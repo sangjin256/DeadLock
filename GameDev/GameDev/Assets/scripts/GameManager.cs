@@ -194,12 +194,6 @@ public class GameManager : MonoBehaviour
             if (currentLevel <= 9)
             {
                 canvas.transform.GetChild(0).gameObject.SetActive(true);
-                string str = GetTipString();
-                if(str != null)
-                {
-                    canvas.transform.GetChild(1).gameObject.SetActive(true);
-                    canvas.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = str;
-                }
             }
             failScreen = canvas.transform.GetChild(canvas.transform.childCount - 2).gameObject;
             successScreen = canvas.transform.GetChild(canvas.transform.childCount - 3).gameObject;
