@@ -1,0 +1,600 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16a4558c3e9b2f64aad26ea7934b8dcb, type: 3}
+  m_Name: Stage40
+  m_EditorClassIdentifier: 
+  level:
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.98823535, g: 0.5647059, b: 0.53333336, a: 1}
+    - {r: 1, g: 0.98823535, b: 0.62352943, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    - {r: 1, g: 0.98823535, b: 0.62352943, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.98823535, g: 0.5647059, b: 0.53333336, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 1, g: 0.98823535, b: 0.62352943, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 1, g: 0.98823535, b: 0.62352943, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 1
+    clockNum: 3
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.98823535, g: 0.5647059, b: 0.53333336, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    maxCount: 3
+    fixedNum: 0
+    isSimul: 1
+    isSwitchColor: 1
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    maxCount: 2
+    fixedNum: 0
+    isSimul: 1
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 2
+    fixedNum: 0
+    isSimul: 1
+    isSwitchColor: 1
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 1, g: 0.98823535, b: 0.62352943, a: 1}
+    maxCount: 2
+    fixedNum: 0
+    isSimul: 1
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 1
+    isClockOffToOn: 0
+    clockNum: 4
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.98823535, g: 0.5647059, b: 0.53333336, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 1, g: 0.98823535, b: 0.62352943, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.98823535, g: 0.5647059, b: 0.53333336, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7607844, g: 0.9568628, b: 1, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  row: 5
+  col: 11

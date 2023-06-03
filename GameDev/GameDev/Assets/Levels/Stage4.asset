@@ -1,0 +1,197 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16a4558c3e9b2f64aad26ea7934b8dcb, type: 3}
+  m_Name: Stage4
+  m_EditorClassIdentifier: 
+  level:
+  - nodeTypes: 2
+    colors:
+    - {r: 0.9176471, g: 0.44705886, b: 0.48235297, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.7137255, g: 0.80392164, b: 0.36078432, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.5686275, g: 0.65882355, b: 0.90196085, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.627451, g: 0.5176471, b: 0.7568628, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.9176471, g: 0.44705886, b: 0.48235297, a: 1}
+    - {r: 0.7137255, g: 0.80392164, b: 0.36078432, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7137255, g: 0.80392164, b: 0.36078432, a: 1}
+    - {r: 0.5686275, g: 0.65882355, b: 0.90196085, a: 1}
+    maxCount: 0
+    fixedNum: 4
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.5686275, g: 0.65882355, b: 0.90196085, a: 1}
+    - {r: 0.627451, g: 0.5176471, b: 0.7568628, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.9176471, g: 0.44705886, b: 0.48235297, a: 1}
+    - {r: 0.627451, g: 0.5176471, b: 0.7568628, a: 1}
+    maxCount: 0
+    fixedNum: 1
+    isSimul: 0
+    isSwitchColor: 0
+  row: 4
+  col: 7

@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Canvas
+  - ProcessColor
+  - ScrollMenu
+  - Stage
+  - Setting
+  - ProcessColorBehind
+  - Resource
+  - Reflector
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - PostProcessing
+  - Water
+  - UI
+  - Block
+  - Resource
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: LIne
+    uniqueID: 58545197
+    locked: 0
+  - name: Pointer
+    uniqueID: 894205033
+    locked: 0
+  - name: Resource
+    uniqueID: 271011995
+    locked: 0
+  - name: Process
+    uniqueID: 167505809
+    locked: 0
+  - name: Setting
+    uniqueID: 3693353215
+    locked: 0

@@ -1,0 +1,1005 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16a4558c3e9b2f64aad26ea7934b8dcb, type: 3}
+  m_Name: Stage33
+  m_EditorClassIdentifier: 
+  level:
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 1
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 2
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 1
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 1
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.81568635, g: 0.69411767, b: 0.8980393, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 1
+    colors:
+    - {r: 0.7019608, g: 0.8862746, b: 0.6313726, a: 1}
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  - nodeTypes: 0
+    colors: []
+    maxCount: 0
+    fixedNum: 0
+    isSimul: 0
+    isSwitchColor: 0
+    isBlock: 0
+    blockBinaryString: 
+    isStartWithEmptyColor: 0
+    isClockOnToOff: 0
+    isClockOffToOn: 0
+    clockNum: 0
+  row: 9
+  col: 9
