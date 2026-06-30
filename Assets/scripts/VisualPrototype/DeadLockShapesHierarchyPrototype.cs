@@ -179,21 +179,26 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
 
     private void RemoveChild(string childName)
     {
-        while (true)
+        var childrenToRemove = new System.Collections.Generic.List<GameObject>();
+        for (int i = 0; i < transform.childCount; i++)
         {
-            Transform existing = transform.Find(childName);
-            if (existing == null)
+            Transform child = transform.GetChild(i);
+            if (child.name == childName)
             {
-                return;
+                childrenToRemove.Add(child.gameObject);
             }
+        }
 
+        foreach (GameObject child in childrenToRemove)
+        {
             if (Application.isPlaying)
             {
-                Destroy(existing.gameObject);
-                return;
+                Destroy(child);
             }
-
-            DestroyImmediate(existing.gameObject);
+            else
+            {
+                DestroyImmediate(child);
+            }
         }
     }
 
@@ -213,6 +218,11 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
 
     private void CreateMetroConnection(string name, Color color, Transform parent, params Vector2[] points)
     {
+        if (points == null || points.Length < 2)
+        {
+            return;
+        }
+
         Transform root = CreateGroup("Line_" + name, parent);
         Transform background = CreateGroup("Background", root);
         Transform links = CreateGroup("Links", root);
@@ -285,12 +295,13 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         Transform trayBackground = CreateGroup("Background", tray);
         Transform traySlots = CreateGroup("Slots", tray);
 
-        float trayWidth = Mathf.Max(0.46f, 0.28f + requestedColors.Length * 0.28f);
+        int colorCount = requestedColors != null ? requestedColors.Length : 0;
+        float trayWidth = Mathf.Max(0.46f, 0.28f + colorCount * 0.28f);
         CreateRectangle("Shadow", new Vector2(0.035f, -0.035f), new Vector2(trayWidth, 0.32f), 0.16f, WithAlpha(Color.black, 0.28f), trayBackground, 25);
         CreateRectangle("Fill", Vector2.zero, new Vector2(trayWidth, 0.32f), 0.16f, WithAlpha(_ink, 0.78f), trayBackground, 26);
 
-        float start = -(requestedColors.Length - 1) * 0.16f;
-        for (int i = 0; i < requestedColors.Length; i++)
+        float start = -(colorCount - 1) * 0.16f;
+        for (int i = 0; i < colorCount; i++)
         {
             Transform slot = CreateGroup("Slot_" + i, traySlots);
             Vector2 chipPosition = new Vector2(start + 0.32f * i, 0f);
@@ -391,6 +402,11 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
 
     private void CreateColorSwitchResource(string name, Vector2 position, Color[] colors, Transform parent)
     {
+        if (colors == null || colors.Length == 0)
+        {
+            return;
+        }
+
         Transform root = CreateResourceShell(name, position, colors[0], parent);
         Transform slots = CreateGroup("Slots", root);
         Vector2 visualOffset = GetTriangleVisualOffset(colors.Length);

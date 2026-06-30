@@ -173,8 +173,9 @@ public class DeadLockShapesVisualPrototype : ImmediateModeShapeDrawer
         Draw.FontSize = 0.18f;
         Draw.Text(position + new Vector2(-0.13f, -0.06f), label, TextAlign.Left, new Color(1f, 1f, 1f, 0.72f));
 
-        float start = -(requestedColors.Length - 1) * 0.21f;
-        for (int i = 0; i < requestedColors.Length; i++)
+        int colorCount = requestedColors != null ? requestedColors.Length : 0;
+        float start = -(colorCount - 1) * 0.21f;
+        for (int i = 0; i < colorCount; i++)
         {
             Vector2 chipPosition = position + new Vector2(start + 0.42f * i, outerRadius + 0.38f);
             Draw.Disc(chipPosition, 0.15f, requestedColors[i]);
@@ -219,6 +220,11 @@ public class DeadLockShapesVisualPrototype : ImmediateModeShapeDrawer
 
     private void DrawColorSwitchResource(Vector2 position, Color[] colors, float pulse)
     {
+        if (colors == null || colors.Length == 0)
+        {
+            return;
+        }
+
         DrawResourceShell(position, colors[0], "Switch");
 
         for (int i = 0; i < colors.Length; i++)
