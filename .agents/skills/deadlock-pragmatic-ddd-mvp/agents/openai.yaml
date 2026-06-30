@@ -1,0 +1,8 @@
+interface:
+  display_name: "DeadLock DDD와 MVP"
+  short_description: "DeadLock의 Domain, Repository, Manager, MVP, Bootstrap, Infrastructure 아키텍처 규칙"
+  default_prompt: "$deadlock-pragmatic-ddd-mvp DeadLock DDD/MVP 아키텍처 규칙을 적용해줘."
+
+policy:
+  allow_implicit_invocation: true
+

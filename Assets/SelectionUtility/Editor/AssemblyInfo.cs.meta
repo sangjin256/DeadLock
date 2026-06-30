@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 60d3f256086346cc81d68cd5d36a01d7
+timeCreated: 1736629660
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Editor/AssemblyInfo.cs
+  uploadId: 724893

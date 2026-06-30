@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-direction: row; flex-grow: 1;">
+        <ui:VisualElement name="Left" style="flex-grow: 1; border-right-width: 1px; border-right-color: rgb(42, 42, 42);">
+            <ui:IMGUIContainer name="Filters" focusable="false" style="flex-shrink: 0;" />
+            <ui:IMGUIContainer name="SearchField" style="flex-shrink: 0;" />
+            <ui:ListView focusable="false" show-bound-collection-size="false" show-alternating-row-backgrounds="ContentOnly" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Right" style="width: 50%; flex-grow: 1;">
+            <ui:Label text="Hierarchy" display-tooltip-when-elided="true" name="Label" style="height: 28px; -unity-text-align: middle-center; border-bottom-width: 1px; border-bottom-color: rgb(42, 42, 42); font-size: 11px; overflow: hidden;" />
+            <ui:ListView focusable="false" show-alternating-row-backgrounds="ContentOnly" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

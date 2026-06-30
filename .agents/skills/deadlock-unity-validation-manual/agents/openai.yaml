@@ -1,0 +1,8 @@
+interface:
+  display_name: "DeadLock 수동 검증"
+  short_description: "명시 요청 시에만 실행하는 DeadLock Unity 컴파일, 콘솔, 테스트 검증"
+  default_prompt: "$deadlock-unity-validation-manual 현재 DeadLock 변경 사항을 검증해줘."
+
+policy:
+  allow_implicit_invocation: true
+
