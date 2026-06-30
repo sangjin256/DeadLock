@@ -8,6 +8,12 @@ using UnityEditor;
 [ExecuteAlways]
 public class DeadLockShapesHierarchyPrototype : MonoBehaviour
 {
+    private enum RelayVisualType
+    {
+        Link,
+        Transfer
+    }
+
     [Header("Scene")]
     [SerializeField]
     private Camera _targetCamera;
@@ -29,6 +35,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
     private const string GeneratedRootName = "Generated Metro Shapes Hierarchy";
     private const string LegacyGeneratedRootName = "Generated Shapes Hierarchy";
     private const float MetroLineThickness = 0.15f;
+    private const float RelayStubLength = 0.6f;
 
     [System.NonSerialized]
     private bool _isBuildQueued;
@@ -127,6 +134,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         Transform generatedRoot = CreateGroup(GeneratedRootName, transform);
         Transform labels = CreateGroup("Labels", generatedRoot);
         Transform connections = CreateGroup("Metro Connections", generatedRoot);
+        Transform relayLinks = CreateGroup("Relay Links", generatedRoot);
         Transform processes = CreateGroup("Process Stations", generatedRoot);
         Transform resources = CreateGroup("Resource Stations", generatedRoot);
 
@@ -147,6 +155,9 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         CreateMetroConnection("Red_ProcessB_Switch", _red, connections, processB, colorSwitch);
         CreateMetroConnection("Red_Switch_Sync", _red, connections, colorSwitch, simultaneous);
         CreateMetroConnection("Amber_Capacity_Clock", _amber, connections, capacity, clock);
+
+        CreateRelayLink("RelayLink_Basic_ColorSwitch", basic, colorSwitch, RelayVisualType.Link, relayLinks);
+        CreateRelayLink("RelayTransfer_Capacity_Simultaneous", capacity, simultaneous, RelayVisualType.Transfer, relayLinks);
 
         CreateProcess("Process_Selected_P1", processA, "P1", new[] { _green, _blue, _red }, true, processes);
         CreateProcess("Process_P2", processB, "P2", new[] { _red, _green }, false, processes);
@@ -210,6 +221,45 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
             CreateLine("Shadow_" + i, start, end, MetroLineThickness + 0.08f, WithAlpha(Color.black, 0.34f), root, 0);
             CreateLine("Track_" + i, start, end, MetroLineThickness, color, root, 2);
         }
+    }
+
+    private void CreateRelayLink(string name, Vector2 start, Vector2 end, RelayVisualType type, Transform parent)
+    {
+        Transform root = CreateGroup(name, parent);
+        Vector2 direction = (end - start).normalized;
+        float length = Vector2.Distance(start, end);
+        float nodePadding = 0.52f;
+        float stubLength = Mathf.Min(RelayStubLength, Mathf.Max(0f, (length - nodePadding * 2f) * 0.5f));
+        Vector2 visibleStart = start + direction * nodePadding;
+        Vector2 visibleEnd = end - direction * nodePadding;
+        Vector2 startStubEnd = visibleStart + direction * stubLength;
+        Vector2 endStubEnd = visibleEnd - direction * stubLength;
+
+        CreateRelayStubLine("StartStub", visibleStart, startStubEnd, root);
+        CreateRelayStubLine("EndStub", visibleEnd, endStubEnd, root);
+        CreateRelayEndpointPlaceholders(type, visibleStart, startStubEnd, endStubEnd, direction, root);
+    }
+
+    private void CreateRelayStubLine(string name, Vector2 start, Vector2 end, Transform parent)
+    {
+        Color relayColor = new Color(0.08f, 0.09f, 0.1f, 1f);
+        CreateLine(name, start, end, 0.14f, WithAlpha(relayColor, 0.45f), parent, 1);
+    }
+
+    private void CreateRelayEndpointPlaceholders(RelayVisualType type, Vector2 startStubStart, Vector2 startStubEnd, Vector2 endStubEnd, Vector2 direction, Transform parent)
+    {
+        Color relayColor = new Color(0.08f, 0.09f, 0.1f, 1f);
+
+        if (type == RelayVisualType.Link)
+        {
+            CreateRing("LinkStartPlaceholder", startStubEnd, 0.12f, 0.035f, WithAlpha(relayColor, 0.68f), parent, 4);
+            CreateRing("LinkEndPlaceholder", endStubEnd, 0.12f, 0.035f, WithAlpha(relayColor, 0.68f), parent, 4);
+            return;
+        }
+
+        CreateDisc("TransferSenderPlaceholder", startStubEnd, 0.095f, WithAlpha(relayColor, 0.62f), parent, 4);
+        CreateRing("TransferReceiverPlaceholder", endStubEnd, 0.12f, 0.035f, WithAlpha(relayColor, 0.68f), parent, 4);
+        CreateDisc("TransferDirectionPlaceholder", Vector2.Lerp(startStubStart, startStubEnd, 0.62f), 0.055f, WithAlpha(relayColor, 0.5f), parent, 4);
     }
 
     private void CreateProcess(string name, Vector2 position, string label, Color[] requestedColors, bool selected, Transform parent)
