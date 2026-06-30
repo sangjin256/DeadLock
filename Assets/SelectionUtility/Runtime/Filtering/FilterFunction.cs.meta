@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 8f6e53c9b33d4b31a20d4951585c4bb5
+timeCreated: 1736535879
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Runtime/Filtering/FilterFunction.cs
+  uploadId: 724893

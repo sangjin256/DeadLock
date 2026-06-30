@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 36414bab637348b59fb1354712c032b2
+timeCreated: 1736624076
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Runtime/KeyActions/OpenPrefabAction.cs
+  uploadId: 724893

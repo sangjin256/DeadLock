@@ -1,0 +1,8 @@
+interface:
+  display_name: "DeadLock 로컬 문서"
+  short_description: "Notion 없이 Docs/를 기준으로 DeadLock 계획과 상태를 관리"
+  default_prompt: "$deadlock-local-docs DeadLock 로컬 문서를 갱신하거나 참조해줘."
+
+policy:
+  allow_implicit_invocation: true
+

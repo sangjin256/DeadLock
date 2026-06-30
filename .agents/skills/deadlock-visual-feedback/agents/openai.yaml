@@ -1,0 +1,8 @@
+interface:
+  display_name: "DeadLock 비주얼 피드백"
+  short_description: "FEEL, DOTween, Shapes, shader, UniTask 기반 DeadLock 게임 feel 지침"
+  default_prompt: "$deadlock-visual-feedback DeadLock 프레젠테이션과 피드백을 개선하거나 리뷰해줘."
+
+policy:
+  allow_implicit_invocation: true
+

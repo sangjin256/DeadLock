@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: d88fde9a6bba44c5ac7f53b2512bf772
+timeCreated: 1735499591
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Editor/Core/Hierarchy.cs
+  uploadId: 724893

@@ -1,0 +1,16 @@
+{
+    "name": "Xarbrough.SelectionUtility.Editor",
+    "references": [
+        "Xarbrough.SelectionUtility.Runtime"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": []
+}

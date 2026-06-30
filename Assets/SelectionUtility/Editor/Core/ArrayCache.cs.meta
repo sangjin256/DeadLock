@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 50341f4d481e49f3a2668205414fa948
+timeCreated: 1735485028
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Editor/Core/ArrayCache.cs
+  uploadId: 724893

@@ -1,0 +1,8 @@
+interface:
+  display_name: "DeadLock C# 컨벤션"
+  short_description: "DeadLock의 Unity C# 스타일, DTO, UniTask, 이벤트, 계층 경계 규칙"
+  default_prompt: "$deadlock-csharp-conventions DeadLock C# 컨벤션을 적용해줘."
+
+policy:
+  allow_implicit_invocation: true
+

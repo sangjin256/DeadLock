@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: caa5c3ba622f4b9fbfd6380023e019ca
+timeCreated: 1736619893
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Samples/CustomKeyAction.cs
+  uploadId: 724893

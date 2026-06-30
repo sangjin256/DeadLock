@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: d9326f62c413492dbf5b3f2cf45f82be
+timeCreated: 1736535793
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Runtime/KeyActions/KeyAction.cs
+  uploadId: 724893

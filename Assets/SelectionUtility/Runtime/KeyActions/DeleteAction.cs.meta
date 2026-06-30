@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 1795818621fb4fab8c3edf4fe4f4cfa9
+timeCreated: 1736603402
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Runtime/KeyActions/DeleteAction.cs
+  uploadId: 724893

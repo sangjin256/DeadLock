@@ -1,0 +1,14 @@
+{
+    "name": "Xarbrough.SelectionUtility.Samples",
+    "references": [
+        "Xarbrough.SelectionUtility.Runtime"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": []
+}

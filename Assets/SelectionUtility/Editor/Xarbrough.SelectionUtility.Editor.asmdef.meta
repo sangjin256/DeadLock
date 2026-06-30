@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 20755c9485c7b06468a4c1fef1dbd65d
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Editor/Xarbrough.SelectionUtility.Editor.asmdef
+  uploadId: 724893

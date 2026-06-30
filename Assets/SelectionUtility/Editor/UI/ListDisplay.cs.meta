@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 9fd44d68f4894b6da58a108625eb9117
+timeCreated: 1735921910
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Editor/UI/ListDisplay.cs
+  uploadId: 724893

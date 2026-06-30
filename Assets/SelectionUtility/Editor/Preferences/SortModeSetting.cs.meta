@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 55700cc90f124e2a91152e09bd759f89
+timeCreated: 1736685968
+AssetOrigin:
+  serializedVersion: 1
+  productId: 179537
+  packageName: Selection Utility
+  packageVersion: 2.0.0
+  assetPath: Assets/SelectionUtility/Editor/Preferences/SortModeSetting.cs
+  uploadId: 724893
