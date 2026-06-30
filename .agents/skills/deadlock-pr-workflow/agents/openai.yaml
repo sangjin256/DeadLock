@@ -1,0 +1,8 @@
+interface:
+  display_name: "DeadLock PR 워크플로우"
+  short_description: "pr {타겟 브랜치} 요청 시 PR 초안을 만들고 승인 후에만 push/PR 생성"
+  default_prompt: "$deadlock-pr-workflow 현재 브랜치 작업을 정리해서 PR 초안을 만들어줘."
+
+policy:
+  allow_implicit_invocation: true
+
