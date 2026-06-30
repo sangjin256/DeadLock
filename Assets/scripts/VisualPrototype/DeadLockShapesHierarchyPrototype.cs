@@ -30,10 +30,10 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
     private readonly Color _ink = new Color(0.055f, 0.065f, 0.075f, 1f);
     private readonly Color _stationFill = new Color(0.91f, 0.94f, 0.95f, 1f);
     private readonly Color _stationMuted = new Color(0.72f, 0.78f, 0.8f, 1f);
-    private readonly Color _text = new Color(0.86f, 0.9f, 0.92f, 0.86f);
 
-    private const string GeneratedRootName = "Generated Metro Shapes Hierarchy";
-    private const string LegacyGeneratedRootName = "Generated Shapes Hierarchy";
+    private const string GeneratedRootName = "Generated Metro Shapes Hierarchy V2";
+    private const string LegacyGeneratedRootName = "Generated Metro Shapes Hierarchy";
+    private const string OlderGeneratedRootName = "Generated Shapes Hierarchy";
     private const float MetroLineThickness = 0.15f;
     private const float RelayStubLength = 0.6f;
 
@@ -112,7 +112,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
     private void BuildIfNeeded()
     {
         bool hasGeneratedRoot = CountChildren(GeneratedRootName) > 0;
-        bool hasLegacyRoot = CountChildren(LegacyGeneratedRootName) > 0;
+        bool hasLegacyRoot = CountChildren(LegacyGeneratedRootName) > 0 || CountChildren(OlderGeneratedRootName) > 0;
 
         if (hasGeneratedRoot && hasLegacyRoot == false && CountChildren(GeneratedRootName) == 1)
         {
@@ -132,7 +132,6 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         RemoveGeneratedRoots();
 
         Transform generatedRoot = CreateGroup(GeneratedRootName, transform);
-        Transform labels = CreateGroup("Labels", generatedRoot);
         Transform connections = CreateGroup("Metro Connections", generatedRoot);
         Transform relayLinks = CreateGroup("Relay Links", generatedRoot);
         Transform processes = CreateGroup("Process Stations", generatedRoot);
@@ -147,9 +146,6 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         Vector2 emptyColor = new Vector2(-0.9f, -0.8f);
         Vector2 clock = new Vector2(4.75f, 2.0f);
 
-        CreateLabel("Title", "DeadLock Metro Visual Prototype", new Vector2(-5.85f, 3.08f), 0.24f, labels, TextAlignmentOptions.Left);
-        CreateLabel("Subtitle", "uniform lines / compact resources / hierarchy-editable Shapes", new Vector2(-5.85f, 2.75f), 0.14f, labels, TextAlignmentOptions.Left);
-
         CreateMetroConnection("Green_ProcessA_Basic", _green, connections, processA, basic);
         CreateMetroConnection("Blue_ProcessA_Empty", _blue, connections, processA, emptyColor);
         CreateMetroConnection("Red_ProcessB_Switch", _red, connections, processB, colorSwitch);
@@ -159,8 +155,8 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         CreateRelayLink("RelayLink_Basic_ColorSwitch", basic, colorSwitch, RelayVisualType.Link, relayLinks);
         CreateRelayLink("RelayTransfer_Capacity_Simultaneous", capacity, simultaneous, RelayVisualType.Transfer, relayLinks);
 
-        CreateProcess("Process_Selected_P1", processA, "P1", new[] { _green, _blue, _red }, true, processes);
-        CreateProcess("Process_P2", processB, "P2", new[] { _red, _green }, false, processes);
+        CreateProcess("Process_Selected", processA, new[] { _green, _blue, _red }, true, processes);
+        CreateProcess("Process_Waiting", processB, new[] { _red, _green }, false, processes);
 
         CreateBasicResource("Resource_Basic", basic, _green, resources);
         CreateCapacityResource("Resource_Capacity_2_of_3", capacity, _blue, 3, 2, resources);
@@ -174,6 +170,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
     {
         RemoveChild(GeneratedRootName);
         RemoveChild(LegacyGeneratedRootName);
+        RemoveChild(OlderGeneratedRootName);
     }
 
     private void RemoveChild(string childName)
@@ -262,7 +259,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         CreateDisc("TransferDirectionPlaceholder", Vector2.Lerp(startStubStart, startStubEnd, 0.62f), 0.055f, WithAlpha(relayColor, 0.5f), parent, 4);
     }
 
-    private void CreateProcess(string name, Vector2 position, string label, Color[] requestedColors, bool selected, Transform parent)
+    private void CreateProcess(string name, Vector2 position, Color[] requestedColors, bool selected, Transform parent)
     {
         Transform root = CreateGroup(name, parent);
         root.localPosition = ToVector3(position);
@@ -271,7 +268,6 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         CreateDisc("StationStroke", Vector2.zero, 0.68f, selected ? _mint : WithAlpha(_stationMuted, 0.72f), root, 20);
         CreateDisc("StationFill", Vector2.zero, 0.6f, _stationFill, root, 22);
         CreateDisc("ProcessPort", Vector2.zero, 0.16f, _ink, root, 24);
-        CreateLabel("Label", label, new Vector2(0f, -0.04f), 0.16f, root, TextAlignmentOptions.Center);
 
         Transform tray = CreateGroup("RequiredResourceTray", root);
         tray.localPosition = ToVector3(new Vector2(0f, 0.88f));
@@ -293,62 +289,96 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
     {
         Transform root = CreateResourceShell(name, position, color, parent);
         CreateDisc("Port", Vector2.zero, 0.16f, _ink, root, 24);
-        CreateLabel("TypeLabel", "Basic", new Vector2(0f, -0.76f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateCapacityResource(string name, Vector2 position, Color color, int capacity, int available, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, color, parent);
 
-        float start = -(capacity - 1) * 0.18f;
         for (int i = 0; i < capacity; i++)
         {
             Color slotColor = i < available ? color : WithAlpha(_stationMuted, 0.42f);
-            CreateDisc("CapacitySlot_" + i, new Vector2(start + i * 0.36f, 0f), 0.11f, slotColor, root, 24);
+            CreateDisc("CapacitySlot_" + i, GetCapacitySlotPosition(i, capacity), 0.11f, slotColor, root, 24);
         }
 
-        CreateLabel("Count", available + "/" + capacity, new Vector2(0f, -0.72f), 0.12f, root, TextAlignmentOptions.Center);
+    }
+
+    private Vector2 GetCapacitySlotPosition(int index, int capacity)
+    {
+        if (capacity == 1)
+        {
+            return Vector2.zero;
+        }
+
+        if (capacity == 2)
+        {
+            return new Vector2(index == 0 ? -0.18f : 0.18f, 0f);
+        }
+
+        if (capacity == 3)
+        {
+            return GetRadialSlotPosition(index, capacity, 0.23f) + GetTriangleVisualOffset(capacity);
+        }
+
+        if (capacity == 4)
+        {
+            Vector2[] gridSlots =
+            {
+                new Vector2(-0.16f, 0.16f),
+                new Vector2(0.16f, 0.16f),
+                new Vector2(-0.16f, -0.16f),
+                new Vector2(0.16f, -0.16f)
+            };
+
+            return gridSlots[index];
+        }
+
+        float angle = ShapesMath.TAU * (index / (float)capacity) + ShapesMath.TAU / 4f;
+        return ShapesMath.AngToDir(angle) * 0.22f;
     }
 
     private void CreateSimultaneousResource(string name, Vector2 position, Color color, int requiredCount, int activeCount, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, color, parent);
-        Vector2 hub = Vector2.zero;
-        Vector2[] slots =
-        {
-            new Vector2(-0.26f, 0.2f),
-            new Vector2(-0.28f, -0.16f),
-            new Vector2(0.27f, -0.03f)
-        };
+        Vector2 hub = GetTriangleVisualOffset(requiredCount);
 
-        for (int i = 0; i < requiredCount && i < slots.Length; i++)
+        for (int i = 0; i < requiredCount; i++)
         {
-            CreateLine("SimLink_" + i, slots[i], hub, 0.04f, WithAlpha(color, 0.62f), root, 23);
+            Vector2 slot = GetRadialSlotPosition(i, requiredCount, 0.29f) + hub;
+            CreateLine("SimLink_" + i, slot, hub, 0.04f, WithAlpha(color, 0.62f), root, 23);
         }
 
-        for (int i = 0; i < requiredCount && i < slots.Length; i++)
+        for (int i = 0; i < requiredCount; i++)
         {
             Color slotColor = i < activeCount ? color : WithAlpha(_stationMuted, 0.42f);
-            CreateDisc("SimSlot_" + i, slots[i], 0.105f, slotColor, root, 24);
+            CreateDisc("SimSlot_" + i, GetRadialSlotPosition(i, requiredCount, 0.29f) + hub, 0.105f, slotColor, root, 24);
         }
 
         bool isActive = activeCount >= requiredCount;
         CreateDisc("ActivationLight", hub, 0.12f, isActive ? _green : _red, root, 26);
-        CreateLabel("Count", activeCount + "/" + requiredCount, new Vector2(0f, -0.72f), 0.12f, root, TextAlignmentOptions.Center);
+    }
+
+    private Vector2 GetTriangleVisualOffset(int count)
+    {
+        return count == 3 ? new Vector2(0f, -0.06f) : Vector2.zero;
+    }
+
+    private Vector2 GetRadialSlotPosition(int index, int count, float radius)
+    {
+        float angle = ShapesMath.TAU * (index / (float)count) + ShapesMath.TAU / 4f;
+        return ShapesMath.AngToDir(angle) * radius;
     }
 
     private void CreateColorSwitchResource(string name, Vector2 position, Color[] colors, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, colors[0], parent);
+        Vector2 visualOffset = GetTriangleVisualOffset(colors.Length);
 
         for (int i = 0; i < colors.Length; i++)
         {
-            float angle = ShapesMath.TAU * (i / (float)colors.Length) + ShapesMath.TAU / 4f;
-            Vector2 direction = ShapesMath.AngToDir(angle);
-            CreateDisc("SwitchColor_" + i, direction * 0.23f, 0.095f, colors[i], root, 24);
+            CreateDisc("SwitchColor_" + i, GetRadialSlotPosition(i, colors.Length, 0.23f) + visualOffset, 0.095f, colors[i], root, 24);
         }
 
-        CreateLabel("TypeLabel", "Switch", new Vector2(0f, -0.76f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateEmptyColorResource(string name, Vector2 position, Transform parent)
@@ -356,7 +386,6 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         Transform root = CreateResourceShell(name, position, _stationMuted, parent);
         CreateLine("EmptySlashA", new Vector2(-0.19f, -0.19f), new Vector2(0.19f, 0.19f), 0.06f, _stationMuted, root, 24);
         CreateLine("EmptySlashB", new Vector2(-0.19f, 0.19f), new Vector2(0.19f, -0.19f), 0.06f, _stationMuted, root, 24);
-        CreateLabel("TypeLabel", "Empty", new Vector2(0f, -0.76f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateClockResource(string name, Vector2 position, Color color, int count, Transform parent)
@@ -365,7 +394,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         CreateRing("ClockFace", Vector2.zero, 0.31f, 0.035f, WithAlpha(color, 0.48f), root, 24);
         CreateLine("ClockMinuteHand", Vector2.zero, new Vector2(0f, 0.22f), 0.035f, WithAlpha(color, 0.32f), root, 25);
         CreateLine("ClockHourHand", Vector2.zero, new Vector2(0.16f, -0.1f), 0.035f, WithAlpha(color, 0.32f), root, 25);
-        CreateLabel("TurnCount", count.ToString(), new Vector2(0f, -0.07f), 0.38f, root, TextAlignmentOptions.Center, _ink);
+        CreateLabel("TurnCount", count.ToString(), Vector2.zero, 5f, root, TextAlignmentOptions.Center, _ink);
     }
 
     private Transform CreateResourceShell(string name, Vector2 position, Color color, Transform parent)
@@ -437,11 +466,6 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         return line;
     }
 
-    private TextMeshPro CreateLabel(string name, string text, Vector2 localPosition, float fontSize, Transform parent, TextAlignmentOptions alignment)
-    {
-        return CreateLabel(name, text, localPosition, fontSize, parent, alignment, _text);
-    }
-
     private TextMeshPro CreateLabel(string name, string text, Vector2 localPosition, float fontSize, Transform parent, TextAlignmentOptions alignment, Color color)
     {
         GameObject go = CreateObject(name, parent);
@@ -454,7 +478,7 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         label.alignment = alignment;
         label.enableWordWrapping = false;
         label.sortingOrder = 40;
-        label.rectTransform.sizeDelta = new Vector2(3f, 0.5f);
+        label.rectTransform.sizeDelta = new Vector2(2f, 2f);
         return label;
     }
 
