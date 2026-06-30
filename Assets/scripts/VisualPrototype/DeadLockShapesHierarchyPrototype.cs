@@ -242,22 +242,22 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
     private void CreateBasicResource(string name, Vector2 position, Color color, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, color, parent);
-        CreateDisc("Port", Vector2.zero, 0.14f, _ink, root, 24);
-        CreateLabel("TypeLabel", "Basic", new Vector2(0f, -0.68f), 0.12f, root, TextAlignmentOptions.Center);
+        CreateDisc("Port", Vector2.zero, 0.16f, _ink, root, 24);
+        CreateLabel("TypeLabel", "Basic", new Vector2(0f, -0.76f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateCapacityResource(string name, Vector2 position, Color color, int capacity, int available, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, color, parent);
 
-        float start = -(capacity - 1) * 0.16f;
+        float start = -(capacity - 1) * 0.18f;
         for (int i = 0; i < capacity; i++)
         {
             Color slotColor = i < available ? color : WithAlpha(_stationMuted, 0.42f);
-            CreateDisc("CapacitySlot_" + i, new Vector2(start + i * 0.32f, 0f), 0.095f, slotColor, root, 24);
+            CreateDisc("CapacitySlot_" + i, new Vector2(start + i * 0.36f, 0f), 0.11f, slotColor, root, 24);
         }
 
-        CreateLabel("Count", available + "/" + capacity, new Vector2(0f, -0.62f), 0.12f, root, TextAlignmentOptions.Center);
+        CreateLabel("Count", available + "/" + capacity, new Vector2(0f, -0.72f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateSimultaneousResource(string name, Vector2 position, Color color, int requiredCount, int activeCount, Transform parent)
@@ -266,25 +266,25 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         Vector2 hub = Vector2.zero;
         Vector2[] slots =
         {
-            new Vector2(-0.22f, 0.18f),
-            new Vector2(-0.24f, -0.14f),
-            new Vector2(0.23f, -0.03f)
+            new Vector2(-0.26f, 0.2f),
+            new Vector2(-0.28f, -0.16f),
+            new Vector2(0.27f, -0.03f)
         };
 
         for (int i = 0; i < requiredCount && i < slots.Length; i++)
         {
-            CreateLine("SimLink_" + i, slots[i], hub, 0.035f, WithAlpha(color, 0.62f), root, 23);
+            CreateLine("SimLink_" + i, slots[i], hub, 0.04f, WithAlpha(color, 0.62f), root, 23);
         }
 
         for (int i = 0; i < requiredCount && i < slots.Length; i++)
         {
             Color slotColor = i < activeCount ? color : WithAlpha(_stationMuted, 0.42f);
-            CreateDisc("SimSlot_" + i, slots[i], 0.09f, slotColor, root, 24);
+            CreateDisc("SimSlot_" + i, slots[i], 0.105f, slotColor, root, 24);
         }
 
         bool isActive = activeCount >= requiredCount;
-        CreateDisc("ActivationLight", hub, 0.105f, isActive ? _green : _red, root, 26);
-        CreateLabel("Count", activeCount + "/" + requiredCount, new Vector2(0f, -0.62f), 0.12f, root, TextAlignmentOptions.Center);
+        CreateDisc("ActivationLight", hub, 0.12f, isActive ? _green : _red, root, 26);
+        CreateLabel("Count", activeCount + "/" + requiredCount, new Vector2(0f, -0.72f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateColorSwitchResource(string name, Vector2 position, Color[] colors, Transform parent)
@@ -295,36 +295,36 @@ public class DeadLockShapesHierarchyPrototype : MonoBehaviour
         {
             float angle = ShapesMath.TAU * (i / (float)colors.Length) + ShapesMath.TAU / 4f;
             Vector2 direction = ShapesMath.AngToDir(angle);
-            CreateDisc("SwitchColor_" + i, direction * 0.2f, 0.085f, colors[i], root, 24);
+            CreateDisc("SwitchColor_" + i, direction * 0.23f, 0.095f, colors[i], root, 24);
         }
 
-        CreateLabel("TypeLabel", "Switch", new Vector2(0f, -0.68f), 0.12f, root, TextAlignmentOptions.Center);
+        CreateLabel("TypeLabel", "Switch", new Vector2(0f, -0.76f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateEmptyColorResource(string name, Vector2 position, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, _stationMuted, parent);
-        CreateLine("EmptySlashA", new Vector2(-0.16f, -0.16f), new Vector2(0.16f, 0.16f), 0.055f, _stationMuted, root, 24);
-        CreateLine("EmptySlashB", new Vector2(-0.16f, 0.16f), new Vector2(0.16f, -0.16f), 0.055f, _stationMuted, root, 24);
-        CreateLabel("TypeLabel", "Empty", new Vector2(0f, -0.68f), 0.12f, root, TextAlignmentOptions.Center);
+        CreateLine("EmptySlashA", new Vector2(-0.19f, -0.19f), new Vector2(0.19f, 0.19f), 0.06f, _stationMuted, root, 24);
+        CreateLine("EmptySlashB", new Vector2(-0.19f, 0.19f), new Vector2(0.19f, -0.19f), 0.06f, _stationMuted, root, 24);
+        CreateLabel("TypeLabel", "Empty", new Vector2(0f, -0.76f), 0.12f, root, TextAlignmentOptions.Center);
     }
 
     private void CreateClockResource(string name, Vector2 position, Color color, int count, Transform parent)
     {
         Transform root = CreateResourceShell(name, position, color, parent);
-        CreateRing("ClockFace", Vector2.zero, 0.24f, 0.045f, color, root, 24);
-        CreateLine("ClockMinuteHand", Vector2.zero, new Vector2(0f, 0.16f), 0.045f, color, root, 25);
-        CreateLine("ClockHourHand", Vector2.zero, new Vector2(0.13f, -0.11f), 0.045f, color, root, 25);
-        CreateLabel("Count", count.ToString(), new Vector2(0f, -0.68f), 0.12f, root, TextAlignmentOptions.Center);
+        CreateRing("ClockFace", Vector2.zero, 0.31f, 0.035f, WithAlpha(color, 0.48f), root, 24);
+        CreateLine("ClockMinuteHand", Vector2.zero, new Vector2(0f, 0.22f), 0.035f, WithAlpha(color, 0.32f), root, 25);
+        CreateLine("ClockHourHand", Vector2.zero, new Vector2(0.16f, -0.1f), 0.035f, WithAlpha(color, 0.32f), root, 25);
+        CreateLabel("TurnCount", count.ToString(), new Vector2(0f, -0.07f), 0.38f, root, TextAlignmentOptions.Center, _ink);
     }
 
     private Transform CreateResourceShell(string name, Vector2 position, Color color, Transform parent)
     {
         Transform root = CreateGroup(name, parent);
         root.localPosition = ToVector3(position);
-        CreateRectangle("ResourceShadow", new Vector2(0.06f, -0.06f), new Vector2(0.86f, 0.86f), 0.18f, WithAlpha(Color.black, 0.25f), root, 5);
-        CreateRectangle("ResourceStroke", Vector2.zero, new Vector2(0.84f, 0.84f), 0.17f, color, root, 20);
-        CreateRectangle("ResourceFill", Vector2.zero, new Vector2(0.68f, 0.68f), 0.13f, _stationFill, root, 22);
+        CreateRectangle("ResourceShadow", new Vector2(0.07f, -0.07f), new Vector2(1.02f, 1.02f), 0.21f, WithAlpha(Color.black, 0.25f), root, 5);
+        CreateRectangle("ResourceStroke", Vector2.zero, new Vector2(0.98f, 0.98f), 0.2f, color, root, 20);
+        CreateRectangle("ResourceFill", Vector2.zero, new Vector2(0.83f, 0.83f), 0.17f, _stationFill, root, 22);
         return root;
     }
 
