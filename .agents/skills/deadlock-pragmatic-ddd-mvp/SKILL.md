@@ -25,7 +25,7 @@ Assets/Scripts/Game/
   06.Infrastructure/
 ```
 
-새 코드는 이 구조를 우선 사용한다. 기존 `Assets/scripts` 코드는 한 번에 크게 옮기지 말고, 기능 단위로 점진적으로 흡수한다.
+새 코드는 이 구조를 우선 사용한다. 기존 `Assets/Outdated/scripts` 코드는 한 번에 크게 옮기지 말고, 기능 단위로 점진적으로 흡수한다.
 
 ## 계층 책임
 

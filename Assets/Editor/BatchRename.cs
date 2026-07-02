@@ -39,11 +39,15 @@ public class BatchRename : ScriptableWizard
 
         foreach(Object O in Selection.objects)
         {
+#if DEADLOCK_LEGACY_LEVEL_EDITOR
             if(O is LevelCreator)
             {
                 AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(O), BaseName + PostFix);
             }
             else O.name = BaseName + PostFix;
+#else
+            O.name = BaseName + PostFix;
+#endif
             PostFix += Increment;
         }
     }
