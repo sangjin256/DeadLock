@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public sealed class Board
@@ -11,6 +12,21 @@ public sealed class Board
 
     public Board(IEnumerable<ProcessNode> processes, IEnumerable<ResourceNode> resources, IEnumerable<IBoardRule> boardRules)
     {
+        if(processes == null)
+        {
+            throw new ArgumentNullException(nameof(processes));
+        }
+
+        if(resources == null)
+        {
+            throw new ArgumentNullException(nameof(resources));
+        }
+
+        if(boardRules == null)
+        {
+            throw new ArgumentNullException(nameof(boardRules));
+        }
+
         _processList = new List<ProcessNode>(processes);
         _resourceList = new List<ResourceNode>(resources);
         _boardRuleList = new List<IBoardRule>(boardRules);
@@ -29,7 +45,7 @@ public sealed class Board
 
         if(process == null || resource == null || !process.TryGetSlot(slotId, out ProcessColorSlot slot))
         {
-            return AssignConnectionResult.Fail(EAssignConnectionError.NotFound);;
+            return AssignConnectionResult.Fail(EAssignConnectionError.NotFound);
         }
 
         if(slot.IsConnected || resource.IsLocked || !resource.HasAvailableCapacity)
@@ -89,12 +105,12 @@ public sealed class Board
 
     private void ApplyEffects(RuleEffects effects)
     {
-        foreach(int resourceId in effects.LockedResourceIdList)
+        foreach(int resourceId in effects.LockedResourceIdSet)
         {
             GetResource(resourceId)?.SetLocked(true);
         }
 
-        foreach(int resourceId in effects.UnlockedResourceIdList)
+        foreach(int resourceId in effects.UnlockedResourceIdSet)
         {
             GetResource(resourceId)?.SetLocked(false);
         }

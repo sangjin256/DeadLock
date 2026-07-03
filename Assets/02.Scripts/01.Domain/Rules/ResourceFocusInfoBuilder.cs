@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using System.Linq;
 
 public sealed class ResourceFocusInfoBuilder
 {
     private readonly int _focusedResourceId;
-    private readonly List<int> _highlightedResourceIdList = new();
-    private readonly List<int> _highlightedConnectionIdList = new();
-    private readonly List<int> _activeBoardRuleIdList = new();
+    private readonly HashSet<int> _highlightedResourceIdSet = new();
+    private readonly HashSet<int> _highlightedConnectionIdSet = new();
+    private readonly HashSet<int> _activeBoardRuleIdSet = new();
 
     private EFocusKind _focusKind = EFocusKind.Single;
 
@@ -22,34 +23,25 @@ public sealed class ResourceFocusInfoBuilder
 
     public void HighlightResource(int resourceId)
     {
-        if (!_highlightedResourceIdList.Contains(resourceId))
-        {
-            _highlightedResourceIdList.Add(resourceId);
-        }
+        _highlightedResourceIdSet.Add(resourceId);
     }
 
     public void HighlightConnection(int connectionId)
     {
-        if (!_highlightedConnectionIdList.Contains(connectionId))
-        {
-            _highlightedConnectionIdList.Add(connectionId);
-        }
+        _highlightedConnectionIdSet.Add(connectionId);
     }
 
     public void ActivateBoardRule(int boardRuleId)
     {
-        if (!_activeBoardRuleIdList.Contains(boardRuleId))
-        {
-            _activeBoardRuleIdList.Add(boardRuleId);
-        }
+        _activeBoardRuleIdSet.Add(boardRuleId);
     }
 
     public ResourceFocusInfo Build()
     {
         return new ResourceFocusInfo(_focusedResourceId, 
                                      _focusKind, 
-                                     _highlightedResourceIdList.ToArray(), 
-                                     _highlightedConnectionIdList.ToArray(), 
-                                     _activeBoardRuleIdList.ToArray());
+                                     _highlightedResourceIdSet.ToArray(), 
+                                     _highlightedConnectionIdSet.ToArray(), 
+                                     _activeBoardRuleIdSet.ToArray());
     }
 }

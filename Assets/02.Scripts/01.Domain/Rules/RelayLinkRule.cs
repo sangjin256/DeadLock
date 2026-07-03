@@ -16,7 +16,9 @@ public sealed class RelayLinkRule : IBoardRule
     public bool CanConnect(ConnectionContext context, Board board)
     {
         int otherId = _relation.GetOther(context.Resource.Id);
-        return board.GetResource(otherId).ConnectionIdList.Count == 0;
+        ResourceNode otherResource = board.GetResource(otherId);
+
+        return otherResource != null && otherResource.ConnectionIdList.Count == 0;
     }
 
     public void OnConnected(ConnectionContext context, Board board, RuleEffects effects)
