@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
+#if DEADLOCK_LEGACY_LEVEL_EDITOR
 
 //EditorDefaultResources폴더 설명
 //이 폴더는 Resources 폴더와 유사하지만 에디터 스크립트들 에서만 의미를 가진다. 만약 에디터 플러그 인에
@@ -61,3 +62,5 @@ public class LevelCreatorInspector : Editor
         GUILayout.EndVertical();
     }
 }
+
+#endif
