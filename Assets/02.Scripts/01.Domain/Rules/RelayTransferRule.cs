@@ -26,7 +26,7 @@ public sealed class RelayTransferRule : IBoardRule
             return;
         }
 
-        effects.ActivateResource(_relation.GetOther(context.Resource.Id));
+        effects.UnlockResource(_relation.GetOther(context.Resource.Id));
     }
 
     public void AddFocusInfo(int resourceId, ResourceFocusInfoBuilder builder)

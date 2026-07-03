@@ -10,10 +10,10 @@ public sealed class ProcessNode
     private readonly List<ProcessColorSlot> _slotList;
     public IReadOnlyList<ProcessColorSlot> ColorSlotList => _slotList;
 
-    public ProcessNode(int id, IEnumerable<ProcessColorSlot> slots)
+    public ProcessNode(int id, List<ProcessColorSlot> slotList)
     {
         Id = id;
-        _slotList = new List<ProcessColorSlot>(slots);
+        _slotList = slotList;
         _state = EProcessState.Running;
     }
 

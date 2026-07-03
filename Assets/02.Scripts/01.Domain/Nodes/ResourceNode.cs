@@ -12,8 +12,6 @@ public sealed class ResourceNode
     public ColorId Color => _color;
     private bool _isLocked;
     public bool IsLocked => _isLocked;
-    private bool _isExternallyActivated;
-    public bool IsExternallyActivated => _isExternallyActivated;
 
     private readonly List<int> _connectionIdList;
     public IReadOnlyList<int> ConnectionIdList => _connectionIdList;
@@ -48,10 +46,5 @@ public sealed class ResourceNode
     public void SetLocked(bool locked)
     {
         _isLocked = locked;
-    }
-
-    public void SetExternallyActivated(bool activated)
-    {
-        _isExternallyActivated = activated;
     }
 }

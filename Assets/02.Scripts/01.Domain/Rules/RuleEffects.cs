@@ -4,7 +4,6 @@ public sealed class RuleEffects
 {
     public readonly List<int> LockedResourceIdList = new();
     public readonly List<int> UnlockedResourceIdList = new();
-    public readonly List<int> ActivatedResourceIdList = new();
 
     public void LockResource(int resourceId)
     {
@@ -19,14 +18,6 @@ public sealed class RuleEffects
         if (!UnlockedResourceIdList.Contains(resourceId))
         {
             UnlockedResourceIdList.Add(resourceId);
-        }
-    }
-
-    public void ActivateResource(int resourceId)
-    {
-        if (!ActivatedResourceIdList.Contains(resourceId))
-        {
-            ActivatedResourceIdList.Add(resourceId);
         }
     }
 }

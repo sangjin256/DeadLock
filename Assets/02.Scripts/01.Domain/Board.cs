@@ -99,9 +99,5 @@ public sealed class Board
             GetResource(resourceId)?.SetLocked(false);
         }
 
-        foreach(int resourceId in effects.ActivatedResourceIdList)
-        {
-            GetResource(resourceId)?.SetExternallyActivated(true);
-        }
     }
 }
