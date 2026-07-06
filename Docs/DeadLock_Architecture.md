@@ -54,6 +54,35 @@ Relay는 자원 타입이 아니라 보드 범위 관계다.
 
 `Relation`은 구조, `Rule`은 행동으로 구분한다. 따라서 `RelayRelation`이 직접 Rule을 상속하기보다, Relay Rule이 Relation 데이터를 사용한다.
 
+## 라운드/점유/대기 모델
+
+레거시 동작 보존을 위해 시작 전 예약과 시뮬레이션 중 실제 점유를 분리한다.
+
+- `Board.AssignConnection()`은 실제 점유가 아니라 계획 연결을 만든다.
+- 시작 전 연결 검증은 "이 리소스가 이 색을 처리할 수 있는가"를 확인한다.
+- 시작 전 예약 단계에서 `ResourceNode.Capacity`를 소모하지 않는다.
+- `ProcessColorSlot`은 할당된 리소스, 선택 순서, 완료 상태를 표현해야 한다.
+- `ResourceNode`는 capacity, available capacity, waiting queue, 현재 색/상태를 가진다.
+- 스케줄은 각 프로세스의 n번째 슬롯을 n번째 라운드 후보로 만든다.
+- 같은 라운드 안의 스케줄 항목은 프로세스와 리소스 사이 거리순, 동거리면 선택 순서순으로 처리한다.
+- 시뮬레이션 중 실제 연결 검증은 프로세스 상태, 현재 리소스 상태, 남은 capacity, Rule 조건으로 판단한다.
+- 연결에 성공하면 리소스를 점유하고 해당 슬롯을 완료 처리한다.
+- 리소스 점유는 개별 슬롯 작업이 아니라 프로세스 완료 시점까지 유지된다.
+- 연결할 수 없으면 프로세스는 해당 리소스의 waiting queue에 들어가고 다른 리소스로 진행하지 않는다.
+- 라운드 종료 시 완료 가능한 프로세스를 판정하고, 완료된 프로세스가 점유한 리소스를 반환한다.
+- 리소스가 반환되면 waiting queue의 다음 항목을 다음 라운드 맨 앞으로 재투입한다.
+- 모든 미완료 프로세스가 waiting이고 clock waiting처럼 풀릴 가능성이 없으면 deadlock 실패로 본다.
+
+## Rule 책임
+
+`IResourceRule`은 시작 전 검증과 시뮬레이션 중 검증을 분리할 수 있어야 한다. 레거시에서는 ColorSwitch처럼 시작 전에는 색 목록으로 예약 가능 여부를 판단하지만, 시뮬레이션 중에는 현재 색으로 실제 연결 여부를 판단하는 규칙이 있다.
+
+- `ColorSwitchRule`: 색 목록, 현재 색, 반환 시 색 순환, waiting 우선순위 조정을 담당한다.
+- `EmptyColorRule`: 첫 실제 연결 색으로 현재 색을 고정한다.
+- `ClockRule`: 라운드 종료마다 카운트를 감소시키고, 열림/닫힘 전환과 clock waiting 해제를 담당한다.
+- `SimultaneousRule`: 연결 가능 여부보다 프로세스 완료 가능 여부를 보류한다.
+- Relay Rule은 리소스 내부 Rule이 아니라 기존 리소스 Rule 위에 얹히는 `IBoardRule`로 유지한다.
+
 ## 포커스와 비주얼 조회
 
 View는 특정 자원이 Relay인지, 어떤 Rule인지 직접 판단하지 않는다. 자원 hover/tap 같은 입력은 Presenter와 Manager를 거쳐 Board에 포커스 정보를 요청한다.
