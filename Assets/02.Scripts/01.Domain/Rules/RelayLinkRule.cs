@@ -13,17 +13,27 @@ public sealed class RelayLinkRule : IBoardRule
         return _relation.Contains(resourceId);
     }
 
-    public bool CanConnect(ConnectionContext context, Board board)
+    public bool CanReserve(ConnectionContext context, Board board)
+    {
+        return context.Resource.Rule.CanReserve(context);
+    }
+
+    public bool CanOccupy(ConnectionContext context, Board board)
     {
         int otherId = _relation.GetOther(context.Resource.Id);
         ResourceNode otherResource = board.GetResource(otherId);
 
-        return otherResource != null && otherResource.ConnectionIdList.Count == 0;
+        return otherResource is not null && otherResource.OccupiedConnectionIdList.Count == 0;
     }
 
-    public void OnConnected(ConnectionContext context, Board board, RuleEffects effects)
+    public void OnOccupied(ConnectionContext context, Board board, RuleEffects effects)
     {
         effects.LockResource(_relation.GetOther(context.Resource.Id));
+    }
+
+    public void OnReleased(ConnectionContext context, Board board, RuleEffects effects)
+    {
+        effects.UnlockResource(_relation.GetOther(context.Resource.Id));
     }
 
     public void AddFocusInfo(int resourceId, ResourceFocusInfoBuilder builder)

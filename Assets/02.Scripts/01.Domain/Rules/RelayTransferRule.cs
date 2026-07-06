@@ -1,6 +1,6 @@
 public sealed class RelayTransferRule : IBoardRule
 {
-   private readonly RelayRelation _relation;
+    private readonly RelayRelation _relation;
 
     public int Id => _relation.Id;
 
@@ -14,19 +14,39 @@ public sealed class RelayTransferRule : IBoardRule
         return _relation.Contains(resourceId);
     }
 
-    public bool CanConnect(ConnectionContext context, Board board)
+    public bool CanReserve(ConnectionContext context, Board board)
+    {
+        if (context.Resource.Id == _relation.SenderResourceId)
+        {
+            return context.Resource.Rule.CanReserve(context);
+        }
+
+        return true;
+    }
+
+    public bool CanOccupy(ConnectionContext context, Board board)
     {
         return true;
     }
 
-    public void OnConnected(ConnectionContext context, Board board, RuleEffects effects)
+    public void OnOccupied(ConnectionContext context, Board board, RuleEffects effects)
     {
-        if(context.Resource.Id != _relation.SenderResourceId)
+        if (context.Resource.Id != _relation.SenderResourceId)
         {
             return;
         }
 
-        effects.UnlockResource(_relation.GetOther(context.Resource.Id));
+        effects.SetRelayColor(_relation.GetOther(context.Resource.Id), context.Slot.RequiredColor);
+    }
+
+    public void OnReleased(ConnectionContext context, Board board, RuleEffects effects)
+    {
+        if (context.Resource.Id != _relation.SenderResourceId)
+        {
+            return;
+        }
+
+        effects.ClearRelayColor(_relation.GetOther(context.Resource.Id));
     }
 
     public void AddFocusInfo(int resourceId, ResourceFocusInfoBuilder builder)

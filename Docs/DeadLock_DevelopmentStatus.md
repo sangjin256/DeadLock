@@ -14,69 +14,45 @@
 - `Assets/02.Scripts/01.Domain` 아래에 `Board`, `ProcessNode`, `ProcessColorSlot`, `ResourceNode`, `Connection`, `LevelDefinition`, `LevelProgress` 등 순수 Domain 골격을 작성했다.
 - `ColorId`, `ConnectionContext`, `RuleEffects`, `ResourceFocusInfo`, `ResourceFocusInfoBuilder`, `AssignConnectionResult` 같은 도메인 보조 타입을 작성했다.
 - `IResourceRule`, `IBoardRule`, `NoResourceRule`, `RelayRelation`, `RelayLinkRule`, `RelayTransferRule`을 작성해 내부 자원 Rule과 보드 범위 Rule의 기본 경계를 세웠다.
-- Relay Transfer의 의미는 "source 자원을 사용하면 target 자원이 unlock된다"로 정리했다. 따라서 `ActivateResource`, `IsExternallyActivated` 계열 상태는 제거하고 `UnlockResource` 효과만 사용한다.
+- Relay Transfer의 의미는 방향성 `Sender -> Receiver` 색 전달로 정정했다. Receiver는 예약 단계에서 전달 색 후보로 연결할 수 있고, Sender를 실제 점유한 슬롯 색이 Receiver의 임시 색이 된다. Sender 반환 시 전달 색이 해제되며, Receiver가 이미 점유 중이면 기존 점유 색을 유지하고 반환 뒤 변경을 적용한다.
 - `ProcessNode`는 `List<ProcessColorSlot>`을 직접 받는 소유권 이전 방식으로 정리했고, `ColorId`는 `Equals`, `GetHashCode`, `==`, `!=` 비교를 지원한다.
 - `Assets/Outdated/scripts` 런타임 분석 결과, 레거시 핵심 규칙은 "프로세스가 리소스 슬롯을 점유하면 해당 프로세스의 모든 작업이 완료될 때까지 리소스를 반환하지 않는다"는 구조로 확인했다.
 - 레거시 waiting은 재선택 상태가 아니라 리소스 `waitingList`에 머무는 상태다. 슬롯이 풀리면 대기 항목이 다음 라운드 맨 앞으로 재투입되고, waiting 중인 프로세스는 다른 리소스로 진행하지 않는다.
 - 레거시에서는 시작 전 연결 가능 여부와 시뮬레이션 중 실제 연결 가능 여부가 다르다. 시작 전에는 리소스가 해당 색을 처리할 수 있는지 확인하고, 시뮬레이션 중에는 현재 리소스 상태, capacity, 프로세스 상태를 기준으로 판정한다.
 - 레거시 리소스는 단일 타입 enum보다 `ResourceNode.Capacity`와 내부 Rule 조합에 가깝다. `Basic`, `Simultaneous`, `ColorSwitch`, `EmptyColor`, `Clock`은 `IResourceRule` 계열 조합으로 흡수하는 방향이 맞다.
 - `DeadLock_GameDesign.md`와 `DeadLock_Architecture.md`에 레거시 라운드, 리소스 점유, waiting, 시작 전/시뮬레이션 중 연결 판정 규칙을 최신화했다.
+- `Board.AssignConnection()`은 예약 전용 흐름으로 정리했고, `RunSimulation(int maxRoundCount)` 기반 최소 라운드 실행 흐름을 추가했다.
+- `BoardPosition`, `RoundScheduleItem`, `WaitingRequest`, `RoundResult`, `SimulationReport`를 추가해 거리순 스케줄, waiting 재투입, 시뮬레이션 결과 보고의 최소 기반을 만들었다.
+- `IResourceRule`과 `IBoardRule`은 예약 검증(`CanReserve`)과 실제 점유 검증(`CanOccupy`)을 분리했다.
+- `ResourceNode`는 실제 점유 목록, waiting queue, Relay Transfer 임시 색과 점유 중 색 latch를 갖도록 보강했다.
+- enum은 C# 컨벤션에 맞춰 개별 파일로 분리했다.
 
 ## 다음 작업 순서
 
-1. 현재 Domain 구조를 점검한다.
-   - `Board`, `ProcessNode`, `ProcessColorSlot`, `ResourceNode`, `Connection`, `IResourceRule`이 레거시 핵심 규칙을 담을 수 있는지 확인한다.
-   - 특히 `ProcessColorSlot`의 `AssignedResourceId`, `SelectionOrder`, `IsCompleted`, `ResourceNode`의 `AvailableCapacity`, `WaitingQueue`, `Connection`의 예약/실행 역할을 검토한다.
-   - `IResourceRule`은 시작 전 연결 검증과 시뮬레이션 중 연결 검증을 분리할 수 있어야 한다.
-
-2. 라운드/점유/대기 도메인 타입을 보강한다.
-   - 필요한 최소 타입만 추가한다: 라운드 결과, 스케줄 항목, waiting 요청, 연결 또는 슬롯 상태.
-   - 리소스 점유는 개별 색 작업이 아니라 프로세스 완료 시점까지 유지되는 것으로 구현한다.
-   - waiting은 리소스 대기열 안에 머물다가 슬롯이 풀릴 때 다음 라운드 맨 앞으로 재투입되는 흐름으로 구현한다.
-
-3. 시작 전 연결/예약 흐름을 정리한다.
-   - `Board.AssignConnection()`은 실제 점유가 아니라 계획 연결을 만든다.
-   - 시작 전 검증은 해당 리소스가 그 색을 처리할 수 있는지 확인한다.
-   - capacity는 시작 전 예약 단계에서 소모하지 않는다.
-   - 모든 프로세스 색 슬롯이 배정되어야 시뮬레이션을 시작할 수 있다.
-
-4. 스케줄 생성과 라운드 실행을 구현한다.
-   - 각 프로세스의 n번째 색 슬롯을 n번째 라운드 후보로 배치한다.
-   - 같은 라운드에서는 프로세스와 리소스 사이 거리순, 동거리면 `SelectionOrder`순으로 처리한다.
-   - 실행 중에는 프로세스 상태, 현재 리소스 상태, capacity, Rule 조건을 기준으로 실제 연결 가능 여부를 판단한다.
-   - 연결 성공 시 리소스를 점유하고 슬롯을 완료 처리한다.
-   - 연결 불가 시 리소스 waiting queue에 넣고 프로세스를 waiting 상태로 둔다.
-
-5. 라운드 종료 처리를 구현한다.
-   - 프로세스의 모든 슬롯 완료 여부와 완료 보류 조건을 검사한다.
-   - 완료된 프로세스가 점유한 모든 리소스를 반환한다.
-   - 반환된 리소스의 waiting queue에서 다음 항목을 꺼내 다음 라운드 맨 앞으로 재투입한다.
-   - fixed finish order, clock tick, deadlock, success/fail 결과를 판정한다.
-
-6. `IResourceRule` 기반 내부 자원 규칙을 구현한다.
+1. `IResourceRule` 기반 내부 자원 규칙을 구현한다.
    - `ColorSwitchRule`, `EmptyColorRule`, `ClockRule`, `SimultaneousRule`을 작성한다.
    - Capacity는 `ResourceNode.Capacity` 기본 속성으로 유지한다.
    - `Simultaneous`는 연결 가능 여부보다 완료 가능 여부를 보류하는 규칙으로 다룬다.
 
-7. Relay Rule을 새 라운드 모델에 맞춰 재검토한다.
-   - `RelayLinkRule`의 상호 잠금이 예약 단계와 실행 단계 중 어디에 적용되는지 정리한다.
-   - `RelayTransferRule`의 unlock 효과가 라운드 중 어느 시점에 적용되는지 정리한다.
+2. Relay Transfer 고도화 정책을 결정한다.
+   - Sender capacity가 2 이상일 때 여러 색이 Receiver에 전달되는 우선순위를 정한다.
+   - Receiver가 waiting queue를 가진 상태에서 전달 색이 바뀔 때 waiting 우선순위를 재정렬할지 결정한다.
 
-8. focused Domain 테스트를 추가한다.
+3. focused Domain 테스트를 추가한다.
    - 기본 색 연결, capacity 초과 waiting, waiting 유지, 프로세스 완료 전 리소스 미반환, 완료 후 waiting 재투입을 검증한다.
    - `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-9. `LevelDefinition`을 순수 정의 데이터로 정리한다.
+4. `LevelDefinition`을 순수 정의 데이터로 정리한다.
     - 현재는 `ProcessNode[]`, `ResourceNode[]`, `IBoardRule[]`를 직접 받아 `Board`를 만든다.
     - 이후 레거시 `LevelCreator.Node` 또는 새 ScriptableObject 입력과 매핑될 수 있는 정의 타입으로 분리한다.
 
-10. `LevelPlayManager`와 DTO를 작성한다.
+5. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-11. MVP UI와 Bootstrap을 연결한다.
+6. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-12. 저장/플랫폼/모바일 입력을 분리한다.
+7. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
     - 새 레벨 에디터는 마지막에 설계한다.
 

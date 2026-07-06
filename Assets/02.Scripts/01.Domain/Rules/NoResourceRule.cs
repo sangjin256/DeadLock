@@ -6,18 +6,27 @@ public sealed class NoResourceRule : IResourceRule
     {
     }
 
-    public bool CanConnect(ConnectionContext context)
+    public bool CanReserve(ConnectionContext context)
     {
         return context.Resource.Color.Equals(context.Slot.RequiredColor);
     }
 
-    public void OnConnected(ConnectionContext context, RuleEffects effects)
+    public bool CanOccupy(ConnectionContext context)
+    {
+        return context.Resource.Color.Equals(context.Slot.RequiredColor);
+    }
+
+    public void OnOccupied(ConnectionContext context, RuleEffects effects)
     {
     }
 
     public bool CanFinish(ResourceNode resource)
     {
         return true;
+    }
+
+    public void OnReleased(ResourceNode resource, RuleEffects effects)
+    {
     }
 
     public void OnRoundEnded(ResourceNode resource, int round, RuleEffects effects)

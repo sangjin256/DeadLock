@@ -50,7 +50,7 @@ Relay는 자원 타입이 아니라 보드 범위 관계다.
 
 - `RelayRelation`: 두 자원과 Relay 종류, 방향 정보를 나타내는 순수 데이터다.
 - `RelayLinkRule`: `RelayRelation`을 사용해 상호 잠금 같은 Link 규칙을 적용한다.
-- `RelayTransferRule`: `RelayRelation`을 사용해 상태 전달 같은 Transfer 규칙을 적용한다.
+- `RelayTransferRule`: `RelayRelation`의 Sender/Receiver 방향을 사용해 Sender에 들어온 실제 점유 색을 Receiver의 임시 색으로 전달한다.
 
 `Relation`은 구조, `Rule`은 행동으로 구분한다. 따라서 `RelayRelation`이 직접 Rule을 상속하기보다, Relay Rule이 Relation 데이터를 사용한다.
 
@@ -81,7 +81,8 @@ Relay는 자원 타입이 아니라 보드 범위 관계다.
 - `EmptyColorRule`: 첫 실제 연결 색으로 현재 색을 고정한다.
 - `ClockRule`: 라운드 종료마다 카운트를 감소시키고, 열림/닫힘 전환과 clock waiting 해제를 담당한다.
 - `SimultaneousRule`: 연결 가능 여부보다 프로세스 완료 가능 여부를 보류한다.
-- Relay Rule은 리소스 내부 Rule이 아니라 기존 리소스 Rule 위에 얹히는 `IBoardRule`로 유지한다.
+- Relay Link Rule은 리소스 내부 Rule이 아니라 기존 리소스 Rule 위에 얹히는 `IBoardRule`로 유지한다. 예약 단계는 막지 않고, 실행 중 한쪽 리소스가 점유되면 반환될 때까지 반대쪽 점유를 막는다.
+- Relay Transfer Rule도 `IBoardRule`로 유지한다. Receiver는 시작 전 예약 단계에서 전달 색 후보로 예약을 허용하고, Sender가 실제 점유될 때 슬롯 색을 Receiver의 임시 색으로 전달한다. Sender 반환 시 전달 색을 해제하며, Receiver가 이미 점유 중이면 색 변경/해제는 Receiver 반환 뒤에 적용한다.
 
 ## 포커스와 비주얼 조회
 
