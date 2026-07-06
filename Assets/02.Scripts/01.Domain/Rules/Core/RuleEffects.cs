@@ -10,6 +10,8 @@ public sealed class RuleEffects
 
     public readonly HashSet<int> ClearedRelayColorResourceIdSet = new();
 
+    public readonly HashSet<int> FailedOccupiedResourceIdSet = new();
+
     public void LockResource(int resourceId)
     {
         LockedResourceIdSet.Add(resourceId);
@@ -32,5 +34,10 @@ public sealed class RuleEffects
     {
         ClearedRelayColorResourceIdSet.Add(resourceId);
         RelayColorByResourceIdDict.Remove(resourceId);
+    }
+
+    public void FailOccupiedResource(int resourceId)
+    {
+        FailedOccupiedResourceIdSet.Add(resourceId);
     }
 }

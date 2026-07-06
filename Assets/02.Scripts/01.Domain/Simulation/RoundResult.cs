@@ -19,10 +19,18 @@ public sealed class RoundResult
     private readonly List<int> _releasedConnectionIdList = new();
     public IReadOnlyList<int> ReleasedConnectionIdList => _releasedConnectionIdList;
 
+    private readonly List<int> _failedProcessIdList = new();
+    public IReadOnlyList<int> FailedProcessIdList => _failedProcessIdList;
+
+    private readonly List<int> _blockedConnectionIdList = new();
+    public IReadOnlyList<int> BlockedConnectionIdList => _blockedConnectionIdList;
+
     public bool HasProgress => _occupiedConnectionIdList.Count > 0 ||
                                _completedProcessIdList.Count > 0 ||
                                _releasedConnectionIdList.Count > 0 ||
-                               _requeuedConnectionIdList.Count > 0;
+                               _requeuedConnectionIdList.Count > 0 ||
+                               _failedProcessIdList.Count > 0 ||
+                               _blockedConnectionIdList.Count > 0;
 
     public RoundResult(int roundIndex)
     {
@@ -52,6 +60,16 @@ public sealed class RoundResult
     public void AddReleasedConnection(int connectionId)
     {
         AddUnique(_releasedConnectionIdList, connectionId);
+    }
+
+    public void AddFailedProcess(int processId)
+    {
+        AddUnique(_failedProcessIdList, processId);
+    }
+
+    public void AddBlockedConnection(int connectionId)
+    {
+        AddUnique(_blockedConnectionIdList, connectionId);
     }
 
     private static void AddUnique(List<int> idList, int id)

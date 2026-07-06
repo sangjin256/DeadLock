@@ -25,11 +25,15 @@ public sealed class NoResourceRule : IResourceRule
         return true;
     }
 
-    public void OnReleased(ResourceNode resource, RuleEffects effects)
+    public void OnReleased(ConnectionContext context, RuleEffects effects)
     {
     }
 
     public void OnRoundEnded(ResourceNode resource, int round, RuleEffects effects)
+    {
+    }
+
+    public void ResetSimulationState(ResourceNode resource)
     {
     }
 

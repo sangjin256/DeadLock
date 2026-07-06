@@ -37,6 +37,8 @@ Assets/02.Scripts/
 
 `SimulationReport`, `RoundResult`, `AssignConnectionResult` 같은 타입은 도메인 계층에 둘 수 있지만 엔티티라기보다 도메인 메서드의 결과값으로 분류한다.
 
+도메인 폴더는 역할 기준으로 정리한다. `Common/Values`에는 `ColorId`, `BoardPosition` 같은 값 객체를 두고, `Common/Enums`에는 enum을 둔다. `Rules/Contracts`에는 Rule 인터페이스, `Rules/Core`에는 Rule 실행 보조 타입, `Rules/Resource`에는 자원 단일 Rule, `Rules/Board`에는 보드 범위 Rule, `Rules/Relations`에는 관계 데이터, `Rules/Focus`에는 포커스 조회 결과 타입을 둔다.
+
 ## Rule 설계
 
 자원 하나에 붙는 규칙과 보드 범위에서 작동하는 규칙을 분리한다.
@@ -77,10 +79,12 @@ Relay는 자원 타입이 아니라 보드 범위 관계다.
 
 `IResourceRule`은 시작 전 검증과 시뮬레이션 중 검증을 분리할 수 있어야 한다. 레거시에서는 ColorSwitch처럼 시작 전에는 색 목록으로 예약 가능 여부를 판단하지만, 시뮬레이션 중에는 현재 색으로 실제 연결 여부를 판단하는 규칙이 있다.
 
-- `ColorSwitchRule`: 색 목록, 현재 색, 반환 시 색 순환, waiting 우선순위 조정을 담당한다.
-- `EmptyColorRule`: 첫 실제 연결 색으로 현재 색을 고정한다.
-- `ClockRule`: 라운드 종료마다 카운트를 감소시키고, 열림/닫힘 전환과 clock waiting 해제를 담당한다.
-- `SimultaneousRule`: 연결 가능 여부보다 프로세스 완료 가능 여부를 보류한다.
+- `ColorSwitchRule`: 색 목록, 현재 색, 반환 시 색 순환, idle 라운드 종료 시 색 순환을 담당한다. 별도 정책 enum 없이 이 동작으로 고정한다.
+- `EmptyColorRule`: 첫 실제 연결 색으로 현재 색을 고정하고, 시뮬레이션 리셋 시 고정 상태와 색을 초기화한다.
+- `ClockRule`: 라운드 종료마다 카운트를 감소시키고 열림/닫힘을 전환한다. OnToOff가 닫히는 순간 점유 중인 미완료 프로세스가 있으면 실패 효과를 발생시킨다.
+- `SimultaneousRule`: 연결 가능 여부보다 프로세스 완료 가능 여부를 보류한다. 필요한 동시 점유 수는 `ResourceNode.Capacity`와 같다.
+- 모든 `IResourceRule`은 `ResetSimulationState()` 훅을 가진다. `Board.RunSimulation()` 시작 시 리소스 런타임 상태와 Rule 내부 상태를 함께 초기화한다.
+- `RuleEffects`는 lock/unlock, Relay 임시 색 set/clear뿐 아니라 점유 중 리소스 실패 효과도 표현한다. 실패 효과가 적용되면 관련 프로세스는 `Failed`, 관련 connection은 `Blocked`가 되고 시뮬레이션은 `Failed`로 종료된다.
 - Relay Link Rule은 리소스 내부 Rule이 아니라 기존 리소스 Rule 위에 얹히는 `IBoardRule`로 유지한다. 예약 단계는 막지 않고, 실행 중 한쪽 리소스가 점유되면 반환될 때까지 반대쪽 점유를 막는다.
 - Relay Transfer Rule도 `IBoardRule`로 유지한다. Receiver는 시작 전 예약 단계에서 전달 색 후보로 예약을 허용하고, Sender가 실제 점유될 때 슬롯 색을 Receiver의 임시 색으로 전달한다. Sender 반환 시 전달 색을 해제하며, Receiver가 이미 점유 중이면 색 변경/해제는 Receiver 반환 뒤에 적용한다.
 

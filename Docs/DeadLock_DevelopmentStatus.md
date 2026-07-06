@@ -26,13 +26,17 @@
 - `IResourceRule`과 `IBoardRule`은 예약 검증(`CanReserve`)과 실제 점유 검증(`CanOccupy`)을 분리했다.
 - `ResourceNode`는 실제 점유 목록, waiting queue, Relay Transfer 임시 색과 점유 중 색 latch를 갖도록 보강했다.
 - enum은 C# 컨벤션에 맞춰 개별 파일로 분리했다.
+- `ColorSwitchRule`, `EmptyColorRule`, `ClockRule`, `SimultaneousRule`을 추가해 내부 자원 Rule의 첫 구현을 완료했다.
+- `IResourceRule.ResetSimulationState()`를 추가해 `Board.RunSimulation()` 시작 시 리소스 상태와 Rule 내부 상태를 함께 초기화한다.
+- `RuleEffects`와 `RoundResult`에 실패 보고를 추가했다. Clock OnToOff가 닫힐 때 점유 중인 미완료 프로세스가 있으면 관련 프로세스는 `Failed`, connection은 `Blocked`가 되고 시뮬레이션은 `Failed`로 종료된다.
+- ColorSwitch는 정책 enum 없이 고정 동작으로 정했다. 반환 시 다음 색으로 전환하고, 리소스가 비어 있으며 해당 라운드에 점유 성공이 없으면 라운드 종료 때도 다음 색으로 전환한다.
+- `Common`은 `Values`와 `Enums`, `Rules`는 `Contracts`, `Core`, `Resource`, `Board`, `Relations`, `Focus` 하위 폴더로 정리했다.
 
 ## 다음 작업 순서
 
-1. `IResourceRule` 기반 내부 자원 규칙을 구현한다.
-   - `ColorSwitchRule`, `EmptyColorRule`, `ClockRule`, `SimultaneousRule`을 작성한다.
-   - Capacity는 `ResourceNode.Capacity` 기본 속성으로 유지한다.
-   - `Simultaneous`는 연결 가능 여부보다 완료 가능 여부를 보류하는 규칙으로 다룬다.
+1. ColorSwitch waiting queue 우선순위 조정 여부를 재검토한다.
+   - 현재 waiting queue는 FIFO다.
+   - ColorSwitch 현재 색과 맞는 waiting 항목을 먼저 재투입할지, FIFO를 유지할지 결정한다.
 
 2. Relay Transfer 고도화 정책을 결정한다.
    - Sender capacity가 2 이상일 때 여러 색이 Receiver에 전달되는 우선순위를 정한다.
@@ -59,4 +63,15 @@
 ## 검증
 
 Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되지 않았다면 Unity 컴파일 성공을 가정하지 않는다.
+
+최근 Domain 작업 뒤 정적 확인은 완료했다.
+
+- `Assets/02.Scripts/01.Domain` 순수 C# 임시 classlib 컴파일은 성공했다.
+- `UnityEngine`, `CanConnect`, `OnConnected`, `DomainEnumDef`, `EColorSwitchAdvanceMode` 잔존 검색 결과는 없었다.
+- 모든 Domain `.cs` 파일과 폴더에 Unity `.meta` 파일이 있는지 확인했다.
+- Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
+
+## 다음 스레드 시작 메모
+
+다음 작업은 `ColorSwitch` waiting queue 정책 결정부터 시작하면 된다. 현재 구현은 FIFO waiting queue를 유지한다. 결정할 내용은 ColorSwitch 현재 색과 맞는 waiting 항목을 FIFO보다 먼저 재투입할지, 아니면 모든 리소스에서 FIFO를 일관되게 유지할지다. 그 다음 RelayTransfer Sender capacity 2 이상 정책과 focused Domain 테스트 구조를 진행한다.
 

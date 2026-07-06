@@ -9,6 +9,7 @@ public sealed class Board
     private readonly List<IBoardRule> _boardRuleList;
 
     private int _nextConnectionId;
+    private bool _hasSimulationFailure;
 
     public Board(IEnumerable<ProcessNode> processes, IEnumerable<ResourceNode> resources, IEnumerable<IBoardRule> boardRules)
     {
@@ -131,7 +132,14 @@ public sealed class Board
             }
 
             CompleteReadyProcesses(roundResult);
-            ApplyRoundEndedEffects(round);
+            ApplyRoundEndedEffects(round, roundResult);
+
+            if (_hasSimulationFailure)
+            {
+                roundResultList.Add(roundResult);
+                return CreateSimulationReport(ESimulationEndState.Failed, roundResultList);
+            }
+
             RequeueWaitingRequests(round + 1, roundResult, priorityScheduleItemList);
 
             roundResultList.Add(roundResult);
@@ -147,7 +155,7 @@ public sealed class Board
             }
         }
 
-        BlockUnresolvedConnections();
+        BlockUnresolvedConnections(null);
         return CreateSimulationReport(ESimulationEndState.Failed, roundResultList);
     }
 
@@ -168,6 +176,8 @@ public sealed class Board
 
     private void ResetSimulationState()
     {
+        _hasSimulationFailure = false;
+
         foreach (ProcessNode process in _processList)
         {
             process.ResetSimulationState();
@@ -176,6 +186,7 @@ public sealed class Board
         foreach (ResourceNode resource in _resourceList)
         {
             resource.ResetSimulationState();
+            resource.Rule.ResetSimulationState(resource);
         }
 
         foreach (Connection connection in _connectionList)
@@ -390,7 +401,7 @@ public sealed class Board
             }
         }
 
-        ApplyEffects(effects);
+        ApplyEffects(effects, roundResult);
         roundResult.AddOccupiedConnection(connection.Id);
     }
 
@@ -460,7 +471,7 @@ public sealed class Board
             connection.Complete();
 
             RuleEffects effects = new RuleEffects();
-            resource.Rule.OnReleased(resource, effects);
+            resource.Rule.OnReleased(context, effects);
 
             foreach (IBoardRule rule in _boardRuleList)
             {
@@ -470,18 +481,23 @@ public sealed class Board
                 }
             }
 
-            ApplyEffects(effects);
+            ApplyEffects(effects, roundResult);
             roundResult.AddReleasedConnection(connection.Id);
         }
     }
 
-    private void ApplyRoundEndedEffects(int round)
+    private void ApplyRoundEndedEffects(int round, RoundResult roundResult)
     {
         foreach (ResourceNode resource in _resourceList)
         {
             RuleEffects effects = new RuleEffects();
             resource.Rule.OnRoundEnded(resource, round, effects);
-            ApplyEffects(effects);
+            ApplyEffects(effects, roundResult);
+        }
+
+        foreach (ResourceNode resource in _resourceList)
+        {
+            resource.ResetRoundState();
         }
     }
 
@@ -579,7 +595,7 @@ public sealed class Board
         return hasUnfinishedProcess;
     }
 
-    private void BlockUnresolvedConnections()
+    private void BlockUnresolvedConnections(RoundResult roundResult)
     {
         foreach (Connection connection in _connectionList)
         {
@@ -589,6 +605,7 @@ public sealed class Board
             }
 
             connection.Block();
+            roundResult?.AddBlockedConnection(connection.Id);
         }
 
         foreach (ProcessNode process in _processList)
@@ -596,6 +613,7 @@ public sealed class Board
             if (process.State != EProcessState.Completed)
             {
                 process.Fail();
+                roundResult?.AddFailedProcess(process.Id);
             }
         }
     }
@@ -642,7 +660,7 @@ public sealed class Board
         return idList.ToArray();
     }
 
-    private void ApplyEffects(RuleEffects effects)
+    private void ApplyEffects(RuleEffects effects, RoundResult roundResult)
     {
         foreach (int resourceId in effects.LockedResourceIdSet)
         {
@@ -663,5 +681,45 @@ public sealed class Board
         {
             GetResource(resourceId)?.ClearRelayColor();
         }
+
+        foreach (int resourceId in effects.FailedOccupiedResourceIdSet)
+        {
+            FailOccupiedResource(resourceId, roundResult);
+        }
+    }
+
+    private void FailOccupiedResource(int resourceId, RoundResult roundResult)
+    {
+        ResourceNode resource = GetResource(resourceId);
+
+        if (resource is null)
+        {
+            return;
+        }
+
+        foreach (int connectionId in resource.OccupiedConnectionIdList)
+        {
+            Connection connection = GetConnection(connectionId);
+
+            if (connection is null || connection.State == EConnectionState.Blocked)
+            {
+                continue;
+            }
+
+            connection.Block();
+            roundResult?.AddBlockedConnection(connection.Id);
+
+            ProcessNode process = GetProcess(connection.ProcessId);
+
+            if (process is null || process.State == EProcessState.Failed)
+            {
+                continue;
+            }
+
+            process.Fail();
+            roundResult?.AddFailedProcess(process.Id);
+        }
+
+        _hasSimulationFailure = true;
     }
 }

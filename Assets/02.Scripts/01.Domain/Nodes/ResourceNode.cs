@@ -9,7 +9,9 @@ public sealed class ResourceNode
 
     public int AvailableCapacity => Capacity - _occupiedConnectionIdList.Count;
     public bool HasAvailableCapacity => AvailableCapacity > 0;
+    public bool WasOccupiedThisRound => _wasOccupiedThisRound;
 
+    private readonly ColorId _initialColor;
     private ColorId _color;
     public ColorId Color
     {
@@ -48,6 +50,8 @@ public sealed class ResourceNode
     private ColorId _latchedOccupiedColor;
     private bool _hasLatchedOccupiedColor;
 
+    private bool _wasOccupiedThisRound;
+
     public ResourceNode(int id, ColorId color, int capacity, IResourceRule rule)
         : this(id, color, capacity, rule, BoardPosition.Zero)
     {
@@ -56,6 +60,7 @@ public sealed class ResourceNode
     public ResourceNode(int id, ColorId color, int capacity, IResourceRule rule, BoardPosition position)
     {
         Id = id;
+        _initialColor = color;
         _color = color;
         Capacity = capacity;
         Rule = rule ?? NoResourceRule.Instance;
@@ -78,6 +83,7 @@ public sealed class ResourceNode
         }
 
         _occupiedConnectionIdList.Add(connectionId);
+        _wasOccupiedThisRound = true;
     }
 
     public void ReleaseConnection(int connectionId)
@@ -114,6 +120,11 @@ public sealed class ResourceNode
     public void ChangeColor(ColorId newColor)
     {
         _color = newColor;
+    }
+
+    public void ResetColor()
+    {
+        _color = _initialColor;
     }
 
     public void SetLocked(bool locked)
@@ -156,7 +167,14 @@ public sealed class ResourceNode
         _isLocked = false;
         _hasRelayColor = false;
         _hasLatchedOccupiedColor = false;
+        _wasOccupiedThisRound = false;
+        ResetColor();
         ClearPendingRelayColorChange();
+    }
+
+    public void ResetRoundState()
+    {
+        _wasOccupiedThisRound = false;
     }
 
     private void ApplyPendingRelayColorChange()
