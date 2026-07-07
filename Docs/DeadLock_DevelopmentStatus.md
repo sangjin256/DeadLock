@@ -31,32 +31,27 @@
 - `RuleEffects`와 `RoundResult`에 실패 보고를 추가했다. Clock OnToOff가 닫힐 때 점유 중인 미완료 프로세스가 있으면 관련 프로세스는 `Failed`, connection은 `Blocked`가 되고 시뮬레이션은 `Failed`로 종료된다.
 - ColorSwitch는 정책 enum 없이 고정 동작으로 정했다. 반환 시 다음 색으로 전환하고, 리소스가 비어 있으며 해당 라운드에 점유 성공이 없으면 라운드 종료 때도 다음 색으로 전환한다.
 - `Common`은 `Values`와 `Enums`, `Rules`는 `Contracts`, `Core`, `Resource`, `Board`, `Relations`, `Focus` 하위 폴더로 정리했다.
+- ColorSwitch waiting 정책은 색 기반 우선순위 없이 strict FIFO로 확정했다. waiting head가 현재 색과 맞지 않아 실패해도 뒤 항목을 먼저 재투입하지 않는다.
+- RelayTransfer Sender resource는 capacity 1만 허용하기로 확정했다. 이 제약은 인게임 Rule 방어가 아니라 레벨 에디터/ScriptableObject authoring 검증에서 보장한다.
 
 ## 다음 작업 순서
 
-1. ColorSwitch waiting queue 우선순위 조정 여부를 재검토한다.
-   - 현재 waiting queue는 FIFO다.
-   - ColorSwitch 현재 색과 맞는 waiting 항목을 먼저 재투입할지, FIFO를 유지할지 결정한다.
-
-2. Relay Transfer 고도화 정책을 결정한다.
-   - Sender capacity가 2 이상일 때 여러 색이 Receiver에 전달되는 우선순위를 정한다.
-   - Receiver가 waiting queue를 가진 상태에서 전달 색이 바뀔 때 waiting 우선순위를 재정렬할지 결정한다.
-
-3. focused Domain 테스트를 추가한다.
-   - 기본 색 연결, capacity 초과 waiting, waiting 유지, 프로세스 완료 전 리소스 미반환, 완료 후 waiting 재투입을 검증한다.
-   - `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
-
-4. `LevelDefinition`을 순수 정의 데이터로 정리한다.
+1. `LevelDefinition`을 순수 정의 데이터로 정리한다.
     - 현재는 `ProcessNode[]`, `ResourceNode[]`, `IBoardRule[]`를 직접 받아 `Board`를 만든다.
     - 이후 레거시 `LevelCreator.Node` 또는 새 ScriptableObject 입력과 매핑될 수 있는 정의 타입으로 분리한다.
+    - RelayTransfer Sender capacity 1 같은 authoring 검증 규칙을 이 변환/검증 단계에서 적용한다.
 
-5. `LevelPlayManager`와 DTO를 작성한다.
+2. Unity Test Framework 기반 테스트 구조를 준비한다.
+   - 순수 .NET console runner는 사용하지 않는다.
+   - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
+
+3. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-6. MVP UI와 Bootstrap을 연결한다.
+4. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-7. 저장/플랫폼/모바일 입력을 분리한다.
+5. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
     - 새 레벨 에디터는 마지막에 설계한다.
 
@@ -67,11 +62,11 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 최근 Domain 작업 뒤 정적 확인은 완료했다.
 
 - `Assets/02.Scripts/01.Domain` 순수 C# 임시 classlib 컴파일은 성공했다.
-- `UnityEngine`, `CanConnect`, `OnConnected`, `DomainEnumDef`, `EColorSwitchAdvanceMode` 잔존 검색 결과는 없었다.
+- Unity 의존, 구 Rule API, 폐기된 enum 묶음/정책 enum 잔존 검색 결과는 없었다.
 - 모든 Domain `.cs` 파일과 폴더에 Unity `.meta` 파일이 있는지 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 `ColorSwitch` waiting queue 정책 결정부터 시작하면 된다. 현재 구현은 FIFO waiting queue를 유지한다. 결정할 내용은 ColorSwitch 현재 색과 맞는 waiting 항목을 FIFO보다 먼저 재투입할지, 아니면 모든 리소스에서 FIFO를 일관되게 유지할지다. 그 다음 RelayTransfer Sender capacity 2 이상 정책과 focused Domain 테스트 구조를 진행한다.
+다음 작업은 `LevelDefinition`을 순수 정의 데이터와 Board 생성용 mapper/validator 흐름으로 분리하는 것이다. RelayTransfer Sender capacity 1 제약은 이 authoring 검증 단계에서 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 

@@ -336,11 +336,21 @@ public sealed class Board
             return;
         }
 
+        if (item.IsPriorityFromWaiting && !resource.IsWaitingHead(connection.Id))
+        {
+            return;
+        }
+
         ConnectionContext context = new ConnectionContext(process, slot, resource);
 
         if (!CanOccupy(context))
         {
             WaitForResource(process, resource, connection, slot, roundResult);
+            return;
+        }
+
+        if (item.IsPriorityFromWaiting && !resource.TryRemoveWaitingHead(connection.Id))
+        {
             return;
         }
 
@@ -508,25 +518,25 @@ public sealed class Board
     {
         foreach (ResourceNode resource in _resourceList)
         {
-            int availableCount = resource.AvailableCapacity;
-
-            for (int i = 0; i < availableCount; i++)
+            if (resource.AvailableCapacity <= 0)
             {
-                if (!resource.TryDequeueWaiting(out WaitingRequest request))
-                {
-                    break;
-                }
-
-                RoundScheduleItem item = CreateScheduleItemFromWaitingRequest(request, roundIndex);
-
-                if (item is null)
-                {
-                    continue;
-                }
-
-                priorityScheduleItemList.Add(item);
-                roundResult.AddRequeuedConnection(request.ConnectionId);
+                continue;
             }
+
+            if (!resource.TryPeekWaiting(out WaitingRequest request))
+            {
+                continue;
+            }
+
+            RoundScheduleItem item = CreateScheduleItemFromWaitingRequest(request, roundIndex);
+
+            if (item is null)
+            {
+                continue;
+            }
+
+            priorityScheduleItemList.Add(item);
+            roundResult.AddRequeuedConnection(request.ConnectionId);
         }
     }
 

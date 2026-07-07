@@ -72,21 +72,21 @@ Relay는 자원 타입이 아니라 보드 범위 관계다.
 - 리소스 점유는 개별 슬롯 작업이 아니라 프로세스 완료 시점까지 유지된다.
 - 연결할 수 없으면 프로세스는 해당 리소스의 waiting queue에 들어가고 다른 리소스로 진행하지 않는다.
 - 라운드 종료 시 완료 가능한 프로세스를 판정하고, 완료된 프로세스가 점유한 리소스를 반환한다.
-- 리소스가 반환되면 waiting queue의 다음 항목을 다음 라운드 맨 앞으로 재투입한다.
+- 리소스가 반환되면 waiting queue의 맨 앞 항목만 다음 라운드 맨 앞으로 재투입한다. 맨 앞 항목이 현재 리소스 상태와 맞지 않아 실패해도 뒤 항목을 먼저 꺼내지 않는 strict FIFO를 유지한다.
 - 모든 미완료 프로세스가 waiting이고 clock waiting처럼 풀릴 가능성이 없으면 deadlock 실패로 본다.
 
 ## Rule 책임
 
 `IResourceRule`은 시작 전 검증과 시뮬레이션 중 검증을 분리할 수 있어야 한다. 레거시에서는 ColorSwitch처럼 시작 전에는 색 목록으로 예약 가능 여부를 판단하지만, 시뮬레이션 중에는 현재 색으로 실제 연결 여부를 판단하는 규칙이 있다.
 
-- `ColorSwitchRule`: 색 목록, 현재 색, 반환 시 색 순환, idle 라운드 종료 시 색 순환을 담당한다. 별도 정책 enum 없이 이 동작으로 고정한다.
+- `ColorSwitchRule`: 색 목록, 현재 색, 반환 시 색 순환, idle 라운드 종료 시 색 순환을 담당한다. 별도 정책 enum 없이 이 동작으로 고정하고, waiting queue는 색 일치 항목 우선 검색 없이 strict FIFO를 따른다.
 - `EmptyColorRule`: 첫 실제 연결 색으로 현재 색을 고정하고, 시뮬레이션 리셋 시 고정 상태와 색을 초기화한다.
 - `ClockRule`: 라운드 종료마다 카운트를 감소시키고 열림/닫힘을 전환한다. OnToOff가 닫히는 순간 점유 중인 미완료 프로세스가 있으면 실패 효과를 발생시킨다.
 - `SimultaneousRule`: 연결 가능 여부보다 프로세스 완료 가능 여부를 보류한다. 필요한 동시 점유 수는 `ResourceNode.Capacity`와 같다.
 - 모든 `IResourceRule`은 `ResetSimulationState()` 훅을 가진다. `Board.RunSimulation()` 시작 시 리소스 런타임 상태와 Rule 내부 상태를 함께 초기화한다.
 - `RuleEffects`는 lock/unlock, Relay 임시 색 set/clear뿐 아니라 점유 중 리소스 실패 효과도 표현한다. 실패 효과가 적용되면 관련 프로세스는 `Failed`, 관련 connection은 `Blocked`가 되고 시뮬레이션은 `Failed`로 종료된다.
 - Relay Link Rule은 리소스 내부 Rule이 아니라 기존 리소스 Rule 위에 얹히는 `IBoardRule`로 유지한다. 예약 단계는 막지 않고, 실행 중 한쪽 리소스가 점유되면 반환될 때까지 반대쪽 점유를 막는다.
-- Relay Transfer Rule도 `IBoardRule`로 유지한다. Receiver는 시작 전 예약 단계에서 전달 색 후보로 예약을 허용하고, Sender가 실제 점유될 때 슬롯 색을 Receiver의 임시 색으로 전달한다. Sender 반환 시 전달 색을 해제하며, Receiver가 이미 점유 중이면 색 변경/해제는 Receiver 반환 뒤에 적용한다.
+- Relay Transfer Rule도 `IBoardRule`로 유지한다. Receiver는 시작 전 예약 단계에서 전달 색 후보로 예약을 허용하고, Sender가 실제 점유될 때 슬롯 색을 Receiver의 임시 색으로 전달한다. Sender 반환 시 전달 색을 해제하며, Receiver가 이미 점유 중이면 색 변경/해제는 Receiver 반환 뒤에 적용한다. Sender capacity는 1만 지원하며, 이 제약은 런타임 Rule 방어보다 레벨 에디터/ScriptableObject authoring 검증에서 보장한다.
 
 ## 포커스와 비주얼 조회
 

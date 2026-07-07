@@ -99,13 +99,13 @@ public sealed class ResourceNode
 
     public void EnqueueWaiting(WaitingRequest request)
     {
-        if (request is not null)
+        if (request is not null && !ContainsWaitingConnection(request.ConnectionId))
         {
             _waitingRequestQueue.Enqueue(request);
         }
     }
 
-    public bool TryDequeueWaiting(out WaitingRequest request)
+    public bool TryPeekWaiting(out WaitingRequest request)
     {
         if (_waitingRequestQueue.Count == 0)
         {
@@ -113,8 +113,26 @@ public sealed class ResourceNode
             return false;
         }
 
-        request = _waitingRequestQueue.Dequeue();
+        request = _waitingRequestQueue.Peek();
         return true;
+    }
+
+    public bool TryRemoveWaitingHead(int connectionId)
+    {
+        if (_waitingRequestQueue.Count == 0 ||
+            _waitingRequestQueue.Peek().ConnectionId != connectionId)
+        {
+            return false;
+        }
+
+        _waitingRequestQueue.Dequeue();
+        return true;
+    }
+
+    public bool IsWaitingHead(int connectionId)
+    {
+        return _waitingRequestQueue.Count > 0 &&
+               _waitingRequestQueue.Peek().ConnectionId == connectionId;
     }
 
     public void ChangeColor(ColorId newColor)
@@ -202,5 +220,18 @@ public sealed class ResourceNode
         _pendingRelayColor = ColorId.None;
         _hasPendingRelayColor = false;
         _hasPendingRelayColorChange = false;
+    }
+
+    private bool ContainsWaitingConnection(int connectionId)
+    {
+        foreach (WaitingRequest request in _waitingRequestQueue)
+        {
+            if (request.ConnectionId == connectionId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
