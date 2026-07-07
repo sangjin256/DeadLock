@@ -43,6 +43,12 @@ Assets/02.Scripts/
 
 `ColorId`는 실제 색상 코드가 아니라 도메인 규칙 판정용 ID다. Domain은 `ColorId` 값이 같은지만 판단하고, 실제 `UnityEngine.Color`, 아이콘, 머티리얼, 색약 보정 팔레트 같은 표현 데이터는 이후 ScriptableObject, VisualSettings, View 계층에서 `ColorId`에 매핑한다.
 
+Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하나가 스테이지 하나를 나타내며, 그 안에 process, process slot, resource, relay, test case 데이터를 모두 저장한다. `LevelProcessData`, `LevelProcessSlotData`, `LevelResourceData`, `LevelRelayData`, `LevelTestCaseData` 같은 내부 데이터 타입은 ScriptableObject가 아니라 Unity 직렬화용 `[Serializable]` 데이터이므로 `SO` 접미사를 붙이지 않는다.
+
+레벨 에디터는 uGUI가 아니라 UI Toolkit 기반 `EditorWindow`로 만든다. uGUI는 런타임 GameObject 기반 UI에 가깝고, 에디터 확장 UI는 UI Toolkit을 우선한다. 에디터는 `LevelSO`를 선택하고, grid canvas에서 process/resource 배치와 relay 편집을 수행하며, 선택 항목 inspector와 validation/simulation log를 함께 제공한다.
+
+기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 레거시 `Node.colors`의 실제 Unity 색상값은 새 Domain의 `ColorId`로 매핑해야 하므로, 변환 도구는 색상 팔레트 매핑 규칙을 함께 사용한다. 레거시의 `isSimul`, `isSwitchColor`, `isStartWithEmptyColor`, `isClockOnToOff`, `isClockOffToOn`, `clockNum`, `maxCount`, `fixedNum`은 새 resource/process/rule/test data로 해석한다.
+
 ## Rule 설계
 
 자원 하나에 붙는 규칙과 보드 범위에서 작동하는 규칙을 분리한다.
@@ -141,11 +147,12 @@ Manager가 Application 계층이다. Presenter는 프레젠테이션 어댑터�
 4. 순수 Domain 타입을 먼저 작성한다.
 5. `IResourceRule` 기반 내부 자원 규칙을 작성한다.
 6. `IBoardRule` 기반 Relay 규칙을 작성한다.
-7. 임시 수동 `LevelDefinition` 또는 Mapper를 작성한다.
-8. `LevelPlayManager`와 DTO를 작성한다.
-9. MVP View/Presenter와 Bootstrap을 연결한다.
-10. 저장, 플랫폼, 모바일 입력을 분리한다.
-11. 새 레벨 에디터는 마지막에 설계한다.
+7. `LevelSO`와 Domain `LevelDefinition` Mapper를 작성한다.
+8. 레거시 `LevelCreator` 에셋을 `LevelSO`로 변환하는 호환 마이그레이션 도구를 작성한다.
+9. UI Toolkit 기반 레벨 에디터의 기본 창, grid canvas, validation log를 작성한다.
+10. `LevelPlayManager`와 DTO를 작성한다.
+11. MVP View/Presenter와 Bootstrap을 연결한다.
+12. 저장, 플랫폼, 모바일 입력을 분리한다.
 
 ## 검증 정책
 

@@ -109,6 +109,16 @@ Relay Transfer는 "먼 곳의 리소스 색을 간접적으로 만드는 흐름"
 3. 게임 상태를 흐리지 않는 범위에서 비주얼 피드백을 강화한다.
 4. 퍼즐 규칙은 Unity 밖에서도 테스트 가능하게 만든다.
 
+## 레벨 에디터 방향
+
+레벨 하나는 `LevelSO` 하나로 저장한다. `LevelSO` 안에는 보드 크기, process, process slot, resource, relay, test case 데이터가 함께 들어가며, 내부 데이터 타입은 별도 ScriptableObject가 아니라 직렬화 데이터로 둔다.
+
+레벨 에디터는 UI Toolkit 기반 전용 창으로 만든다. 목표 UX는 인스펙터에서 칸마다 버튼을 누르는 방식이 아니라, grid canvas에 process/resource를 배치하고, relay link/transfer를 시각적으로 연결하며, 선택 항목 inspector에서 세부 값을 편집하는 방식이다.
+
+에디터는 제작 중 검증과 테스트를 우선 기능으로 가진다. `LevelSO`를 Domain `LevelDefinition`으로 변환한 뒤 `LevelDefinitionValidator` 결과를 에러 리스트로 보여주고, 에러를 선택하면 관련 노드나 relay를 강조하는 흐름을 목표로 한다.
+
+자동 플레이 검증은 test case 기반으로 시작한다. `LevelSO`에 저장된 test case는 process slot과 resource의 예약 연결 목록, 예상 결과, 최대 라운드 수를 가진다. 에디터는 이를 자동으로 `Board.AssignConnection()`에 적용하고 `Board.RunSimulation()`을 실행해 round-by-round 결과를 재생한다. 이후 클리어 라운드 수, waiting 횟수, relay 사용 여부, clock 여유 라운드 같은 지표로 난이도 분석을 확장한다.
+
 ## 열린 디자인 메모
 
 - 현재 원/사각형 노드 비주얼은 변경될 수 있다.
