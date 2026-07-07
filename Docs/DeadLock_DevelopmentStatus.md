@@ -41,45 +41,42 @@
 - `Assets/02.Scripts/02.Repository/Levels`에 `LevelSO`, `LevelProcessData`, `LevelProcessSlotData`, `LevelResourceData`, `LevelRelayData`, `LevelTestCaseData`, `LevelAssignedConnectionData`, `ELevelResourceRuleType`을 추가했다.
 - Repository 레벨 authoring 타입은 Unity 직렬화용이므로 `UnityEngine`을 참조하지만, Domain의 `LevelDefinition`과 런타임 객체는 참조하지 않는다.
 - 새 `LevelSO` 계열 타입은 프로젝트 C# 컨벤션에 맞춰 `[SerializeField]`를 필드 위 별도 줄에 두고, private backing field 바로 다음 줄에 getter를 배치했다.
+- `LevelSOMapper`를 추가해 `LevelSO` authoring 데이터를 Domain `LevelDefinition`으로 변환하는 경계를 만들었다. Mapper는 검증을 호출하지 않고, 호출자가 필요 시 `LevelDefinitionValidator`를 직접 실행한다.
 - 레벨 에디터는 uGUI가 아니라 UI Toolkit 기반 EditorWindow로 만든다. grid canvas, palette, 선택 항목 inspector, validation log, simulation log를 갖춘 전용 제작 도구를 목표로 한다.
+- 레벨 에디터 제작 중 즉시 UX 검증은 `LevelSO` 데이터를 직접 보고 처리하고, 저장/테스트/게임 시작 전 최종 검증은 `LevelSOMapper.ToLevelDefinition()` 뒤 `LevelDefinitionValidator.Validate()`로 수행한다.
 - 자동 난이도 테스트는 test case 기반 라운드 재생으로 시작한다. 저장된 예약 연결 목록을 `Board.AssignConnection()`에 적용하고 `Board.RunSimulation()` 결과를 round-by-round로 보여준 뒤, 클리어 라운드 수와 waiting/relay/clock 지표를 난이도 분석으로 확장한다.
 - `Assets/Outdated/Levels`에는 기존 `LevelCreator` 기반 레벨 에셋이 61개 남아 있다. 새 레벨 에디터가 완성되더라도 이 데이터를 수동 재작성하지 않고, 레거시 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 작업 순서에 포함한다.
 - 레거시 `Node.colors`는 실제 Unity 색상값이므로 새 Domain의 `ColorId`와 직접 같지 않다. 변환 단계에서는 기존 색상값을 새 `ColorId` 팔레트로 매핑하고, `maxCount`, `fixedNum`, `isSimul`, `isSwitchColor`, `isStartWithEmptyColor`, `isClockOnToOff`, `isClockOffToOn`, `clockNum`을 새 process/resource/rule/test data로 해석한다.
 
 ## 다음 작업 순서
 
-1. `LevelSO`에서 Domain `LevelDefinition`으로 변환하는 Mapper를 추가한다.
-    - Mapper는 Unity authoring 데이터를 순수 Domain definition으로 변환한다.
-    - 변환 후 `LevelDefinitionValidator`를 호출해 authoring 오류를 보고한다.
-    - `int` 색 id는 Domain `ColorId`로 감싸고, `ELevelResourceRuleType`은 각 `ResourceRuleDefinition` 계열로 변환한다.
-
-2. 레거시 `LevelCreator` 에셋을 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만든다.
+1. 레거시 `LevelCreator` 에셋을 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만든다.
     - 대상은 `Assets/Outdated/Levels/*.asset`의 기존 레벨 에셋이다.
     - 기존 Unity `Color` 값은 새 `ColorId` 팔레트로 매핑한다.
     - 레거시 node index는 `row`, `col` 기준 `BoardPosition`으로 변환한다.
     - 레거시 process/resource/rule 플래그는 새 `LevelProcessData`, `LevelResourceData`, `ResourceRuleDefinition` 대응 데이터로 변환한다.
     - 변환 후 `LevelDefinitionValidator`와 test case 기반 시뮬레이션으로 플레이 가능성을 확인하는 흐름을 둔다.
 
-3. UI Toolkit 기반 Level Editor Window를 만든다.
+2. UI Toolkit 기반 Level Editor Window를 만든다.
     - `LevelSO` 선택, grid canvas, palette, 선택 항목 inspector, validation log를 우선 구현한다.
     - process/resource 배치, slot 편집, resource rule 편집, Relay Link/Transfer 시각 편집을 단계적으로 추가한다.
 
-4. Level Editor에 test case 기반 자동 라운드 재생을 추가한다.
+3. Level Editor에 test case 기반 자동 라운드 재생을 추가한다.
     - test case는 예약 연결 목록, 예상 결과, 최대 라운드 수를 저장한다.
     - 에디터는 test case를 적용해 `Board.AssignConnection()`과 `Board.RunSimulation()`을 자동 실행하고 round-by-round 결과를 보여준다.
     - 난이도 지표는 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
 
-5. Unity Test Framework 기반 테스트 구조를 준비한다.
+4. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
    - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-6. `LevelPlayManager`와 DTO를 작성한다.
+5. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-7. MVP UI와 Bootstrap을 연결한다.
+6. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-8. 저장/플랫폼/모바일 입력을 분리한다.
+7. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -92,9 +89,10 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - Unity 의존, 구 Rule API, 폐기된 enum 묶음/정책 enum 잔존 검색 결과는 없었다.
 - 모든 Domain `.cs` 파일과 폴더에 Unity `.meta` 파일이 있는지 확인했다.
 - `LevelSO` authoring 타입 추가 뒤 Repository/Levels의 `[SerializeField]` 한 줄 배치 잔존 여부와 `git diff --check`를 확인했다.
+- `LevelSOMapper` 추가 뒤 Domain Unity 의존, Mapper 존재, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 `LevelSO`에서 Domain `LevelDefinition`으로 변환하는 Mapper를 작성하는 것이다. 그 다음 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만든다. 이후 UI Toolkit 기반 Level Editor Window, test case 기반 자동 라운드 재생, 난이도 지표를 붙인다. RelayTransfer Sender capacity 1 제약은 `LevelDefinitionValidator`를 통해 authoring 단계에서 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만드는 것이다. 이후 UI Toolkit 기반 Level Editor Window, test case 기반 자동 라운드 재생, 난이도 지표를 붙인다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 

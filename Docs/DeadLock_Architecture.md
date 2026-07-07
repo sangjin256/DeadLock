@@ -45,7 +45,11 @@ Assets/02.Scripts/
 
 Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하나가 스테이지 하나를 나타내며, 그 안에 process, process slot, resource, relay, test case 데이터를 모두 저장한다. `LevelProcessData`, `LevelProcessSlotData`, `LevelResourceData`, `LevelRelayData`, `LevelTestCaseData` 같은 내부 데이터 타입은 ScriptableObject가 아니라 Unity 직렬화용 `[Serializable]` 데이터이므로 `SO` 접미사를 붙이지 않는다.
 
+`LevelSOMapper`는 Unity authoring 데이터인 `LevelSO`를 Domain 입력 모델인 `LevelDefinition`으로 변환만 한다. Mapper는 `LevelDefinitionValidator`를 직접 호출하지 않으며, EditorWindow, 마이그레이션 도구, Bootstrap 같은 호출자가 필요 시 `LevelSOMapper.ToLevelDefinition(levelSO)` 뒤 `LevelDefinitionValidator.Validate(definition)`를 실행한다.
+
 레벨 에디터는 uGUI가 아니라 UI Toolkit 기반 `EditorWindow`로 만든다. uGUI는 런타임 GameObject 기반 UI에 가깝고, 에디터 확장 UI는 UI Toolkit을 우선한다. 에디터는 `LevelSO`를 선택하고, grid canvas에서 process/resource 배치와 relay 편집을 수행하며, 선택 항목 inspector와 validation/simulation log를 함께 제공한다.
+
+레벨 에디터 제작 중 즉시 UX 검증은 `LevelSO` 데이터를 직접 보고 처리한다. 예를 들어 RelayTransfer Sender 선택 UI는 capacity 1 resource만 후보로 보여주고, 필드 단위 경고는 현재 편집 중인 data를 기준으로 표시한다. 저장, 테스트 실행, 게임 시작 전 같은 최종/전체 검증은 `LevelDefinition`으로 변환한 뒤 `LevelDefinitionValidator`를 사용한다.
 
 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 레거시 `Node.colors`의 실제 Unity 색상값은 새 Domain의 `ColorId`로 매핑해야 하므로, 변환 도구는 색상 팔레트 매핑 규칙을 함께 사용한다. 레거시의 `isSimul`, `isSwitchColor`, `isStartWithEmptyColor`, `isClockOnToOff`, `isClockOffToOn`, `clockNum`, `maxCount`, `fixedNum`은 새 resource/process/rule/test data로 해석한다.
 
