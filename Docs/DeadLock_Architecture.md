@@ -39,6 +39,10 @@ Assets/02.Scripts/
 
 도메인 폴더는 역할 기준으로 정리한다. `Common/Values`에는 `ColorId`, `BoardPosition` 같은 값 객체를 두고, `Common/Enums`에는 enum을 둔다. `Rules/Contracts`에는 Rule 인터페이스, `Rules/Core`에는 Rule 실행 보조 타입, `Rules/Resource`에는 자원 단일 Rule, `Rules/Board`에는 보드 범위 Rule, `Rules/Relations`에는 관계 데이터, `Rules/Focus`에는 포커스 조회 결과 타입을 둔다.
 
+`LevelDefinition`은 `ProcessNode`, `ResourceNode`, `IResourceRule`, `IBoardRule` 같은 런타임 객체를 직접 보관하지 않는다. 대신 `ProcessDefinition`, `ResourceDefinition`, Rule definition 같은 순수 정의 데이터만 보관하고, `LevelDefinitionValidator`가 authoring 제약을 검증한 뒤 `LevelBoardFactory`가 매번 새 런타임 `Board`를 생성한다. 같은 레벨 정의로 재시도하거나 다시 시작해도 waiting queue, Rule 내부 상태, Relay 임시 색 같은 런타임 상태가 공유되지 않아야 한다.
+
+`ColorId`는 실제 색상 코드가 아니라 도메인 규칙 판정용 ID다. Domain은 `ColorId` 값이 같은지만 판단하고, 실제 `UnityEngine.Color`, 아이콘, 머티리얼, 색약 보정 팔레트 같은 표현 데이터는 이후 ScriptableObject, VisualSettings, View 계층에서 `ColorId`에 매핑한다.
+
 ## Rule 설계
 
 자원 하나에 붙는 규칙과 보드 범위에서 작동하는 규칙을 분리한다.

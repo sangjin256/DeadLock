@@ -11,6 +11,12 @@
 - 리소스는 수용량, 색상, 동시 연결, 색상 전환, 빈 색상, 시계 제약을 가질 수 있다.
 - 성공 조건은 레벨 규칙 안에서 모든 프로세스 노드가 완료되는 것이다.
 
+## 색상 판정과 실제 표현
+
+도메인에서 색상은 실제 화면 색상 코드가 아니라 `ColorId`로 표현되는 규칙 판정용 ID다. 프로세스 슬롯과 리소스가 같은 색인지, ColorSwitch의 현재 색과 슬롯 색이 맞는지, Relay Transfer가 전달한 색이 Receiver에 맞는지는 `ColorId` 비교로 판단한다.
+
+실제 화면 색상, 아이콘, 머티리얼, 색약 보정 팔레트는 Domain 밖의 ScriptableObject, VisualSettings, View 계층에서 `ColorId`에 매핑한다. 따라서 같은 레벨 규칙을 유지한 채 기본 팔레트, 접근성 팔레트, 이벤트 스킨 같은 표현만 바꿀 수 있다.
+
 ## 레거시 핵심 플레이 규칙
 
 레거시 런타임 기준으로 플레이는 시작 전 계획 단계와 라운드 시뮬레이션 단계가 분리된다.
@@ -108,4 +114,5 @@ Relay Transfer는 "먼 곳의 리소스 색을 간접적으로 만드는 흐름"
 - 현재 원/사각형 노드 비주얼은 변경될 수 있다.
 - 연결은 물방울, 젤, 표면장력 시각 언어를 탐색한다.
 - 정적 레벨 ScriptableObject는 유지할 수 있지만, 런타임 규칙은 순수 Domain 객체로 이동하는 것을 목표로 한다.
+- ScriptableObject 레벨 데이터는 Domain의 `LevelDefinition`으로 변환하고, `LevelDefinitionValidator`로 authoring 오류를 검증한 뒤 `LevelBoardFactory`가 런타임 `Board`를 생성한다.
 

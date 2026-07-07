@@ -33,13 +33,17 @@
 - `Common`은 `Values`와 `Enums`, `Rules`는 `Contracts`, `Core`, `Resource`, `Board`, `Relations`, `Focus` 하위 폴더로 정리했다.
 - ColorSwitch waiting 정책은 색 기반 우선순위 없이 strict FIFO로 확정했다. waiting head가 현재 색과 맞지 않아 실패해도 뒤 항목을 먼저 재투입하지 않는다.
 - RelayTransfer Sender resource는 capacity 1만 허용하기로 확정했다. 이 제약은 인게임 Rule 방어가 아니라 레벨 에디터/ScriptableObject authoring 검증에서 보장한다.
+- `LevelDefinition`을 순수 정의 데이터로 전환했다. 이제 `ProcessNode[]`, `ResourceNode[]`, `IBoardRule[]` 같은 런타임 객체를 직접 들지 않고 `ProcessDefinition`, `ResourceDefinition`, `BoardRuleDefinition` 계열 데이터를 보관한다.
+- `LevelBoardFactory`를 추가해 `LevelDefinition`에서 매번 새 `Board`, `ProcessNode`, `ResourceNode`, Rule 인스턴스를 생성하도록 분리했다.
+- `LevelDefinitionValidator`를 추가해 board size, id 중복, position 범위, slot 색, resource capacity, ColorSwitch/Clock 설정, Relay 참조, RelayTransfer Sender capacity 1 제약을 authoring 검증 단계에서 보고한다.
+- `ColorId`는 실제 색상 코드가 아니라 규칙 판정용 ID로 유지한다. 실제 색상, 아이콘, 머티리얼, 색약 보정 팔레트는 이후 ScriptableObject/VisualSettings/View 계층에서 `ColorId`에 매핑한다.
 
 ## 다음 작업 순서
 
-1. `LevelDefinition`을 순수 정의 데이터로 정리한다.
-    - 현재는 `ProcessNode[]`, `ResourceNode[]`, `IBoardRule[]`를 직접 받아 `Board`를 만든다.
-    - 이후 레거시 `LevelCreator.Node` 또는 새 ScriptableObject 입력과 매핑될 수 있는 정의 타입으로 분리한다.
-    - RelayTransfer Sender capacity 1 같은 authoring 검증 규칙을 이 변환/검증 단계에서 적용한다.
+1. Unity ScriptableObject 기반 Level authoring 데이터 구조를 설계한다.
+    - ScriptableObject는 Unity 직렬화와 에디터 입력에 맞춘 DTO로 두고, Domain의 `LevelDefinition`과 직접 섞지 않는다.
+    - ScriptableObject DTO에서 Domain `LevelDefinition`으로 변환하는 Mapper를 추가한다.
+    - 에디터/authoring 단계에서 `LevelDefinitionValidator`를 호출해 잘못된 레벨 생성을 막는다.
 
 2. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
@@ -68,5 +72,5 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 `LevelDefinition`을 순수 정의 데이터와 Board 생성용 mapper/validator 흐름으로 분리하는 것이다. RelayTransfer Sender capacity 1 제약은 이 authoring 검증 단계에서 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 Unity ScriptableObject 기반 Level authoring DTO와 Domain `LevelDefinition`으로 변환하는 Mapper를 설계하는 것이다. RelayTransfer Sender capacity 1 제약은 `LevelDefinitionValidator`를 통해 authoring 단계에서 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 

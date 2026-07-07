@@ -3,27 +3,22 @@ public sealed class LevelDefinition
     public readonly int Id;
     public readonly int RowCount;
     public readonly int ColumnCount;
-    public readonly ProcessNode[] ProcessList;
-    public readonly ResourceNode[] ResourceList;
-    public readonly IBoardRule[] BoardRuleList;
+    public readonly ProcessDefinition[] ProcessList;
+    public readonly ResourceDefinition[] ResourceList;
+    public readonly BoardRuleDefinition[] BoardRuleList;
 
     public LevelDefinition(int id, 
                            int rowCount, 
                            int columnCount, 
-                           ProcessNode[] processList, 
-                           ResourceNode[] resourceList, 
-                           IBoardRule[] boardRuleList)
+                           ProcessDefinition[] processList,
+                           ResourceDefinition[] resourceList,
+                           BoardRuleDefinition[] boardRuleList)
     {
         Id = id;
         RowCount = rowCount;
         ColumnCount = columnCount;
-        ProcessList = processList;
-        ResourceList = resourceList;
-        BoardRuleList = boardRuleList;
-    }
-
-    public Board CreateBoard()
-    {
-        return new Board(ProcessList, ResourceList, BoardRuleList);
+        ProcessList = processList ?? new ProcessDefinition[0];
+        ResourceList = resourceList ?? new ResourceDefinition[0];
+        BoardRuleList = boardRuleList ?? new BoardRuleDefinition[0];
     }
 }
