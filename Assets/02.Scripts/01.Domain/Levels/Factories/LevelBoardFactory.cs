@@ -50,14 +50,46 @@ public sealed class LevelBoardFactory
             resourceArray[i] = new ResourceNode(definition.Id,
                                                 definition.InitialColor,
                                                 definition.Capacity,
-                                                CreateResourceRule(definition.RuleDefinition),
+                                                CreateResourceRule(definition.RuleDefinitionList),
                                                 definition.Position);
         }
 
         return resourceArray;
     }
 
-    private IResourceRule CreateResourceRule(ResourceRuleDefinition definition)
+    private IResourceRule CreateResourceRule(ResourceRuleDefinition[] definitionArray)
+    {
+        if (definitionArray is null || definitionArray.Length == 0)
+        {
+            return NoResourceRule.Instance;
+        }
+
+        List<IResourceRule> ruleList = new List<IResourceRule>();
+
+        for (int i = 0; i < definitionArray.Length; i++)
+        {
+            IResourceRule rule = CreateSingleResourceRule(definitionArray[i]);
+
+            if (rule != NoResourceRule.Instance)
+            {
+                ruleList.Add(rule);
+            }
+        }
+
+        if (ruleList.Count == 0)
+        {
+            return NoResourceRule.Instance;
+        }
+
+        if (ruleList.Count == 1)
+        {
+            return ruleList[0];
+        }
+
+        return new CompositeResourceRule(ruleList);
+    }
+
+    private IResourceRule CreateSingleResourceRule(ResourceRuleDefinition definition)
     {
         if (definition is null || definition is NoResourceRuleDefinition)
         {

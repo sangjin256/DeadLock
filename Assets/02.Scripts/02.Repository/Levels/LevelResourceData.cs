@@ -26,18 +26,6 @@ public sealed class LevelResourceData
     public int Capacity => _capacity;
 
     [SerializeField]
-    private ELevelResourceRuleType _ruleType;
-    public ELevelResourceRuleType RuleType => _ruleType;
-
-    [SerializeField]
-    private List<int> _colorIdList = new();
-    public IReadOnlyList<int> ColorIdList => _colorIdList;
-
-    [SerializeField]
-    private EClockMode _clockMode;
-    public EClockMode ClockMode => _clockMode;
-
-    [SerializeField]
-    private int _clockRoundCount;
-    public int ClockRoundCount => _clockRoundCount;
+    private List<LevelResourceRuleData> _ruleDataList = new();
+    public IReadOnlyList<LevelResourceRuleData> RuleDataList => _ruleDataList;
 }

@@ -123,21 +123,40 @@ public sealed class LevelDefinitionValidator
             errorList.Add(new LevelValidationError($"Resource {resource.Id} capacity must be greater than 0."));
         }
 
-        if (resource.RuleDefinition is null)
+        if (resource.RuleDefinitionList is null ||
+            resource.RuleDefinitionList.Length == 0)
         {
-            errorList.Add(new LevelValidationError($"Resource {resource.Id} rule definition must not be null."));
+            errorList.Add(new LevelValidationError($"Resource {resource.Id} rule definition list must not be empty."));
             return;
         }
 
-        if (resource.RuleDefinition is ColorSwitchRuleDefinition colorSwitchDefinition)
+        int clockRuleCount = 0;
+
+        for (int i = 0; i < resource.RuleDefinitionList.Length; i++)
         {
-            ValidateColorSwitchRule(resource, colorSwitchDefinition, errorList);
+            ResourceRuleDefinition ruleDefinition = resource.RuleDefinitionList[i];
+
+            if (ruleDefinition is null)
+            {
+                errorList.Add(new LevelValidationError($"Resource {resource.Id} rule definition must not be null."));
+                continue;
+            }
+
+            if (ruleDefinition is ColorSwitchRuleDefinition colorSwitchDefinition)
+            {
+                ValidateColorSwitchRule(resource, colorSwitchDefinition, errorList);
+            }
+
+            if (ruleDefinition is ClockRuleDefinition clockDefinition)
+            {
+                clockRuleCount++;
+                ValidateClockRule(resource, clockDefinition, errorList);
+            }
         }
 
-        if (resource.RuleDefinition is ClockRuleDefinition clockDefinition &&
-            clockDefinition.RoundCount <= 0)
+        if (clockRuleCount > 1)
         {
-            errorList.Add(new LevelValidationError($"Resource {resource.Id} clock round count must be greater than 0."));
+            errorList.Add(new LevelValidationError($"Resource {resource.Id} must not have multiple clock rule definitions."));
         }
     }
 
@@ -157,6 +176,16 @@ public sealed class LevelDefinitionValidator
             {
                 errorList.Add(new LevelValidationError($"Resource {resource.Id} ColorSwitch color list contains ColorId.None."));
             }
+        }
+    }
+
+    private void ValidateClockRule(ResourceDefinition resource,
+                                   ClockRuleDefinition definition,
+                                   List<LevelValidationError> errorList)
+    {
+        if (definition.RoundCount <= 0)
+        {
+            errorList.Add(new LevelValidationError($"Resource {resource.Id} clock round count must be greater than 0."));
         }
     }
 

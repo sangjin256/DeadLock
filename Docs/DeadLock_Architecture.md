@@ -60,6 +60,10 @@ Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하�
 - `IResourceRule`: 자원 하나 내부에서 작동하는 규칙이다. `ColorSwitchRule`, `EmptyColorRule`, `ClockRule`, `SimultaneousRule` 같은 타입이 여기에 속한다.
 - `IBoardRule`: 자원 하나를 넘어 자원 관계나 보드 범위에서 작동하는 규칙이다. Relay 같은 공간/관계 퍼즐이 여기에 속한다.
 
+Resource Rule은 Strategy + Composite 구조로 사용한다. `ResourceNode`와 `Board`는 여전히 `resource.Rule.CanReserve(context)`, `resource.Rule.CanOccupy(context)`처럼 하나의 `IResourceRule`만 호출한다. 단일 규칙이면 해당 Rule 인스턴스를 그대로 쓰고, 레거시처럼 `Simultaneous + ColorSwitch + Clock` 조합이 필요한 경우에는 `CompositeResourceRule`이 여러 `IResourceRule`을 순서대로 감싸 하나의 Rule처럼 노출한다. `CanReserve`, `CanOccupy`, `CanFinish`는 내부 Rule이 모두 통과해야 성공하고, `OnOccupied`, `OnReleased`, `OnRoundEnded`, `ResetSimulationState`는 내부 Rule 순서대로 실행한다.
+
+`ResourceDefinition`과 `LevelResourceData`도 이 구조에 맞춰 다중 resource rule 목록을 가진다. `LevelResourceRuleData`는 Unity authoring용 직렬화 entry이며, Mapper가 이를 `ResourceRuleDefinition[]`으로 변환하고 `LevelBoardFactory`가 실제 `IResourceRule` 인스턴스 목록으로 만든 뒤 필요하면 `CompositeResourceRule`로 감싼다. rule 목록이 없으면 제작 오류로 보고하며, 단순 Basic 리소스도 명시적인 Basic entry를 가진다.
+
 `Capacity`는 내부 Rule보다 `ResourceNode`의 기본 속성으로 둔다. 이렇게 해야 수용량이 있는 Clock, Relay 대상 자원 같은 조합을 자연스럽게 만들 수 있다.
 
 Relay는 자원 타입이 아니라 보드 범위 관계다.

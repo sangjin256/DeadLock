@@ -95,32 +95,54 @@ public sealed class LevelSOMapper
 
             BoardPosition position = new BoardPosition(resourceData.Row, resourceData.Column);
             ColorId initialColor = new ColorId(resourceData.InitialColorId);
-            ResourceRuleDefinition ruleDefinition = ToResourceRuleDefinition(resourceData);
+            ResourceRuleDefinition[] ruleDefinitionList = ToResourceRuleDefinitionArray(resourceData.RuleDataList);
             resourceList[i] = new ResourceDefinition(resourceData.Id,
                                                      position,
                                                      initialColor,
                                                      resourceData.Capacity,
-                                                     ruleDefinition);
+                                                     ruleDefinitionList);
         }
 
         return resourceList;
     }
 
-    private ResourceRuleDefinition ToResourceRuleDefinition(LevelResourceData resourceData)
+    private ResourceRuleDefinition[] ToResourceRuleDefinitionArray(IReadOnlyList<LevelResourceRuleData> ruleDataList)
     {
-        switch (resourceData.RuleType)
+        if (ruleDataList is null)
+        {
+            return new ResourceRuleDefinition[0];
+        }
+
+        ResourceRuleDefinition[] ruleDefinitionArray = new ResourceRuleDefinition[ruleDataList.Count];
+
+        for (int i = 0; i < ruleDataList.Count; i++)
+        {
+            ruleDefinitionArray[i] = ToResourceRuleDefinition(ruleDataList[i]);
+        }
+
+        return ruleDefinitionArray;
+    }
+
+    private ResourceRuleDefinition ToResourceRuleDefinition(LevelResourceRuleData ruleData)
+    {
+        if (ruleData is null)
+        {
+            return null;
+        }
+
+        switch (ruleData.RuleType)
         {
             case ELevelResourceRuleType.Basic:
                 return new NoResourceRuleDefinition();
 
             case ELevelResourceRuleType.ColorSwitch:
-                return new ColorSwitchRuleDefinition(ToColorIdArray(resourceData.ColorIdList));
+                return new ColorSwitchRuleDefinition(ToColorIdArray(ruleData.ColorIdList));
 
             case ELevelResourceRuleType.EmptyColor:
                 return new EmptyColorRuleDefinition();
 
             case ELevelResourceRuleType.Clock:
-                return new ClockRuleDefinition(resourceData.ClockMode, resourceData.ClockRoundCount);
+                return new ClockRuleDefinition(ruleData.ClockMode, ruleData.ClockRoundCount);
 
             case ELevelResourceRuleType.Simultaneous:
                 return new SimultaneousRuleDefinition();

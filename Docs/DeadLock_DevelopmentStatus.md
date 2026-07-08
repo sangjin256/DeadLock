@@ -42,6 +42,9 @@
 - Repository 레벨 authoring 타입은 Unity 직렬화용이므로 `UnityEngine`을 참조하지만, Domain의 `LevelDefinition`과 런타임 객체는 참조하지 않는다.
 - 새 `LevelSO` 계열 타입은 프로젝트 C# 컨벤션에 맞춰 `[SerializeField]`를 필드 위 별도 줄에 두고, private backing field 바로 다음 줄에 getter를 배치했다.
 - `LevelSOMapper`를 추가해 `LevelSO` authoring 데이터를 Domain `LevelDefinition`으로 변환하는 경계를 만들었다. Mapper는 검증을 호출하지 않고, 호출자가 필요 시 `LevelDefinitionValidator`를 직접 실행한다.
+- 레거시의 복합 resource rule을 표현하기 위해 `CompositeResourceRule`을 추가했다. `ResourceNode`는 계속 하나의 `IResourceRule`만 소유하고, 여러 rule 조합은 composite이 내부 rule 목록을 순서대로 실행한다.
+- `ResourceDefinition`은 단일 `ResourceRuleDefinition` 대신 `ResourceRuleDefinition[]`을 가진다. `LevelResourceData`도 단일 rule 필드 대신 `LevelResourceRuleData` 목록을 저장하고, `LevelSOMapper`와 `LevelBoardFactory`가 이를 다중 rule 구조로 변환한다.
+- `LevelDefinitionValidator`는 resource rule 목록의 empty/null, ColorSwitch 색 목록, Clock round count, 중복 Clock 조합을 최종 authoring 검증 오류로 보고한다.
 - 레벨 에디터는 uGUI가 아니라 UI Toolkit 기반 EditorWindow로 만든다. grid canvas, palette, 선택 항목 inspector, validation log, simulation log를 갖춘 전용 제작 도구를 목표로 한다.
 - 레벨 에디터 제작 중 즉시 UX 검증은 `LevelSO` 데이터를 직접 보고 처리하고, 저장/테스트/게임 시작 전 최종 검증은 `LevelSOMapper.ToLevelDefinition()` 뒤 `LevelDefinitionValidator.Validate()`로 수행한다.
 - 자동 난이도 테스트는 test case 기반 라운드 재생으로 시작한다. 저장된 예약 연결 목록을 `Board.AssignConnection()`에 적용하고 `Board.RunSimulation()` 결과를 round-by-round로 보여준 뒤, 클리어 라운드 수와 waiting/relay/clock 지표를 난이도 분석으로 확장한다.
@@ -54,7 +57,8 @@
     - 대상은 `Assets/Outdated/Levels/*.asset`의 기존 레벨 에셋이다.
     - 기존 Unity `Color` 값은 새 `ColorId` 팔레트로 매핑한다.
     - 레거시 node index는 `row`, `col` 기준 `BoardPosition`으로 변환한다.
-    - 레거시 process/resource/rule 플래그는 새 `LevelProcessData`, `LevelResourceData`, `ResourceRuleDefinition` 대응 데이터로 변환한다.
+    - 레거시 process/resource/rule 플래그는 새 `LevelProcessData`, `LevelResourceData`, `LevelResourceRuleData` 대응 데이터로 변환한다.
+    - 레거시 복합 resource rule 순서는 `Simultaneous`, `ColorSwitch`, `EmptyColor`, `ClockOffToOn`, `ClockOnToOff` 기준으로 보존한다.
     - 변환 후 `LevelDefinitionValidator`와 test case 기반 시뮬레이션으로 플레이 가능성을 확인하는 흐름을 둔다.
 
 2. UI Toolkit 기반 Level Editor Window를 만든다.
@@ -90,9 +94,10 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - 모든 Domain `.cs` 파일과 폴더에 Unity `.meta` 파일이 있는지 확인했다.
 - `LevelSO` authoring 타입 추가 뒤 Repository/Levels의 `[SerializeField]` 한 줄 배치 잔존 여부와 `git diff --check`를 확인했다.
 - `LevelSOMapper` 추가 뒤 Domain Unity 의존, Mapper 존재, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
+- Composite Resource Rule 추가 뒤 Domain Unity 의존, 다중 rule 변환 경계, 단일 rule 잔존, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만드는 것이다. 이후 UI Toolkit 기반 Level Editor Window, test case 기반 자동 라운드 재생, 난이도 지표를 붙인다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만드는 것이다. 변환기는 레거시 복합 resource rule flag를 `LevelResourceRuleData` 목록으로 옮긴다. 이후 UI Toolkit 기반 Level Editor Window, test case 기반 자동 라운드 재생, 난이도 지표를 붙인다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 
