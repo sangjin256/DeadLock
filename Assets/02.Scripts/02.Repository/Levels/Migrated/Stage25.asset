@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a88d4aa3fb404f919fd2a5f6b3fdba25, type: 3}
+  m_Name: Stage25
+  m_EditorClassIdentifier: Assembly-CSharp::LevelSO
+  _id: 25
+  _rowCount: 5
+  _columnCount: 7
+  _processDataList:
+  - _id: 7
+    _row: 1
+    _column: 0
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 11
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 11
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 12
+      _selectionOrder: 2
+  - _id: 13
+    _row: 1
+    _column: 6
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 11
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 14
+      _selectionOrder: 1
+  - _id: 21
+    _row: 3
+    _column: 0
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 12
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 11
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 13
+      _selectionOrder: 2
+  - _id: 27
+    _row: 3
+    _column: 6
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 13
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 12
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 14
+      _selectionOrder: 2
+  _resourceDataList:
+  - _id: 2
+    _row: 0
+    _column: 2
+    _initialColorId: 13
+    _capacity: 1
+    _ruleDataList:
+    - _ruleType: 0
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 4
+    _row: 0
+    _column: 4
+    _initialColorId: 12
+    _capacity: 1
+    _ruleDataList:
+    - _ruleType: 3
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 5
+  - _id: 17
+    _row: 2
+    _column: 3
+    _initialColorId: 11
+    _capacity: 3
+    _ruleDataList:
+    - _ruleType: 4
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 30
+    _row: 4
+    _column: 2
+    _initialColorId: 12
+    _capacity: 1
+    _ruleDataList:
+    - _ruleType: 0
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 32
+    _row: 4
+    _column: 4
+    _initialColorId: 14
+    _capacity: 2
+    _ruleDataList:
+    - _ruleType: 4
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  _relayDataList: []
+  _testCaseDataList: []

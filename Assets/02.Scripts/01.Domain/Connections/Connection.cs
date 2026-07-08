@@ -22,8 +22,23 @@ public sealed class Connection
         _state = EConnectionState.Completed;
     }
 
+    public void Occupy()
+    {
+        _state = EConnectionState.Occupied;
+    }
+
+    public void Wait()
+    {
+        _state = EConnectionState.Waiting;
+    }
+
     public void Block()
     {
         _state = EConnectionState.Blocked;
+    }
+
+    public void ResetSimulationState()
+    {
+        _state = EConnectionState.Planned;
     }
 }

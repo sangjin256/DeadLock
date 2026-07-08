@@ -3,8 +3,8 @@ public sealed class ProcessColorSlot
     public readonly int Id;
     public readonly ColorId RequiredColor;
 
-    private int _order;
-    public int Order => _order;
+    private int _selectionOrder;
+    public int SelectionOrder => _selectionOrder;
 
     private int _connectionId;
     public int ConnectionId => _connectionId;
@@ -18,13 +18,13 @@ public sealed class ProcessColorSlot
     {
         Id = id;
         RequiredColor = requiredColor;
-        _order = order;
+        _selectionOrder = order;
         _connectionId = -1;
     }
 
     public void SetOrder(int order)
     {
-        _order = order;
+        _selectionOrder = order;
     }
 
     public void AssignConnection(int connectionId)
@@ -35,6 +35,11 @@ public sealed class ProcessColorSlot
     public void ClearConnection()
     {
         _connectionId = -1;
+        _isCompleted = false;
+    }
+
+    public void ResetProgress()
+    {
         _isCompleted = false;
     }
 

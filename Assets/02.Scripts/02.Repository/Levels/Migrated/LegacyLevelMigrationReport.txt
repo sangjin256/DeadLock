@@ -1,0 +1,124 @@
+# Legacy Level Migration Report
+
+Source assets: 61
+Converted assets: 61
+Failed assets: 0
+
+## Color Mapping
+ColorId 1: #EA727BFF
+ColorId 2: #91A8E6FF
+ColorId 3: #A084C1FF
+ColorId 4: #B6CD5CFF
+ColorId 5: #CFC5FAFF
+ColorId 6: #E08CA0FF
+ColorId 7: #B9E9CFFF
+ColorId 8: #8DC2E7FF
+ColorId 9: #FAF8DCFF
+ColorId 10: #F4BEC3FF
+ColorId 11: #A7DBBCFF
+ColorId 12: #FC8F97FF
+ColorId 13: #6B8FCEFF
+ColorId 14: #FFE9CAFF
+ColorId 15: #4D6FC4FF
+ColorId 16: #F2BAD6FF
+ColorId 17: #69DFDEFF
+ColorId 18: #EC608BFF
+ColorId 19: #ED6E9BFF
+ColorId 20: #FC9088FF
+ColorId 21: #B3E2A1FF
+ColorId 22: #C2F4FFFF
+ColorId 23: #D0B1E5FF
+ColorId 24: #FFFC9FFF
+ColorId 25: #FF97BAFF
+ColorId 26: #FEE4A7FF
+ColorId 27: #C7E291FF
+ColorId 28: #828282FF
+ColorId 29: #95C9E1FF
+ColorId 30: #FF829BFF
+ColorId 31: #F2A9FFFF
+ColorId 32: #8897C2FF
+ColorId 33: #F9AEC7FF
+ColorId 34: #EA788BFF
+ColorId 35: #CEE089FF
+ColorId 36: #96E0DBFF
+ColorId 37: #00FF42FF
+
+## Messages
+[Warning] Stage1 node 2 fixedNum 3 is not migrated.
+[Warning] Stage1 node 14 fixedNum 1 is not migrated.
+[Info] Stage1 validation succeeded.
+[Warning] Stage10 node 42 fixedNum 3 is not migrated.
+[Warning] Stage10 node 48 fixedNum 3 is not migrated.
+[Info] Stage10 validation succeeded.
+[Info] Stage11 validation succeeded.
+[Info] Stage12 validation succeeded.
+[Info] Stage13 validation succeeded.
+[Info] Stage14 validation succeeded.
+[Info] Stage15 validation succeeded.
+[Info] Stage16 validation succeeded.
+[Info] Stage17 validation succeeded.
+[Warning] Stage18 node 31 fixedNum 2 is not migrated.
+[Info] Stage18 validation succeeded.
+[Info] Stage19 validation succeeded.
+[Warning] Stage2 node 9 fixedNum 2 is not migrated.
+[Info] Stage2 validation succeeded.
+[Info] Stage20 validation succeeded.
+[Info] Stage21 validation succeeded.
+[Warning] Stage22 node 25 fixedNum 1 is not migrated.
+[Info] Stage22 validation succeeded.
+[Info] Stage23 validation succeeded.
+[Info] Stage24 validation succeeded.
+[Info] Stage25 validation succeeded.
+[Info] Stage26 validation succeeded.
+[Info] Stage27 validation succeeded.
+[Info] Stage28 validation succeeded.
+[Info] Stage28_new validation succeeded.
+[Info] Stage29 validation succeeded.
+[Warning] Stage3 node 20 fixedNum 2 is not migrated.
+[Info] Stage3 validation succeeded.
+[Info] Stage30 validation succeeded.
+[Info] Stage31 validation succeeded.
+[Info] Stage32 validation succeeded.
+[Info] Stage33 validation succeeded.
+[Info] Stage34 validation succeeded.
+[Info] Stage35 validation succeeded.
+[Info] Stage36 validation succeeded.
+[Info] Stage37 validation succeeded.
+[Info] Stage38 validation succeeded.
+[Info] Stage39 validation succeeded.
+[Warning] Stage4 node 23 fixedNum 4 is not migrated.
+[Warning] Stage4 node 27 fixedNum 1 is not migrated.
+[Info] Stage4 validation succeeded.
+[Info] Stage40 validation succeeded.
+[Info] Stage41 validation succeeded.
+[Info] Stage42 validation succeeded.
+[Info] Stage43 validation succeeded.
+[Info] Stage44 validation succeeded.
+[Info] Stage45 validation succeeded.
+[Info] Stage46 validation succeeded.
+[Info] Stage47 validation succeeded.
+[Warning] Stage48 node 24 fixedNum 2 is not migrated.
+[Info] Stage48 validation succeeded.
+[Info] Stage49 validation succeeded.
+[Warning] Stage5 node 1 fixedNum 3 is not migrated.
+[Info] Stage5 validation succeeded.
+[Info] Stage50 validation succeeded.
+[Warning] Stage6 node 2 fixedNum 2 is not migrated.
+[Warning] Stage6 node 14 fixedNum 3 is not migrated.
+[Info] Stage6 validation succeeded.
+[Warning] Stage7 node 34 fixedNum 4 is not migrated.
+[Info] Stage7 validation succeeded.
+[Warning] Stage8 node 28 fixedNum 3 is not migrated.
+[Info] Stage8 validation succeeded.
+[Warning] stage9 node 28 fixedNum 5 is not migrated.
+[Info] stage9 validation succeeded.
+[Info] Tutorial1 validation succeeded.
+[Info] Tutorial10 validation succeeded.
+[Info] Tutorial2 validation succeeded.
+[Info] Tutorial3 validation succeeded.
+[Info] Tutorial4 validation succeeded.
+[Info] Tutorial5 validation succeeded.
+[Info] Tutorial6 validation succeeded.
+[Info] Tutorial7 validation succeeded.
+[Info] Tutorial8 validation succeeded.
+[Info] Tutorial9 validation succeeded.
