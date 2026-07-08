@@ -1,0 +1,476 @@
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.Experimental.GraphView;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+internal sealed class LevelBoardGraphView : GraphView
+{
+    private const string ClipboardHeader = "DeadLockLevelEditorNodesV1";
+    private const float GridUnit = 96f;
+    private const float CanvasPadding = 80f;
+
+    private readonly LevelEditorWindow _window;
+    private readonly LevelEditorColorMap _colorMap;
+    private readonly List<LevelBoardNodeView> _selectedNodeViewList = new List<LevelBoardNodeView>();
+    private LevelBoardBoundsElement _boundsElement;
+    private LevelBoardNodeView _draggingNodeView;
+    private Vector2 _dragStartMousePosition;
+    private Vector2 _dragStartNodePosition;
+    private bool _isRefreshing;
+
+    public LevelBoardGraphView(LevelEditorWindow window, LevelEditorColorMap colorMap)
+    {
+        _window = window;
+        _colorMap = colorMap;
+
+        focusable = true;
+        style.flexGrow = 1f;
+        style.backgroundColor = new StyleColor(new Color(0.10f, 0.11f, 0.13f));
+
+        Insert(0, new GridBackground());
+        SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
+        this.AddManipulator(new ContentDragger());
+        this.AddManipulator(new SelectionDragger());
+        this.AddManipulator(new RectangleSelector());
+
+        graphViewChanged = OnGraphViewChanged;
+        RegisterCallback<MouseDownEvent>(OnMouseDown);
+        RegisterCallback<KeyDownEvent>(OnKeyDown);
+    }
+
+    public void Populate(LevelSO levelSO)
+    {
+        _isRefreshing = true;
+        ClearNodeSelection();
+        List<GraphElement> elementList = new List<GraphElement>();
+
+        foreach (GraphElement graphElement in graphElements)
+        {
+            elementList.Add(graphElement);
+        }
+
+        DeleteElements(elementList);
+        _boundsElement?.RemoveFromHierarchy();
+        _boundsElement = null;
+
+        if (levelSO != null)
+        {
+            AddBoardBounds(levelSO);
+            AddProcessNodes(levelSO);
+            AddResourceNodes(levelSO);
+        }
+
+        _isRefreshing = false;
+    }
+
+    private void AddBoardBounds(LevelSO levelSO)
+    {
+        _boundsElement = new LevelBoardBoundsElement(levelSO.RowCount,
+                                                     levelSO.ColumnCount,
+                                                     GridUnit);
+        _boundsElement.style.left = CanvasPadding;
+        _boundsElement.style.top = CanvasPadding;
+        contentViewContainer.Insert(0, _boundsElement);
+        _boundsElement.SendToBack();
+    }
+
+    private void AddProcessNodes(LevelSO levelSO)
+    {
+        for (int i = 0; i < levelSO.ProcessDataList.Count; i++)
+        {
+            LevelProcessData processData = levelSO.ProcessDataList[i];
+
+            if (processData == null)
+            {
+                continue;
+            }
+
+            LevelBoardNodeView nodeView = new LevelBoardNodeView(ELevelEditorNodeKind.Process,
+                                                                 i,
+                                                                 processData.Row,
+                                                                 processData.Column,
+                                                                 _window.GetProcessColorIds(processData),
+                                                                 _window.HasProcessIssue(processData),
+                                                                 _colorMap);
+            AddNode(nodeView, processData.Row, processData.Column);
+        }
+    }
+
+    private void AddResourceNodes(LevelSO levelSO)
+    {
+        for (int i = 0; i < levelSO.ResourceDataList.Count; i++)
+        {
+            LevelResourceData resourceData = levelSO.ResourceDataList[i];
+
+            if (resourceData == null)
+            {
+                continue;
+            }
+
+            LevelBoardNodeView nodeView = new LevelBoardNodeView(ELevelEditorNodeKind.Resource,
+                                                                 i,
+                                                                 resourceData.Row,
+                                                                 resourceData.Column,
+                                                                 _window.GetResourceColorIds(resourceData),
+                                                                 _window.HasResourceIssue(resourceData),
+                                                                 _colorMap);
+            AddNode(nodeView, resourceData.Row, resourceData.Column);
+        }
+    }
+
+    private void AddNode(LevelBoardNodeView nodeView, int row, int column)
+    {
+        AddElement(nodeView);
+        nodeView.RegisterCallback<MouseDownEvent>(mouseDownEvent => HandleNodeMouseDown(mouseDownEvent, nodeView));
+        nodeView.RegisterCallback<MouseMoveEvent>(mouseMoveEvent => HandleNodeMouseMove(mouseMoveEvent, nodeView));
+        nodeView.RegisterCallback<MouseUpEvent>(mouseUpEvent => HandleNodeMouseUp(mouseUpEvent, nodeView));
+        nodeView.SetPosition(new Rect(GetNodePosition(row, column), Vector2.zero));
+    }
+
+    private void HandleNodeMouseDown(MouseDownEvent mouseDownEvent, LevelBoardNodeView nodeView)
+    {
+        Focus();
+
+        if (mouseDownEvent.button != 0)
+        {
+            return;
+        }
+
+        if (_window.CurrentTool == ELevelEditorTool.Erase)
+        {
+            _window.DeleteNodesFromGraph(new List<LevelBoardNodeView> { nodeView });
+            mouseDownEvent.StopPropagation();
+            return;
+        }
+
+        SelectNodeView(nodeView, mouseDownEvent.ctrlKey || mouseDownEvent.commandKey);
+        _window.SelectNodeFromGraph(nodeView.NodeKind, nodeView.DataIndex);
+        BeginNodeDrag(nodeView, mouseDownEvent);
+        mouseDownEvent.StopPropagation();
+    }
+
+    private void SelectNodeView(LevelBoardNodeView nodeView, bool additive)
+    {
+        if (!additive)
+        {
+            ClearNodeSelection();
+        }
+
+        if (!_selectedNodeViewList.Contains(nodeView))
+        {
+            _selectedNodeViewList.Add(nodeView);
+            nodeView.SetEditorSelected(true);
+            AddToSelection(nodeView);
+        }
+    }
+
+    private void ClearNodeSelection()
+    {
+        for (int i = 0; i < _selectedNodeViewList.Count; i++)
+        {
+            _selectedNodeViewList[i].SetEditorSelected(false);
+        }
+
+        _selectedNodeViewList.Clear();
+        ClearSelection();
+    }
+
+    private void BeginNodeDrag(LevelBoardNodeView nodeView, MouseDownEvent mouseDownEvent)
+    {
+        _draggingNodeView = nodeView;
+        _dragStartMousePosition = GetGraphPosition(mouseDownEvent.localMousePosition, nodeView);
+        _dragStartNodePosition = nodeView.GetPosition().position;
+        nodeView.CaptureMouse();
+    }
+
+    private void HandleNodeMouseMove(MouseMoveEvent mouseMoveEvent, LevelBoardNodeView nodeView)
+    {
+        if (_draggingNodeView != nodeView || !nodeView.HasMouseCapture())
+        {
+            return;
+        }
+
+        Vector2 currentMousePosition = GetGraphPosition(mouseMoveEvent.localMousePosition, nodeView);
+        Vector2 delta = currentMousePosition - _dragStartMousePosition;
+        Rect position = nodeView.GetPosition();
+        nodeView.SetPosition(new Rect(_dragStartNodePosition + delta, position.size));
+        mouseMoveEvent.StopPropagation();
+    }
+
+    private void HandleNodeMouseUp(MouseUpEvent mouseUpEvent, LevelBoardNodeView nodeView)
+    {
+        if (_draggingNodeView != nodeView)
+        {
+            return;
+        }
+
+        if (nodeView.HasMouseCapture())
+        {
+            nodeView.ReleaseMouse();
+        }
+
+        _draggingNodeView = null;
+        SnapAndStoreNode(nodeView);
+        mouseUpEvent.StopPropagation();
+    }
+
+    private GraphViewChange OnGraphViewChanged(GraphViewChange change)
+    {
+        if (_isRefreshing)
+        {
+            return change;
+        }
+
+        if (change.elementsToRemove != null)
+        {
+            List<LevelBoardNodeView> nodeViewList = new List<LevelBoardNodeView>();
+
+            for (int i = 0; i < change.elementsToRemove.Count; i++)
+            {
+                if (change.elementsToRemove[i] is LevelBoardNodeView nodeView)
+                {
+                    nodeViewList.Add(nodeView);
+                }
+            }
+
+            if (nodeViewList.Count > 0)
+            {
+                _window.DeleteNodesFromGraph(nodeViewList);
+                change.elementsToRemove = null;
+                return change;
+            }
+        }
+
+        if (change.movedElements != null)
+        {
+            for (int i = 0; i < change.movedElements.Count; i++)
+            {
+                if (change.movedElements[i] is LevelBoardNodeView nodeView)
+                {
+                    SnapAndStoreNode(nodeView);
+                }
+            }
+        }
+
+        return change;
+    }
+
+    private void SnapAndStoreNode(LevelBoardNodeView nodeView)
+    {
+        Rect position = nodeView.GetPosition();
+        Vector2Int point = GetGridPointFromNodePosition(position.position);
+
+        point.x = _window.ClampRow(point.x);
+        point.y = _window.ClampColumn(point.y);
+        Vector2 snappedPosition = GetNodePosition(point.x, point.y);
+
+        bool moved = _window.TryMoveNodeFromGraph(nodeView.NodeKind, nodeView.DataIndex, point.x, point.y);
+
+        if (moved)
+        {
+            nodeView.SetGridPoint(point.x, point.y);
+            nodeView.SetPosition(new Rect(snappedPosition, position.size));
+        }
+        else
+        {
+            nodeView.SetPosition(new Rect(GetNodePosition(nodeView.Row, nodeView.Column), position.size));
+        }
+    }
+
+    private void OnMouseDown(MouseDownEvent mouseDownEvent)
+    {
+        Focus();
+
+        if (mouseDownEvent.button != 0)
+        {
+            return;
+        }
+
+        LevelBoardNodeView clickedNodeView = GetClickedNodeView(mouseDownEvent);
+
+        if (clickedNodeView != null)
+        {
+            if (_window.CurrentTool == ELevelEditorTool.Erase)
+            {
+                _window.DeleteNodesFromGraph(new List<LevelBoardNodeView> { clickedNodeView });
+                mouseDownEvent.StopPropagation();
+                return;
+            }
+
+            SelectNodeView(clickedNodeView, mouseDownEvent.ctrlKey || mouseDownEvent.commandKey);
+            _window.SelectNodeFromGraph(clickedNodeView.NodeKind, clickedNodeView.DataIndex);
+            return;
+        }
+
+        if (_window.CurrentTool != ELevelEditorTool.AddProcess &&
+            _window.CurrentTool != ELevelEditorTool.AddResource)
+        {
+            if (_window.CurrentTool == ELevelEditorTool.Select)
+            {
+                Vector2Int selectedPoint = GetMouseGridPoint(mouseDownEvent);
+                ClearNodeSelection();
+                _window.SelectGridPointFromGraph(selectedPoint.x, selectedPoint.y);
+                mouseDownEvent.StopPropagation();
+            }
+
+            return;
+        }
+
+        Vector2Int point = GetMouseGridPoint(mouseDownEvent);
+
+        ELevelEditorNodeKind nodeKind = _window.CurrentTool == ELevelEditorTool.AddProcess ?
+            ELevelEditorNodeKind.Process :
+            ELevelEditorNodeKind.Resource;
+
+        _window.AddNodeFromGraph(nodeKind, point.x, point.y);
+        mouseDownEvent.StopPropagation();
+    }
+
+    private LevelBoardNodeView GetClickedNodeView(MouseDownEvent mouseDownEvent)
+    {
+        VisualElement targetElement = mouseDownEvent.target as VisualElement;
+
+        while (targetElement != null)
+        {
+            if (targetElement is LevelBoardNodeView nodeView)
+            {
+                return nodeView;
+            }
+
+            targetElement = targetElement.parent;
+        }
+
+        return null;
+    }
+
+    private Vector2Int GetMouseGridPoint(MouseDownEvent mouseDownEvent)
+    {
+        Vector2 graphPosition = GetGraphPosition(mouseDownEvent.localMousePosition, this);
+        Vector2Int point = GetGridPointFromGraphPosition(graphPosition);
+        point.x = _window.ClampRow(point.x);
+        point.y = _window.ClampColumn(point.y);
+        return point;
+    }
+
+    private Vector2 GetGraphPosition(Vector2 localMousePosition, VisualElement sourceElement)
+    {
+        Vector2 worldPosition = sourceElement.LocalToWorld(localMousePosition);
+        return contentViewContainer.WorldToLocal(worldPosition);
+    }
+
+    private void OnKeyDown(KeyDownEvent keyDownEvent)
+    {
+        if (!keyDownEvent.ctrlKey && !keyDownEvent.commandKey)
+        {
+            return;
+        }
+
+        if (keyDownEvent.keyCode == KeyCode.C)
+        {
+            CopySelection();
+            keyDownEvent.StopPropagation();
+            return;
+        }
+
+        if (keyDownEvent.keyCode == KeyCode.V)
+        {
+            PasteSelection();
+            keyDownEvent.StopPropagation();
+        }
+    }
+
+    private void CopySelection()
+    {
+        List<LevelBoardNodeView> nodeViewList = new List<LevelBoardNodeView>(_selectedNodeViewList);
+
+        if (nodeViewList.Count == 0)
+        {
+            return;
+        }
+
+        List<string> lineList = new List<string>
+        {
+            ClipboardHeader,
+        };
+
+        for (int i = 0; i < nodeViewList.Count; i++)
+        {
+            LevelBoardNodeView nodeView = nodeViewList[i];
+            lineList.Add($"{nodeView.NodeKind}|{nodeView.DataIndex}");
+        }
+
+        EditorGUIUtility.systemCopyBuffer = string.Join("\n", lineList);
+    }
+
+    private void PasteSelection()
+    {
+        string copyBuffer = EditorGUIUtility.systemCopyBuffer;
+
+        if (string.IsNullOrEmpty(copyBuffer) || !copyBuffer.StartsWith(ClipboardHeader))
+        {
+            return;
+        }
+
+        string[] lineArray = copyBuffer.Split('\n');
+        for (int i = 1; i < lineArray.Length; i++)
+        {
+            string line = lineArray[i].Trim();
+
+            if (string.IsNullOrEmpty(line))
+            {
+                continue;
+            }
+
+            string[] tokenArray = line.Split('|');
+
+            if (tokenArray.Length != 2 ||
+                !TryParseNodeKind(tokenArray[0], out ELevelEditorNodeKind nodeKind) ||
+                !int.TryParse(tokenArray[1], out int dataIndex))
+            {
+                continue;
+            }
+
+            _window.DuplicateNodeFromGraph(nodeKind, dataIndex);
+        }
+    }
+
+    private bool TryParseNodeKind(string text, out ELevelEditorNodeKind nodeKind)
+    {
+        if (text == ELevelEditorNodeKind.Process.ToString())
+        {
+            nodeKind = ELevelEditorNodeKind.Process;
+            return true;
+        }
+
+        if (text == ELevelEditorNodeKind.Resource.ToString())
+        {
+            nodeKind = ELevelEditorNodeKind.Resource;
+            return true;
+        }
+
+        nodeKind = ELevelEditorNodeKind.Process;
+        return false;
+    }
+
+    private Vector2Int GetGridPointFromNodePosition(Vector2 nodePosition)
+    {
+        Vector2 bodyCenterPosition = nodePosition + new Vector2(LevelBoardNodeView.BodyCenterX,
+                                                                LevelBoardNodeView.BodyCenterY);
+        return GetGridPointFromGraphPosition(bodyCenterPosition);
+    }
+
+    private Vector2Int GetGridPointFromGraphPosition(Vector2 position)
+    {
+        int row = Mathf.RoundToInt((position.y - CanvasPadding - GridUnit * 0.5f) / GridUnit);
+        int column = Mathf.RoundToInt((position.x - CanvasPadding - GridUnit * 0.5f) / GridUnit);
+        return new Vector2Int(row, column);
+    }
+
+    private Vector2 GetNodePosition(int row, int column)
+    {
+        float left = CanvasPadding + column * GridUnit + GridUnit * 0.5f - LevelBoardNodeView.BodyCenterX;
+        float top = CanvasPadding + row * GridUnit + GridUnit * 0.5f - LevelBoardNodeView.BodyCenterY;
+        return new Vector2(left, top);
+    }
+}

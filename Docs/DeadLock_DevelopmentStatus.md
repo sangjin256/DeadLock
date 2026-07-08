@@ -57,14 +57,23 @@
 - 마이그레이션 결과 검수에서 process 255개, resource 224개가 원본과 변환 결과에서 일치했다. board size, node id, position, slot color id, selection order, resource capacity, 복합 rule 순서, Clock 설정, ColorSwitch 색 목록을 전체 에셋 기준으로 대조했고 오류는 없었다.
 - 마이그레이션 색상 매핑은 총 37개 `ColorId`로 생성됐다. 실제 색상 hex는 `LevelSO`에 저장하지 않고 `LegacyLevelMigrationReport.txt`의 `ColorId -> legacy Color32` 매핑표로만 확인한다.
 - `fixedNum` 미지원 경고는 17건이며 리포트에 남았다. 활성화된 legacy block field는 발견되지 않았다.
+- `Tools/DeadLock/Levels/Level Editor` 메뉴로 여는 UI Toolkit 기반 `LevelEditorWindow` v1을 추가했다. `LevelSO` 선택/생성, 저장, grid canvas, Select/Add Process/Add Resource/Erase 툴, process slot 편집, resource rule 편집, 즉시 검증 로그, 최종 Domain 검증 버튼을 제공한다.
+- Level Editor v1은 `LegacyLevelMigrationReport.txt`의 `ColorId -> legacy Color32` 매핑을 읽어 swatch를 표시한다. 실제 색상 hex는 여전히 `LevelSO`에 저장하지 않으며, 매핑이 없는 `ColorId`는 deterministic fallback 색상으로 표시한다.
+- Level Editor v1의 검증은 제작 중 빠른 UX 검증과 최종 검증을 분리한다. 빠른 검증은 `LevelSO` 데이터를 직접 보고, 최종 검증 버튼은 `LevelSOMapper.ToLevelDefinition()` 뒤 `LevelDefinitionValidator.Validate()` 결과를 표시한다.
+- Level Editor v1.5로 UX를 개선했다. 좌측에 항상 보이는 `ColorId` 팔레트를 두고, 선택 색으로 Process/Resource를 배치하거나 slot/resource/ColorSwitch 색에 적용할 수 있게 했다.
+- Board는 단순 버튼 그리드 대신 canvas 스타일로 바꿨다. Process는 원형, Resource는 사각형으로 렌더링하고, 선택 cell, 겹침, invalid color/capacity/rule 같은 경고 상태를 보드에서 바로 볼 수 있게 했다.
+- Board canvas에서는 Process/Resource의 내부 ID를 표시하지 않고, Inspector에서 위치 기반 ID를 읽기 전용으로만 보여준다. 노드 본체는 흰색 베이스로 통일하고 색 정보는 하단 color chip 목록으로 표현한다.
+- Level Editor 중앙 canvas를 UI Toolkit `GraphView` 기반으로 전환했다. 노드는 pan/zoom 가능한 공간에서 직접 드래그할 수 있고, 이동 결과는 정수 row/column으로 snap되어 `LevelSO`에 저장된다. GraphView pixel 좌표는 저장하지 않는다.
+- Level Editor 보드에서 `Ctrl+C`/`Ctrl+V`로 process/resource 노드를 복제할 수 있게 했다. 복제된 노드는 원본의 slot/rule 데이터를 유지하고 비어 있는 정수 좌표에 배치되며, id는 위치 기반으로 다시 계산한다.
+- Level Editor GraphView canvas에 실제 인게임 보드 영역을 보여주는 외곽 테두리, row/column 격자선, 중앙 포인트를 추가했다. 노드는 색 chip을 포함한 전체 박스가 아니라 P/R 본체 중심이 각 셀 중심에 맞도록 배치된다.
 
 ## 다음 작업 순서
 
-1. UI Toolkit 기반 Level Editor Window를 만든다.
-    - `LevelSO` 선택, grid canvas, palette, 선택 항목 inspector, validation log를 우선 구현한다.
-    - process/resource 배치, slot 편집, resource rule 편집, Relay Link/Transfer 시각 편집을 단계적으로 추가한다.
+1. Level Editor에 Relay Link/Transfer 편집 UI를 추가한다.
+    - v1에서는 기존 relay 데이터를 읽기 전용 요약과 검증 로그로만 보여준다.
+    - 다음 단계에서는 board grid에서 두 resource를 선택해 Link/Transfer를 만들고, Transfer sender는 capacity 1 resource만 후보로 제한한다.
 
-2. Level Editor에 test case 기반 자동 라운드 재생을 추가한다.
+2. Level Editor에 test case 편집과 자동 라운드 재생을 추가한다.
     - test case는 예약 연결 목록, 예상 결과, 최대 라운드 수를 저장한다.
     - 에디터는 test case를 적용해 `Board.AssignConnection()`과 `Board.RunSimulation()`을 자동 실행하고 round-by-round 결과를 보여준다.
     - 난이도 지표는 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
@@ -96,9 +105,10 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - Composite Resource Rule 추가 뒤 Domain Unity 의존, 다중 rule 변환 경계, 단일 rule 잔존, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 도구 추가 뒤 Domain Unity 의존, Editor 폴더 위치, `LevelCreator` 타입 직접 참조, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 실행 뒤 생성 결과를 파일 기준으로 검수했다. 61개 source asset과 61개 migrated `LevelSO`를 비교했고 process/resource 수, 좌표, 색 ID, capacity, rule 설정이 일치했다. 리포트의 failed asset과 validation error는 없었다.
+- Level Editor Window v1/v1.5 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 UI Toolkit 기반 Level Editor Window를 만드는 것이다. `LevelSO` 선택, grid canvas, 선택 항목 inspector, validation log를 먼저 붙이고, 이후 test case 기반 자동 라운드 재생과 난이도 지표를 확장한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 Level Editor에 Relay Link/Transfer 편집 UI를 추가하는 것이다. 이후 test case 편집, 자동 라운드 재생, 난이도 지표를 확장한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 
