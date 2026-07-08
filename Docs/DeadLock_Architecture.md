@@ -51,7 +51,7 @@ Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하�
 
 레벨 에디터 제작 중 즉시 UX 검증은 `LevelSO` 데이터를 직접 보고 처리한다. 예를 들어 RelayTransfer Sender 선택 UI는 capacity 1 resource만 후보로 보여주고, 필드 단위 경고는 현재 편집 중인 data를 기준으로 표시한다. 저장, 테스트 실행, 게임 시작 전 같은 최종/전체 검증은 `LevelDefinition`으로 변환한 뒤 `LevelDefinitionValidator`를 사용한다.
 
-기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 레거시 `Node.colors`의 실제 Unity 색상값은 새 Domain의 `ColorId`로 매핑해야 하므로, 변환 도구는 색상 팔레트 매핑 규칙을 함께 사용한다. 레거시의 `isSimul`, `isSwitchColor`, `isStartWithEmptyColor`, `isClockOnToOff`, `isClockOffToOn`, `clockNum`, `maxCount`, `fixedNum`은 새 resource/process/rule/test data로 해석한다.
+기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 변환 도구는 레거시 타입을 직접 참조하지 않고 YAML을 읽어 `LevelSO`를 생성한다. 레거시 `Node.colors`의 실제 Unity 색상값은 전체 변환 대상의 첫 등장 순서대로 `ColorId` 1부터 자동 매핑하고, 매핑표는 변환 리포트에 남긴다. 레거시 `fixedNum`은 아직 새 Domain 규칙으로 구현하지 않고, 변환 리포트에 미지원 경고로 남긴다.
 
 ## Rule 설계
 

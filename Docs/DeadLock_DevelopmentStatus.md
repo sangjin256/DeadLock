@@ -50,37 +50,36 @@
 - 자동 난이도 테스트는 test case 기반 라운드 재생으로 시작한다. 저장된 예약 연결 목록을 `Board.AssignConnection()`에 적용하고 `Board.RunSimulation()` 결과를 round-by-round로 보여준 뒤, 클리어 라운드 수와 waiting/relay/clock 지표를 난이도 분석으로 확장한다.
 - `Assets/Outdated/Levels`에는 기존 `LevelCreator` 기반 레벨 에셋이 61개 남아 있다. 새 레벨 에디터가 완성되더라도 이 데이터를 수동 재작성하지 않고, 레거시 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 작업 순서에 포함한다.
 - 레거시 `Node.colors`는 실제 Unity 색상값이므로 새 Domain의 `ColorId`와 직접 같지 않다. 변환 단계에서는 기존 색상값을 새 `ColorId` 팔레트로 매핑하고, `maxCount`, `fixedNum`, `isSimul`, `isSwitchColor`, `isStartWithEmptyColor`, `isClockOnToOff`, `isClockOffToOn`, `clockNum`을 새 process/resource/rule/test data로 해석한다.
+- `Tools/DeadLock/Levels/Migrate Legacy Levels` 메뉴로 실행하는 Editor 전용 마이그레이션 도구를 추가했다. 변환기는 레거시 타입을 직접 참조하지 않고 YAML을 읽어 `LevelSO`를 생성한다.
+- 변환 결과는 기본적으로 `Assets/02.Scripts/02.Repository/Levels/Migrated`에 생성된다. 색상은 전체 대상 에셋의 첫 등장 순서대로 `ColorId` 1부터 자동 매핑하고, 매핑표와 validation 결과는 `LegacyLevelMigrationReport.txt`에 남긴다.
+- 레거시 `fixedNum`과 활성화된 legacy block field는 이번 작업에서 새 Domain 규칙으로 구현하지 않고 변환 리포트 경고로 남긴다.
+- Legacy Level 마이그레이션을 실제 실행해 `Assets/Outdated/Levels`의 61개 `LevelCreator` 에셋을 61개 `LevelSO` 에셋으로 변환했다. 생성된 `.asset.meta`도 61개이며, 원본 `Assets/Outdated/Levels` 에셋은 수정되지 않았다.
+- 마이그레이션 결과 검수에서 process 255개, resource 224개가 원본과 변환 결과에서 일치했다. board size, node id, position, slot color id, selection order, resource capacity, 복합 rule 순서, Clock 설정, ColorSwitch 색 목록을 전체 에셋 기준으로 대조했고 오류는 없었다.
+- 마이그레이션 색상 매핑은 총 37개 `ColorId`로 생성됐다. 실제 색상 hex는 `LevelSO`에 저장하지 않고 `LegacyLevelMigrationReport.txt`의 `ColorId -> legacy Color32` 매핑표로만 확인한다.
+- `fixedNum` 미지원 경고는 17건이며 리포트에 남았다. 활성화된 legacy block field는 발견되지 않았다.
 
 ## 다음 작업 순서
 
-1. 레거시 `LevelCreator` 에셋을 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만든다.
-    - 대상은 `Assets/Outdated/Levels/*.asset`의 기존 레벨 에셋이다.
-    - 기존 Unity `Color` 값은 새 `ColorId` 팔레트로 매핑한다.
-    - 레거시 node index는 `row`, `col` 기준 `BoardPosition`으로 변환한다.
-    - 레거시 process/resource/rule 플래그는 새 `LevelProcessData`, `LevelResourceData`, `LevelResourceRuleData` 대응 데이터로 변환한다.
-    - 레거시 복합 resource rule 순서는 `Simultaneous`, `ColorSwitch`, `EmptyColor`, `ClockOffToOn`, `ClockOnToOff` 기준으로 보존한다.
-    - 변환 후 `LevelDefinitionValidator`와 test case 기반 시뮬레이션으로 플레이 가능성을 확인하는 흐름을 둔다.
-
-2. UI Toolkit 기반 Level Editor Window를 만든다.
+1. UI Toolkit 기반 Level Editor Window를 만든다.
     - `LevelSO` 선택, grid canvas, palette, 선택 항목 inspector, validation log를 우선 구현한다.
     - process/resource 배치, slot 편집, resource rule 편집, Relay Link/Transfer 시각 편집을 단계적으로 추가한다.
 
-3. Level Editor에 test case 기반 자동 라운드 재생을 추가한다.
+2. Level Editor에 test case 기반 자동 라운드 재생을 추가한다.
     - test case는 예약 연결 목록, 예상 결과, 최대 라운드 수를 저장한다.
     - 에디터는 test case를 적용해 `Board.AssignConnection()`과 `Board.RunSimulation()`을 자동 실행하고 round-by-round 결과를 보여준다.
     - 난이도 지표는 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
 
-4. Unity Test Framework 기반 테스트 구조를 준비한다.
+3. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
    - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-5. `LevelPlayManager`와 DTO를 작성한다.
+4. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-6. MVP UI와 Bootstrap을 연결한다.
+5. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-7. 저장/플랫폼/모바일 입력을 분리한다.
+6. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -95,9 +94,11 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - `LevelSO` authoring 타입 추가 뒤 Repository/Levels의 `[SerializeField]` 한 줄 배치 잔존 여부와 `git diff --check`를 확인했다.
 - `LevelSOMapper` 추가 뒤 Domain Unity 의존, Mapper 존재, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Composite Resource Rule 추가 뒤 Domain Unity 의존, 다중 rule 변환 경계, 단일 rule 잔존, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
+- Legacy Level 마이그레이션 도구 추가 뒤 Domain Unity 의존, Editor 폴더 위치, `LevelCreator` 타입 직접 참조, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
+- Legacy Level 마이그레이션 실행 뒤 생성 결과를 파일 기준으로 검수했다. 61개 source asset과 61개 migrated `LevelSO`를 비교했고 process/resource 수, 좌표, 색 ID, capacity, rule 설정이 일치했다. 리포트의 failed asset과 validation error는 없었다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋을 새 `LevelSO`로 변환하는 호환 마이그레이션 도구를 만드는 것이다. 변환기는 레거시 복합 resource rule flag를 `LevelResourceRuleData` 목록으로 옮긴다. 이후 UI Toolkit 기반 Level Editor Window, test case 기반 자동 라운드 재생, 난이도 지표를 붙인다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 UI Toolkit 기반 Level Editor Window를 만드는 것이다. `LevelSO` 선택, grid canvas, 선택 항목 inspector, validation log를 먼저 붙이고, 이후 test case 기반 자동 라운드 재생과 난이도 지표를 확장한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 
