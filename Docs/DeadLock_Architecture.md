@@ -55,6 +55,8 @@ Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하�
 
 Level Editor의 색상 swatch는 `LevelSO`에 실제 색상 hex를 저장하지 않고, 마이그레이션 리포트인 `Migrated/LegacyLevelMigrationReport.txt`의 `ColorId -> legacy Color32` 매핑을 읽어 표시한다. 매핑이 없거나 새 `ColorId`인 경우에는 결정적 fallback 색상을 사용하며, Domain과 저장 데이터의 source of truth는 계속 `ColorId` 정수 ID다. 배치와 색 편집은 현재 선택된 팔레트 색을 기준으로 동작한다.
 
+Level Editor의 Resource 노드는 보드에서 개인 Rule과 Relay 참여 상태를 작은 배지로 요약 표시한다. `Basic`, `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous` 같은 resource rule은 리소스 상단 배지로 표시하고, `RelayLink`, `RelayTransfer Sender`, `RelayTransfer Receiver`도 별도 배지로 표시한다. 상세 설정은 Inspector에서 편집하고, 보드 배지는 빠른 식별용 요약으로만 사용한다.
+
 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 변환 도구는 레거시 타입을 직접 참조하지 않고 YAML을 읽어 `LevelSO`를 생성한다. 레거시 `Node.colors`의 실제 Unity 색상값은 전체 변환 대상의 첫 등장 순서대로 `ColorId` 1부터 자동 매핑하고, 매핑표는 변환 리포트에 남긴다. 레거시 `fixedNum`은 아직 새 Domain 규칙으로 구현하지 않고, 변환 리포트에 미지원 경고로 남긴다.
 
 ## Rule 설계

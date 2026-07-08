@@ -66,6 +66,7 @@
 - Level Editor 중앙 canvas를 UI Toolkit `GraphView` 기반으로 전환했다. 노드는 pan/zoom 가능한 공간에서 직접 드래그할 수 있고, 이동 결과는 정수 row/column으로 snap되어 `LevelSO`에 저장된다. GraphView pixel 좌표는 저장하지 않는다.
 - Level Editor 보드에서 `Ctrl+C`/`Ctrl+V`로 process/resource 노드를 복제할 수 있게 했다. 복제된 노드는 원본의 slot/rule 데이터를 유지하고 비어 있는 정수 좌표에 배치되며, id는 위치 기반으로 다시 계산한다.
 - Level Editor GraphView canvas에 실제 인게임 보드 영역을 보여주는 외곽 테두리, row/column 격자선, 중앙 포인트를 추가했다. 노드는 색 chip을 포함한 전체 박스가 아니라 P/R 본체 중심이 각 셀 중심에 맞도록 배치된다.
+- Level Editor Resource 노드에 Rule/Relay 요약 배지를 추가했다. `B`, `SW`, `EM`, `CK`, `xN`, `L`, `TX`, `RX` 배지로 Basic, ColorSwitch, EmptyColor, Clock, Simultaneous, RelayLink, RelayTransfer Sender/Receiver 여부를 보드에서 바로 식별할 수 있다.
 
 ## 다음 작업 순서
 

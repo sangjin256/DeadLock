@@ -13,6 +13,7 @@ internal sealed class LevelBoardNodeView : GraphElement
 
     private const float NodeVisualSize = 66f;
     private const float ChipSize = 10f;
+    private const float BadgeHeight = 14f;
 
     private static readonly Color ProcessBorderColor = new Color(0.30f, 0.56f, 0.92f);
     private static readonly Color ResourceBorderColor = new Color(0.72f, 0.72f, 0.66f);
@@ -35,6 +36,7 @@ internal sealed class LevelBoardNodeView : GraphElement
                               int row,
                               int column,
                               IReadOnlyList<int> colorIdList,
+                              IReadOnlyList<LevelResourceBadgeData> badgeDataList,
                               bool hasWarning,
                               LevelEditorColorMap colorMap)
     {
@@ -64,7 +66,7 @@ internal sealed class LevelBoardNodeView : GraphElement
 
         _selectionFrame = CreateSelectionFrame();
         Add(_selectionFrame);
-        Add(CreateNodeVisual(nodeKind, colorIdList, hasWarning, colorMap));
+        Add(CreateNodeVisual(nodeKind, colorIdList, badgeDataList, hasWarning, colorMap));
     }
 
     public override void OnSelected()
@@ -110,6 +112,7 @@ internal sealed class LevelBoardNodeView : GraphElement
 
     private VisualElement CreateNodeVisual(ELevelEditorNodeKind nodeKind,
                                            IReadOnlyList<int> colorIdList,
+                                           IReadOnlyList<LevelResourceBadgeData> badgeDataList,
                                            bool hasWarning,
                                            LevelEditorColorMap colorMap)
     {
@@ -141,12 +144,77 @@ internal sealed class LevelBoardNodeView : GraphElement
         VisualElement colorStrip = CreateColorStrip(colorIdList, colorMap);
         root.Add(colorStrip);
 
+        if (nodeKind == ELevelEditorNodeKind.Resource)
+        {
+            root.Add(CreateBadgeStrip(badgeDataList));
+        }
+
         if (hasWarning)
         {
             root.Add(CreateWarningDot());
         }
 
         return root;
+    }
+
+    private VisualElement CreateBadgeStrip(IReadOnlyList<LevelResourceBadgeData> badgeDataList)
+    {
+        VisualElement strip = new VisualElement();
+        strip.pickingMode = PickingMode.Ignore;
+        strip.style.position = Position.Absolute;
+        strip.style.left = 6f;
+        strip.style.top = 2f;
+        strip.style.width = ViewWidth - 12f;
+        strip.style.flexDirection = FlexDirection.Row;
+        strip.style.flexWrap = Wrap.Wrap;
+        strip.style.justifyContent = Justify.Center;
+        strip.style.alignItems = Align.Center;
+
+        if (badgeDataList == null || badgeDataList.Count == 0)
+        {
+            strip.style.display = DisplayStyle.None;
+            return strip;
+        }
+
+        int visibleCount = Mathf.Min(badgeDataList.Count, 4);
+
+        for (int i = 0; i < visibleCount; i++)
+        {
+            strip.Add(CreateBadge(badgeDataList[i]));
+        }
+
+        if (badgeDataList.Count > visibleCount)
+        {
+            strip.Add(CreateBadge(new LevelResourceBadgeData("+",
+                                                             $"추가 규칙 {badgeDataList.Count - visibleCount}개",
+                                                             new Color(0.33f, 0.35f, 0.39f))));
+        }
+
+        return strip;
+    }
+
+    private VisualElement CreateBadge(LevelResourceBadgeData badgeData)
+    {
+        Label badge = new Label(badgeData.Label);
+        badge.tooltip = badgeData.Tooltip;
+        badge.pickingMode = PickingMode.Ignore;
+        badge.style.height = BadgeHeight;
+        badge.style.minWidth = 16f;
+        badge.style.marginLeft = 1f;
+        badge.style.marginRight = 1f;
+        badge.style.paddingLeft = 3f;
+        badge.style.paddingRight = 3f;
+        badge.style.unityTextAlign = TextAnchor.MiddleCenter;
+        badge.style.unityFontStyleAndWeight = FontStyle.Bold;
+        badge.style.fontSize = 9f;
+        badge.style.color = new StyleColor(Color.white);
+        badge.style.backgroundColor = new StyleColor(badgeData.BackgroundColor);
+        badge.style.borderTopLeftRadius = 3f;
+        badge.style.borderTopRightRadius = 3f;
+        badge.style.borderBottomLeftRadius = 3f;
+        badge.style.borderBottomRightRadius = 3f;
+        SetBorder(badge, 1f, new Color(0.06f, 0.07f, 0.08f, 0.85f));
+        return badge;
     }
 
     private VisualElement CreateColorStrip(IReadOnlyList<int> colorIdList, LevelEditorColorMap colorMap)

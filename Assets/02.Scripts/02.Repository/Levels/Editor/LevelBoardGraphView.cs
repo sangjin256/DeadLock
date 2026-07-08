@@ -10,6 +10,14 @@ internal sealed class LevelBoardGraphView : GraphView
     private const float GridUnit = 96f;
     private const float CanvasPadding = 80f;
 
+    private static readonly Color BasicBadgeColor = new Color(0.33f, 0.35f, 0.39f);
+    private static readonly Color ColorSwitchBadgeColor = new Color(0.23f, 0.46f, 0.73f);
+    private static readonly Color EmptyColorBadgeColor = new Color(0.42f, 0.44f, 0.49f);
+    private static readonly Color ClockBadgeColor = new Color(0.73f, 0.47f, 0.18f);
+    private static readonly Color SimultaneousBadgeColor = new Color(0.38f, 0.54f, 0.25f);
+    private static readonly Color RelayLinkBadgeColor = new Color(0.44f, 0.32f, 0.64f);
+    private static readonly Color RelayTransferBadgeColor = new Color(0.70f, 0.28f, 0.34f);
+
     private readonly LevelEditorWindow _window;
     private readonly LevelEditorColorMap _colorMap;
     private readonly List<LevelBoardNodeView> _selectedNodeViewList = new List<LevelBoardNodeView>();
@@ -91,6 +99,7 @@ internal sealed class LevelBoardGraphView : GraphView
                                                                  processData.Row,
                                                                  processData.Column,
                                                                  _window.GetProcessColorIds(processData),
+                                                                 null,
                                                                  _window.HasProcessIssue(processData),
                                                                  _colorMap);
             AddNode(nodeView, processData.Row, processData.Column);
@@ -113,9 +122,87 @@ internal sealed class LevelBoardGraphView : GraphView
                                                                  resourceData.Row,
                                                                  resourceData.Column,
                                                                  _window.GetResourceColorIds(resourceData),
+                                                                 GetResourceBadgeDataList(levelSO, resourceData),
                                                                  _window.HasResourceIssue(resourceData),
                                                                  _colorMap);
             AddNode(nodeView, resourceData.Row, resourceData.Column);
+        }
+    }
+
+    private List<LevelResourceBadgeData> GetResourceBadgeDataList(LevelSO levelSO, LevelResourceData resourceData)
+    {
+        List<LevelResourceBadgeData> badgeDataList = new List<LevelResourceBadgeData>();
+        AddRuleBadges(resourceData, badgeDataList);
+        AddRelayBadges(levelSO, resourceData, badgeDataList);
+        return badgeDataList;
+    }
+
+    private void AddRuleBadges(LevelResourceData resourceData, List<LevelResourceBadgeData> badgeDataList)
+    {
+        for (int i = 0; i < resourceData.RuleDataList.Count; i++)
+        {
+            LevelResourceRuleData ruleData = resourceData.RuleDataList[i];
+
+            if (ruleData == null)
+            {
+                continue;
+            }
+
+            switch (ruleData.RuleType)
+            {
+                case ELevelResourceRuleType.Basic:
+                    if (resourceData.RuleDataList.Count == 1)
+                    {
+                        badgeDataList.Add(new LevelResourceBadgeData("B", "Basic: 현재 색과 슬롯 색이 같아야 점유 가능", BasicBadgeColor));
+                    }
+
+                    break;
+
+                case ELevelResourceRuleType.ColorSwitch:
+                    badgeDataList.Add(new LevelResourceBadgeData("SW", "ColorSwitch: 반환/idle 라운드마다 색 전환", ColorSwitchBadgeColor));
+                    break;
+
+                case ELevelResourceRuleType.EmptyColor:
+                    badgeDataList.Add(new LevelResourceBadgeData("EM", "EmptyColor: 첫 점유 색으로 고정", EmptyColorBadgeColor));
+                    break;
+
+                case ELevelResourceRuleType.Clock:
+                    badgeDataList.Add(new LevelResourceBadgeData("CK", $"Clock: {ruleData.ClockMode}, {ruleData.ClockRoundCount}라운드", ClockBadgeColor));
+                    break;
+
+                case ELevelResourceRuleType.Simultaneous:
+                    badgeDataList.Add(new LevelResourceBadgeData($"x{resourceData.Capacity}", "Simultaneous: capacity 수만큼 동시 점유 필요", SimultaneousBadgeColor));
+                    break;
+            }
+        }
+    }
+
+    private void AddRelayBadges(LevelSO levelSO, LevelResourceData resourceData, List<LevelResourceBadgeData> badgeDataList)
+    {
+        for (int i = 0; i < levelSO.RelayDataList.Count; i++)
+        {
+            LevelRelayData relayData = levelSO.RelayDataList[i];
+
+            if (relayData == null ||
+                (relayData.FirstResourceId != resourceData.Id && relayData.SecondResourceId != resourceData.Id))
+            {
+                continue;
+            }
+
+            if (relayData.RelayType == ERelayType.Link)
+            {
+                badgeDataList.Add(new LevelResourceBadgeData("L", "RelayLink: 반대편 점유 중 사용 제한", RelayLinkBadgeColor));
+                continue;
+            }
+
+            if (relayData.RelayType == ERelayType.Transfer)
+            {
+                string label = relayData.SenderResourceId == resourceData.Id ? "TX" : "RX";
+                string tooltip = relayData.SenderResourceId == resourceData.Id ?
+                    "RelayTransfer Sender: 점유 색을 Receiver로 전달" :
+                    "RelayTransfer Receiver: Sender 점유 색을 임시 색으로 받음";
+                badgeDataList.Add(new LevelResourceBadgeData(label, tooltip, RelayTransferBadgeColor));
+            }
         }
     }
 
