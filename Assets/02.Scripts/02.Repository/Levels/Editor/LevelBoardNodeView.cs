@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -13,6 +14,7 @@ internal sealed class LevelBoardNodeView : GraphElement
 
     private const float NodeVisualSize = 66f;
     private const float ChipSize = 10f;
+    private const float AssignedChipSize = 16f;
     private const float BadgeHeight = 14f;
 
     private static readonly Color ProcessBorderColor = new Color(0.30f, 0.56f, 0.92f);
@@ -35,10 +37,11 @@ internal sealed class LevelBoardNodeView : GraphElement
                               int dataIndex,
                               int row,
                               int column,
-                              IReadOnlyList<int> colorIdList,
+                              IReadOnlyList<LevelNodeColorChipData> colorChipDataList,
                               IReadOnlyList<LevelResourceBadgeData> badgeDataList,
                               bool hasWarning,
-                              LevelEditorColorMap colorMap)
+                              LevelEditorColorMap colorMap,
+                              Action<int> onSlotClicked)
     {
         _nodeKind = nodeKind;
         _dataIndex = dataIndex;
@@ -66,7 +69,7 @@ internal sealed class LevelBoardNodeView : GraphElement
 
         _selectionFrame = CreateSelectionFrame();
         Add(_selectionFrame);
-        Add(CreateNodeVisual(nodeKind, colorIdList, badgeDataList, hasWarning, colorMap));
+        Add(CreateNodeVisual(nodeKind, colorChipDataList, badgeDataList, hasWarning, colorMap, onSlotClicked));
     }
 
     public override void OnSelected()
@@ -111,10 +114,11 @@ internal sealed class LevelBoardNodeView : GraphElement
     }
 
     private VisualElement CreateNodeVisual(ELevelEditorNodeKind nodeKind,
-                                           IReadOnlyList<int> colorIdList,
+                                           IReadOnlyList<LevelNodeColorChipData> colorChipDataList,
                                            IReadOnlyList<LevelResourceBadgeData> badgeDataList,
                                            bool hasWarning,
-                                           LevelEditorColorMap colorMap)
+                                           LevelEditorColorMap colorMap,
+                                           Action<int> onSlotClicked)
     {
         VisualElement root = new VisualElement();
         root.style.alignItems = Align.Center;
@@ -141,7 +145,7 @@ internal sealed class LevelBoardNodeView : GraphElement
         kindLabel.style.color = new StyleColor(Color.black);
         body.Add(kindLabel);
 
-        VisualElement colorStrip = CreateColorStrip(colorIdList, colorMap);
+        VisualElement colorStrip = CreateColorStrip(colorChipDataList, colorMap, onSlotClicked);
         root.Add(colorStrip);
 
         if (nodeKind == ELevelEditorNodeKind.Resource)
@@ -217,7 +221,9 @@ internal sealed class LevelBoardNodeView : GraphElement
         return badge;
     }
 
-    private VisualElement CreateColorStrip(IReadOnlyList<int> colorIdList, LevelEditorColorMap colorMap)
+    private VisualElement CreateColorStrip(IReadOnlyList<LevelNodeColorChipData> colorChipDataList,
+                                           LevelEditorColorMap colorMap,
+                                           Action<int> onSlotClicked)
     {
         VisualElement strip = new VisualElement();
         strip.style.flexDirection = FlexDirection.Row;
@@ -227,29 +233,59 @@ internal sealed class LevelBoardNodeView : GraphElement
         strip.style.width = 86f;
         strip.style.marginTop = 5f;
 
-        for (int i = 0; i < colorIdList.Count; i++)
+        for (int i = 0; i < colorChipDataList.Count; i++)
         {
-            strip.Add(CreateMiniChip(colorIdList[i], colorMap));
+            strip.Add(CreateMiniChip(colorChipDataList[i], colorMap, onSlotClicked));
         }
 
         return strip;
     }
 
-    private VisualElement CreateMiniChip(int colorId, LevelEditorColorMap colorMap)
+    private VisualElement CreateMiniChip(LevelNodeColorChipData chipData,
+                                         LevelEditorColorMap colorMap,
+                                         Action<int> onSlotClicked)
     {
         VisualElement chip = new VisualElement();
-        chip.style.width = ChipSize;
-        chip.style.height = ChipSize;
+        float size = chipData.IsAssigned ? AssignedChipSize : ChipSize;
+        chip.style.width = size;
+        chip.style.height = size;
         chip.style.marginLeft = 1f;
         chip.style.marginRight = 1f;
         chip.style.marginTop = 1f;
         chip.style.marginBottom = 1f;
-        chip.style.borderTopLeftRadius = ChipSize;
-        chip.style.borderTopRightRadius = ChipSize;
-        chip.style.borderBottomLeftRadius = ChipSize;
-        chip.style.borderBottomRightRadius = ChipSize;
-        chip.style.backgroundColor = new StyleColor(colorMap.GetColor(colorId));
-        SetBorder(chip, 1f, Color.black);
+        chip.style.alignItems = Align.Center;
+        chip.style.justifyContent = Justify.Center;
+        chip.style.borderTopLeftRadius = size;
+        chip.style.borderTopRightRadius = size;
+        chip.style.borderBottomLeftRadius = size;
+        chip.style.borderBottomRightRadius = size;
+        chip.style.backgroundColor = new StyleColor(colorMap.GetColor(chipData.ColorId));
+        chip.style.opacity = chipData.IsAssigned && !chipData.IsFocused ? 0.68f : 1f;
+
+        Color borderColor = chipData.IsSelected ? new Color(1.0f, 0.78f, 0.22f) : Color.black;
+        SetBorder(chip, chipData.IsSelected ? 2f : 1f, borderColor);
+
+        if (chipData.IsAssigned)
+        {
+            Label orderLabel = new Label(chipData.AssignmentOrder.ToString());
+            orderLabel.pickingMode = PickingMode.Ignore;
+            orderLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            orderLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            orderLabel.style.fontSize = 9f;
+            orderLabel.style.color = new StyleColor(Color.black);
+            chip.Add(orderLabel);
+        }
+
+        if (onSlotClicked != null && chipData.SlotId >= 0)
+        {
+            chip.tooltip = $"Slot {chipData.SlotId}";
+            chip.RegisterCallback<MouseDownEvent>(mouseDownEvent =>
+            {
+                onSlotClicked.Invoke(chipData.SlotId);
+                mouseDownEvent.StopPropagation();
+            });
+        }
+
         return chip;
     }
 

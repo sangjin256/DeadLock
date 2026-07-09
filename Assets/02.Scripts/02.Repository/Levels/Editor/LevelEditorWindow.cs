@@ -12,6 +12,7 @@ public sealed class LevelEditorWindow : EditorWindow
     private const float NodeSize = 64f;
     private const float PaletteWidth = 260f;
     private const float InspectorWidth = 370f;
+    private const float ValidationPanelHeight = 240f;
 
     private static readonly Color BackgroundColor = new Color(0.12f, 0.13f, 0.15f);
     private static readonly Color PanelColor = new Color(0.17f, 0.18f, 0.20f);
@@ -45,6 +46,15 @@ public sealed class LevelEditorWindow : EditorWindow
     private ERelayType _relayDraftType = ERelayType.Link;
     private string _relayDraftMessage = string.Empty;
     private string _finalValidationText = string.Empty;
+    private string _testRunText = string.Empty;
+    private string _testCaseEditMessage = string.Empty;
+    private readonly List<LevelTestConnectionRunData> _lastTestConnectionRunDataList = new List<LevelTestConnectionRunData>();
+    private SimulationReport _lastTestSimulationReport;
+    private int _activeTestCaseIndex = -1;
+    private int _lastRunTestCaseIndex = -1;
+    private int _selectedTestRoundIndex = -1;
+    private int _selectedTestProcessId = -1;
+    private int _selectedTestSlotId = -1;
 
     internal ELevelEditorTool CurrentTool => _currentTool;
     internal int SelectedRelayIndex => _selectedRelayIndex;
@@ -54,6 +64,7 @@ public sealed class LevelEditorWindow : EditorWindow
     internal ERelayType RelayDraftType => _relayDraftType;
     internal bool HasRelayDraftPair => _relayDraftFirstResourceId >= 0 && _relayDraftSecondResourceId >= 0;
     internal int SelectedResourceId => GetSelectedResourceId();
+    internal bool IsTestCaseEditActive => _activeTestCaseIndex >= 0;
 
     [MenuItem("Tools/DeadLock/Levels/Level Editor")]
     public static void Open()
@@ -75,8 +86,7 @@ public sealed class LevelEditorWindow : EditorWindow
         rootVisualElement.style.paddingBottom = 12f;
 
         BuildHeader();
-        BuildMainContent();
-        BuildValidationPanel();
+        BuildEditorBody();
         RefreshAll();
     }
 
@@ -107,11 +117,23 @@ public sealed class LevelEditorWindow : EditorWindow
         header.Add(CreateHeaderButton("색상 새로고침", ReloadColors));
     }
 
-    private void BuildMainContent()
+    private void BuildEditorBody()
+    {
+        TwoPaneSplitView body = new TwoPaneSplitView(1,
+                                                     ValidationPanelHeight,
+                                                     TwoPaneSplitViewOrientation.Vertical);
+        body.style.flexGrow = 1f;
+        rootVisualElement.Add(body);
+
+        BuildMainContent(body);
+        BuildValidationPanel(body);
+    }
+
+    private void BuildMainContent(VisualElement parent)
     {
         TwoPaneSplitView main = new TwoPaneSplitView(0, PaletteWidth, TwoPaneSplitViewOrientation.Horizontal);
         main.style.flexGrow = 1f;
-        rootVisualElement.Add(main);
+        parent.Add(main);
 
         _paletteContainer = CreatePanel(PaletteWidth);
         main.Add(_paletteContainer);
@@ -131,13 +153,12 @@ public sealed class LevelEditorWindow : EditorWindow
         content.Add(_inspectorContainer);
     }
 
-    private void BuildValidationPanel()
+    private void BuildValidationPanel(VisualElement parent)
     {
         _validationContainer = new ScrollView();
-        _validationContainer.style.height = 150f;
-        _validationContainer.style.marginTop = 10f;
+        _validationContainer.style.minHeight = 96f;
         ApplyPanelStyle(_validationContainer);
-        rootVisualElement.Add(_validationContainer);
+        parent.Add(_validationContainer);
     }
 
     private VisualElement CreatePanel(float width)
@@ -193,6 +214,11 @@ public sealed class LevelEditorWindow : EditorWindow
         ClearRelayDraft();
         _selectedRelayIndex = -1;
         _finalValidationText = string.Empty;
+        ClearTestRunState();
+        _testCaseEditMessage = string.Empty;
+        _activeTestCaseIndex = -1;
+        _selectedTestProcessId = -1;
+        _selectedTestSlotId = -1;
         RefreshAll();
     }
 
@@ -727,9 +753,35 @@ public sealed class LevelEditorWindow : EditorWindow
         return false;
     }
 
-    internal List<int> GetProcessColorIds(LevelProcessData processData)
+    internal List<LevelNodeColorChipData> GetProcessColorChips(LevelProcessData processData)
     {
-        return GetProcessColorIdList(processData);
+        List<LevelNodeColorChipData> colorChipDataList = new List<LevelNodeColorChipData>();
+
+        for (int i = 0; i < processData.SlotDataList.Count; i++)
+        {
+            LevelProcessSlotData slotData = processData.SlotDataList[i];
+
+            if (slotData == null)
+            {
+                continue;
+            }
+
+            int assignmentOrder = GetAssignmentOrder(processData.Id, slotData.Id);
+            bool isAssigned = assignmentOrder > 0;
+            bool isSelected = IsSelectedTestSlot(processData.Id, slotData.Id);
+            bool isFocused = !isAssigned ||
+                             isSelected ||
+                             IsAssignmentConnectedToSelectedResource(processData.Id, slotData.Id);
+
+            colorChipDataList.Add(new LevelNodeColorChipData(slotData.RequiredColorId,
+                                                             slotData.Id,
+                                                             assignmentOrder,
+                                                             isAssigned,
+                                                             isSelected,
+                                                             isFocused));
+        }
+
+        return colorChipDataList;
     }
 
     private List<int> GetProcessColorIdList(LevelProcessData processData)
@@ -749,9 +801,22 @@ public sealed class LevelEditorWindow : EditorWindow
         return colorIdList;
     }
 
-    internal List<int> GetResourceColorIds(LevelResourceData resourceData)
+    internal List<LevelNodeColorChipData> GetResourceColorChips(LevelResourceData resourceData)
     {
-        return GetResourceColorIdList(resourceData);
+        List<int> colorIdList = GetResourceColorIdList(resourceData);
+        List<LevelNodeColorChipData> colorChipDataList = new List<LevelNodeColorChipData>();
+
+        for (int i = 0; i < colorIdList.Count; i++)
+        {
+            colorChipDataList.Add(new LevelNodeColorChipData(colorIdList[i],
+                                                             -1,
+                                                             0,
+                                                             false,
+                                                             false,
+                                                             true));
+        }
+
+        return colorChipDataList;
     }
 
     private List<int> GetResourceColorIdList(LevelResourceData resourceData)
@@ -777,6 +842,312 @@ public sealed class LevelEditorWindow : EditorWindow
         }
 
         return colorIdList;
+    }
+
+    internal IReadOnlyList<LevelTestAssignmentPreviewData> GetActiveTestAssignmentPreviewList()
+    {
+        return CreateActiveTestAssignmentPreviewList();
+    }
+
+    internal bool IsSelectedTestSlot(int processId, int slotId)
+    {
+        return _selectedTestProcessId == processId && _selectedTestSlotId == slotId;
+    }
+
+    private List<LevelTestAssignmentPreviewData> CreateActiveTestAssignmentPreviewList()
+    {
+        List<LevelTestAssignmentPreviewData> previewDataList = new List<LevelTestAssignmentPreviewData>();
+        int testCaseIndex = GetVisualizedTestCaseIndex();
+
+        if (_levelSO == null || testCaseIndex < 0 || testCaseIndex >= _levelSO.TestCaseDataList.Count)
+        {
+            return previewDataList;
+        }
+
+        LevelTestCaseData testCaseData = _levelSO.TestCaseDataList[testCaseIndex];
+
+        if (testCaseData == null)
+        {
+            return previewDataList;
+        }
+
+        for (int i = 0; i < testCaseData.AssignedConnectionDataList.Count; i++)
+        {
+            LevelAssignedConnectionData assignedConnectionData = testCaseData.AssignedConnectionDataList[i];
+
+            if (assignedConnectionData == null ||
+                !TryGetProcessDataById(assignedConnectionData.ProcessId, out LevelProcessData processData) ||
+                !TryGetResourceDataById(assignedConnectionData.ResourceId, out LevelResourceData resourceData) ||
+                !TryGetSlotData(processData, assignedConnectionData.SlotId, out LevelProcessSlotData slotData))
+            {
+                continue;
+            }
+
+            int distance = Mathf.Abs(processData.Row - resourceData.Row) + Mathf.Abs(processData.Column - resourceData.Column);
+            previewDataList.Add(new LevelTestAssignmentPreviewData(assignedConnectionData.ProcessId,
+                                                                   assignedConnectionData.SlotId,
+                                                                   assignedConnectionData.ResourceId,
+                                                                   0,
+                                                                   slotData.SelectionOrder,
+                                                                   distance));
+        }
+
+        previewDataList.Sort(CompareAssignmentPreview);
+        return BuildOrderedAssignmentPreviewList(previewDataList);
+    }
+
+    private int GetVisualizedTestCaseIndex()
+    {
+        if (_activeTestCaseIndex >= 0)
+        {
+            return _activeTestCaseIndex;
+        }
+
+        return _lastRunTestCaseIndex;
+    }
+
+    private List<LevelTestAssignmentPreviewData> BuildOrderedAssignmentPreviewList(List<LevelTestAssignmentPreviewData> sortedPreviewDataList)
+    {
+        List<LevelTestAssignmentPreviewData> orderedPreviewDataList = new List<LevelTestAssignmentPreviewData>();
+        int currentResourceId = -1;
+        int order = 0;
+
+        for (int i = 0; i < sortedPreviewDataList.Count; i++)
+        {
+            LevelTestAssignmentPreviewData previewData = sortedPreviewDataList[i];
+
+            if (previewData.ResourceId != currentResourceId)
+            {
+                currentResourceId = previewData.ResourceId;
+                order = 1;
+            }
+            else
+            {
+                order++;
+            }
+
+            orderedPreviewDataList.Add(new LevelTestAssignmentPreviewData(previewData.ProcessId,
+                                                                          previewData.SlotId,
+                                                                          previewData.ResourceId,
+                                                                          order,
+                                                                          previewData.SelectionOrder,
+                                                                          previewData.Distance));
+        }
+
+        return orderedPreviewDataList;
+    }
+
+    private int CompareAssignmentPreview(LevelTestAssignmentPreviewData a, LevelTestAssignmentPreviewData b)
+    {
+        int result = a.ResourceId.CompareTo(b.ResourceId);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = a.Distance.CompareTo(b.Distance);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = a.SelectionOrder.CompareTo(b.SelectionOrder);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = a.ProcessId.CompareTo(b.ProcessId);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        return a.SlotId.CompareTo(b.SlotId);
+    }
+
+    private int GetAssignmentOrder(int processId, int slotId)
+    {
+        IReadOnlyList<LevelTestAssignmentPreviewData> assignmentList = GetActiveTestAssignmentPreviewList();
+
+        for (int i = 0; i < assignmentList.Count; i++)
+        {
+            LevelTestAssignmentPreviewData assignment = assignmentList[i];
+
+            if (assignment.ProcessId == processId && assignment.SlotId == slotId)
+            {
+                return assignment.Order;
+            }
+        }
+
+        return 0;
+    }
+
+    private bool IsAssignmentConnectedToSelectedResource(int processId, int slotId)
+    {
+        if (SelectedResourceId < 0)
+        {
+            return true;
+        }
+
+        IReadOnlyList<LevelTestAssignmentPreviewData> assignmentList = GetActiveTestAssignmentPreviewList();
+
+        for (int i = 0; i < assignmentList.Count; i++)
+        {
+            LevelTestAssignmentPreviewData assignment = assignmentList[i];
+
+            if (assignment.ProcessId == processId &&
+                assignment.SlotId == slotId &&
+                assignment.ResourceId == SelectedResourceId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal ELevelTestConnectionVisualState GetTestConnectionVisualState(int processId, int slotId, int resourceId)
+    {
+        if (_lastTestSimulationReport == null ||
+            GetVisualizedTestCaseIndex() != _lastRunTestCaseIndex ||
+            _selectedTestRoundIndex < 0 ||
+            _selectedTestRoundIndex >= _lastTestSimulationReport.RoundResultList.Length)
+        {
+            return ELevelTestConnectionVisualState.None;
+        }
+
+        if (!TryGetLastRunConnectionId(processId, slotId, resourceId, out int connectionId))
+        {
+            return ELevelTestConnectionVisualState.None;
+        }
+
+        RoundResult roundResult = _lastTestSimulationReport.RoundResultList[_selectedTestRoundIndex];
+
+        if (ContainsId(roundResult.BlockedConnectionIdList, connectionId))
+        {
+            return ELevelTestConnectionVisualState.Blocked;
+        }
+
+        if (ContainsId(roundResult.WaitingConnectionIdList, connectionId))
+        {
+            return ELevelTestConnectionVisualState.Waiting;
+        }
+
+        if (ContainsId(roundResult.RequeuedConnectionIdList, connectionId))
+        {
+            return ELevelTestConnectionVisualState.Waiting;
+        }
+
+        if (ContainsId(roundResult.OccupiedConnectionIdList, connectionId))
+        {
+            return ELevelTestConnectionVisualState.Occupied;
+        }
+
+        if (ContainsId(roundResult.ReleasedConnectionIdList, connectionId))
+        {
+            return ELevelTestConnectionVisualState.None;
+        }
+
+        return ELevelTestConnectionVisualState.None;
+    }
+
+    internal bool IsProcessCompletedBySelectedRound(int processId)
+    {
+        if (_lastTestSimulationReport == null ||
+            GetVisualizedTestCaseIndex() != _lastRunTestCaseIndex ||
+            _selectedTestRoundIndex < 0)
+        {
+            return false;
+        }
+
+        int maxRoundIndex = Mathf.Min(_selectedTestRoundIndex, _lastTestSimulationReport.RoundResultList.Length - 1);
+
+        for (int i = 0; i <= maxRoundIndex; i++)
+        {
+            RoundResult roundResult = _lastTestSimulationReport.RoundResultList[i];
+
+            if (ContainsId(roundResult.CompletedProcessIdList, processId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal bool IsConnectionVisibleBySelectedRound(int processId, int slotId, int resourceId)
+    {
+        if (_lastTestSimulationReport == null ||
+            GetVisualizedTestCaseIndex() != _lastRunTestCaseIndex ||
+            _selectedTestRoundIndex < 0)
+        {
+            return true;
+        }
+
+        if (!TryGetLastRunConnectionId(processId, slotId, resourceId, out int connectionId))
+        {
+            return true;
+        }
+
+        int maxRoundIndex = Mathf.Min(_selectedTestRoundIndex, _lastTestSimulationReport.RoundResultList.Length - 1);
+
+        for (int i = 0; i <= maxRoundIndex; i++)
+        {
+            RoundResult roundResult = _lastTestSimulationReport.RoundResultList[i];
+
+            if (HasConnectionAppearedInRound(roundResult, connectionId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetLastRunConnectionId(int processId, int slotId, int resourceId, out int connectionId)
+    {
+        for (int i = 0; i < _lastTestConnectionRunDataList.Count; i++)
+        {
+            LevelTestConnectionRunData runData = _lastTestConnectionRunDataList[i];
+
+            if (runData.ProcessId == processId &&
+                runData.SlotId == slotId &&
+                runData.ResourceId == resourceId)
+            {
+                connectionId = runData.ConnectionId;
+                return true;
+            }
+        }
+
+        connectionId = -1;
+        return false;
+    }
+
+    private bool HasConnectionAppearedInRound(RoundResult roundResult, int connectionId)
+    {
+        return ContainsId(roundResult.OccupiedConnectionIdList, connectionId) ||
+               ContainsId(roundResult.WaitingConnectionIdList, connectionId) ||
+               ContainsId(roundResult.RequeuedConnectionIdList, connectionId) ||
+               ContainsId(roundResult.ReleasedConnectionIdList, connectionId) ||
+               ContainsId(roundResult.BlockedConnectionIdList, connectionId);
+    }
+
+    private bool ContainsId(IReadOnlyList<int> idList, int id)
+    {
+        for (int i = 0; i < idList.Count; i++)
+        {
+            if (idList[i] == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal bool HasResourceIssue(LevelResourceData resourceData)
@@ -871,6 +1242,7 @@ public sealed class LevelEditorWindow : EditorWindow
         {
             _inspectorContainer.Add(new Label("보드 칸을 선택해 주세요."));
             BuildRelaySummary();
+            BuildTestCaseSummary();
             return;
         }
 
@@ -896,6 +1268,7 @@ public sealed class LevelEditorWindow : EditorWindow
         }
 
         BuildRelaySummary();
+        BuildTestCaseSummary();
     }
 
     private void BuildLevelInspector()
@@ -1132,6 +1505,141 @@ public sealed class LevelEditorWindow : EditorWindow
         {
             BuildRelayInspector(box, i);
         }
+    }
+
+    private void BuildTestCaseSummary()
+    {
+        VisualElement box = CreateBox();
+        _inspectorContainer.Add(box);
+        box.Add(CreateSectionTitle("테스트 케이스"));
+
+        SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
+
+        if (testCaseListProperty == null)
+        {
+            box.Add(new Label("테스트 케이스 데이터를 찾을 수 없습니다."));
+            return;
+        }
+
+        if (testCaseListProperty.arraySize == 0)
+        {
+            box.Add(new Label("생성된 테스트 케이스가 없습니다."));
+        }
+
+        for (int i = 0; i < testCaseListProperty.arraySize; i++)
+        {
+            BuildTestCaseInspector(box,
+                                   testCaseListProperty.GetArrayElementAtIndex(i),
+                                   testCaseListProperty.propertyPath,
+                                   i);
+        }
+
+        box.Add(CreateHeaderButton("테스트 케이스 추가", AddTestCase));
+    }
+
+    private void BuildTestCaseInspector(VisualElement parent,
+                                        SerializedProperty testCaseProperty,
+                                        string testCaseListPath,
+                                        int testCaseIndex)
+    {
+        VisualElement box = CreateNestedBox();
+        parent.Add(box);
+
+        SerializedProperty nameProperty = testCaseProperty.FindPropertyRelative("_name");
+        string title = string.IsNullOrEmpty(nameProperty.stringValue) ?
+            $"테스트 {testCaseIndex + 1}" :
+            nameProperty.stringValue;
+
+        box.Add(CreateSectionTitle(title));
+        AddStringField(box, "이름", nameProperty.propertyPath);
+        AddIntegerField(box, "최대 라운드", testCaseProperty.FindPropertyRelative("_maxRoundCount").propertyPath);
+        AddEnumField<ESimulationEndState>(box, "예상 결과", testCaseProperty.FindPropertyRelative("_expectedEndState").propertyPath);
+        BuildTestCaseEditControls(box, testCaseIndex);
+
+        SerializedProperty assignedConnectionListProperty = testCaseProperty.FindPropertyRelative("_assignedConnectionDataList");
+        box.Add(CreateSectionTitle("예약 연결"));
+
+        if (assignedConnectionListProperty.arraySize == 0)
+        {
+            box.Add(new Label("예약 연결이 없습니다. 모든 슬롯이 예약되어야 시뮬레이션이 정상 실행됩니다."));
+        }
+
+        for (int i = 0; i < assignedConnectionListProperty.arraySize; i++)
+        {
+            BuildAssignedConnectionInspector(box,
+                                             assignedConnectionListProperty.GetArrayElementAtIndex(i),
+                                             assignedConnectionListProperty.propertyPath,
+                                             i);
+        }
+
+        VisualElement buttonRow = CreateButtonRow();
+        buttonRow.Add(CreateHeaderButton("실행", () => RunTestCase(testCaseIndex)));
+        buttonRow.Add(CreateHeaderButton("제거", () => DeleteTestCase(testCaseListPath, testCaseIndex)));
+        box.Add(buttonRow);
+    }
+
+    private void BuildTestCaseEditControls(VisualElement parent, int testCaseIndex)
+    {
+        bool isActive = _activeTestCaseIndex == testCaseIndex;
+        VisualElement controlBox = CreateNestedBox();
+        parent.Add(controlBox);
+
+        Label guideLabel = new Label(isActive ?
+            GetActiveTestCaseGuideText() :
+            "편집 시작 후 보드에서 Process의 색 슬롯을 누르고 Resource를 클릭해 예약 연결을 만듭니다.");
+        guideLabel.style.whiteSpace = WhiteSpace.Normal;
+        guideLabel.style.color = new StyleColor(new Color(0.78f, 0.82f, 0.88f));
+        controlBox.Add(guideLabel);
+
+        if (isActive && _selectedTestProcessId >= 0 && _selectedTestSlotId >= 0)
+        {
+            controlBox.Add(new Label($"선택 슬롯: {GetProcessDisplayName(_selectedTestProcessId)} / 슬롯 {_selectedTestSlotId}"));
+        }
+
+        VisualElement buttonRow = CreateButtonRow();
+
+        if (isActive)
+        {
+            buttonRow.Add(CreateHeaderButton("편집 종료", DeactivateTestCaseEdit));
+            buttonRow.Add(CreateHeaderButton("슬롯 선택 해제", ClearSelectedTestSlot));
+        }
+        else
+        {
+            buttonRow.Add(CreateHeaderButton("편집 시작", () => ActivateTestCaseEdit(testCaseIndex)));
+        }
+
+        controlBox.Add(buttonRow);
+    }
+
+    private string GetActiveTestCaseGuideText()
+    {
+        if (!string.IsNullOrEmpty(_testCaseEditMessage))
+        {
+            return _testCaseEditMessage;
+        }
+
+        return "Process 색 슬롯을 클릭한 뒤 연결할 Resource를 클릭하세요. Resource를 선택하면 연결된 슬롯과 순서가 보드에 강조됩니다.";
+    }
+
+    private void BuildAssignedConnectionInspector(VisualElement parent,
+                                                  SerializedProperty assignedConnectionProperty,
+                                                  string assignedConnectionListPath,
+                                                  int assignedConnectionIndex)
+    {
+        VisualElement box = CreateNestedBox();
+        parent.Add(box);
+
+        int processId = assignedConnectionProperty.FindPropertyRelative("_processId").intValue;
+        int slotId = assignedConnectionProperty.FindPropertyRelative("_slotId").intValue;
+        int resourceId = assignedConnectionProperty.FindPropertyRelative("_resourceId").intValue;
+        int order = GetAssignmentOrder(processId, slotId);
+
+        Label label = new Label(order > 0 ?
+            $"#{order}  {CreateConnectionLabel(processId, slotId, resourceId)}" :
+            CreateConnectionLabel(processId, slotId, resourceId));
+        label.style.whiteSpace = WhiteSpace.Normal;
+        box.Add(label);
+        box.Add(CreateHeaderButton("연결 제거", () => DeleteArrayElement(assignedConnectionListPath, assignedConnectionIndex)));
     }
 
     private void BuildRelayDraftPanel(VisualElement parent)
@@ -1578,6 +2086,11 @@ public sealed class LevelEditorWindow : EditorWindow
                (firstA == secondB && secondA == firstB);
     }
 
+    private string GetProcessDisplayName(int processId)
+    {
+        return $"Process {processId}";
+    }
+
     private string GetResourceDisplayName(int resourceId)
     {
         return $"Resource {resourceId}";
@@ -1627,6 +2140,22 @@ public sealed class LevelEditorWindow : EditorWindow
         IntegerField field = new IntegerField(label);
         field.SetValueWithoutNotify(property.intValue);
         field.RegisterValueChangedCallback(changeEvent => SetIntProperty(propertyPath, changeEvent.newValue));
+        field.style.marginBottom = 4f;
+        parent.Add(field);
+    }
+
+    private void AddStringField(VisualElement parent, string label, string propertyPath)
+    {
+        SerializedProperty property = _serializedObject.FindProperty(propertyPath);
+
+        if (property == null)
+        {
+            return;
+        }
+
+        TextField field = new TextField(label);
+        field.SetValueWithoutNotify(property.stringValue);
+        field.RegisterValueChangedCallback(changeEvent => SetStringProperty(propertyPath, changeEvent.newValue));
         field.style.marginBottom = 4f;
         parent.Add(field);
     }
@@ -1869,6 +2398,89 @@ public sealed class LevelEditorWindow : EditorWindow
         }
     }
 
+    internal void SelectProcessSlotForTestCaseFromGraph(int processIndex, int slotId)
+    {
+        if (_levelSO == null)
+        {
+            return;
+        }
+
+        if (processIndex < 0 || processIndex >= _levelSO.ProcessDataList.Count)
+        {
+            return;
+        }
+
+        LevelProcessData processData = _levelSO.ProcessDataList[processIndex];
+
+        if (processData == null)
+        {
+            return;
+        }
+
+        _selectedRow = processData.Row;
+        _selectedColumn = processData.Column;
+        _selectedRelayIndex = -1;
+
+        if (!IsTestCaseEditActive)
+        {
+            _testCaseEditMessage = "테스트 케이스 편집을 먼저 시작해 주세요.";
+            RefreshAll();
+            return;
+        }
+
+        if (!TryGetSlotData(processData, slotId, out LevelProcessSlotData slotData))
+        {
+            _testCaseEditMessage = "선택한 슬롯 데이터를 찾을 수 없습니다.";
+            RefreshAll();
+            return;
+        }
+
+        _selectedTestProcessId = processData.Id;
+        _selectedTestSlotId = slotData.Id;
+        _testCaseEditMessage = $"{GetProcessDisplayName(processData.Id)} 슬롯 {slotData.Id} 선택됨. 연결할 Resource를 클릭하세요.";
+        RefreshAll();
+    }
+
+    internal void SelectResourceForTestAssignmentFromGraph(int resourceIndex)
+    {
+        if (_levelSO == null)
+        {
+            return;
+        }
+
+        if (resourceIndex < 0 || resourceIndex >= _levelSO.ResourceDataList.Count)
+        {
+            return;
+        }
+
+        LevelResourceData resourceData = _levelSO.ResourceDataList[resourceIndex];
+
+        if (resourceData == null)
+        {
+            return;
+        }
+
+        _selectedRow = resourceData.Row;
+        _selectedColumn = resourceData.Column;
+        _selectedRelayIndex = -1;
+
+        if (!IsTestCaseEditActive)
+        {
+            RefreshAll();
+            return;
+        }
+
+        if (_selectedTestProcessId < 0 || _selectedTestSlotId < 0)
+        {
+            _testCaseEditMessage = "먼저 보드의 Process 색 슬롯을 클릭한 뒤 Resource를 선택하세요.";
+            RefreshAll();
+            return;
+        }
+
+        _testCaseEditMessage = $"{CreateConnectionLabel(_selectedTestProcessId, _selectedTestSlotId, resourceData.Id)} 연결됨.";
+        UpsertTestAssignment(_activeTestCaseIndex, _selectedTestProcessId, _selectedTestSlotId, resourceData.Id);
+    }
+
     internal void SelectNodeForRelayFromGraph(ELevelEditorNodeKind nodeKind, int dataIndex)
     {
         if (_levelSO == null)
@@ -2006,16 +2618,26 @@ public sealed class LevelEditorWindow : EditorWindow
         }
 
         SerializedProperty nodeProperty = listProperty.GetArrayElementAtIndex(dataIndex);
+        int oldProcessId = nodeKind == ELevelEditorNodeKind.Process ?
+            nodeProperty.FindPropertyRelative("_id").intValue :
+            -1;
         int oldResourceId = nodeKind == ELevelEditorNodeKind.Resource ?
             nodeProperty.FindPropertyRelative("_id").intValue :
             -1;
 
         WriteNodePosition(nodeProperty, row, column);
 
+        if (nodeKind == ELevelEditorNodeKind.Process)
+        {
+            int newProcessId = nodeProperty.FindPropertyRelative("_id").intValue;
+            UpdateTestCaseProcessReferences(oldProcessId, newProcessId);
+        }
+
         if (nodeKind == ELevelEditorNodeKind.Resource)
         {
             int newResourceId = nodeProperty.FindPropertyRelative("_id").intValue;
             UpdateRelayResourceReferences(oldResourceId, newResourceId);
+            UpdateTestCaseResourceReferences(oldResourceId, newResourceId);
         }
 
         ApplyGraphEdit(row, column);
@@ -2228,9 +2850,9 @@ public sealed class LevelEditorWindow : EditorWindow
             for (int i = 0; i < relayListProperty.arraySize; i++)
             {
                 SerializedProperty relayProperty = relayListProperty.GetArrayElementAtIndex(i);
-                ReplaceResourceId(relayProperty.FindPropertyRelative("_firstResourceId"), oldResourceId, newResourceId);
-                ReplaceResourceId(relayProperty.FindPropertyRelative("_secondResourceId"), oldResourceId, newResourceId);
-                ReplaceResourceId(relayProperty.FindPropertyRelative("_senderResourceId"), oldResourceId, newResourceId);
+                ReplaceIntId(relayProperty.FindPropertyRelative("_firstResourceId"), oldResourceId, newResourceId);
+                ReplaceIntId(relayProperty.FindPropertyRelative("_secondResourceId"), oldResourceId, newResourceId);
+                ReplaceIntId(relayProperty.FindPropertyRelative("_senderResourceId"), oldResourceId, newResourceId);
             }
         }
 
@@ -2250,11 +2872,53 @@ public sealed class LevelEditorWindow : EditorWindow
         }
     }
 
-    private void ReplaceResourceId(SerializedProperty property, int oldResourceId, int newResourceId)
+    private void UpdateTestCaseProcessReferences(int oldProcessId, int newProcessId)
     {
-        if (property != null && property.intValue == oldResourceId)
+        if (oldProcessId == newProcessId)
         {
-            property.intValue = newResourceId;
+            return;
+        }
+
+        UpdateAssignedConnectionReferences("_processId", oldProcessId, newProcessId);
+    }
+
+    private void UpdateTestCaseResourceReferences(int oldResourceId, int newResourceId)
+    {
+        if (oldResourceId == newResourceId)
+        {
+            return;
+        }
+
+        UpdateAssignedConnectionReferences("_resourceId", oldResourceId, newResourceId);
+    }
+
+    private void UpdateAssignedConnectionReferences(string propertyName, int oldId, int newId)
+    {
+        SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
+
+        if (testCaseListProperty == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < testCaseListProperty.arraySize; i++)
+        {
+            SerializedProperty testCaseProperty = testCaseListProperty.GetArrayElementAtIndex(i);
+            SerializedProperty assignedConnectionListProperty = testCaseProperty.FindPropertyRelative("_assignedConnectionDataList");
+
+            for (int j = 0; j < assignedConnectionListProperty.arraySize; j++)
+            {
+                SerializedProperty assignedConnectionProperty = assignedConnectionListProperty.GetArrayElementAtIndex(j);
+                ReplaceIntId(assignedConnectionProperty.FindPropertyRelative(propertyName), oldId, newId);
+            }
+        }
+    }
+
+    private void ReplaceIntId(SerializedProperty property, int oldId, int newId)
+    {
+        if (property != null && property.intValue == oldId)
+        {
+            property.intValue = newId;
         }
     }
 
@@ -2428,6 +3092,107 @@ public sealed class LevelEditorWindow : EditorWindow
         EndEdit();
     }
 
+    private void AddTestCase()
+    {
+        BeginEdit("Add Test Case");
+        SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
+        int arrayIndex = testCaseListProperty.arraySize;
+        testCaseListProperty.InsertArrayElementAtIndex(arrayIndex);
+        WriteDefaultTestCase(testCaseListProperty.GetArrayElementAtIndex(arrayIndex), arrayIndex);
+        EndEdit();
+    }
+
+    private void ActivateTestCaseEdit(int testCaseIndex)
+    {
+        _activeTestCaseIndex = testCaseIndex;
+        _selectedTestProcessId = -1;
+        _selectedTestSlotId = -1;
+        _testCaseEditMessage = "Process 색 슬롯을 클릭한 뒤 연결할 Resource를 클릭하세요.";
+        RefreshAll();
+    }
+
+    private void DeactivateTestCaseEdit()
+    {
+        _activeTestCaseIndex = -1;
+        _selectedTestProcessId = -1;
+        _selectedTestSlotId = -1;
+        _testCaseEditMessage = string.Empty;
+        RefreshAll();
+    }
+
+    private void ClearSelectedTestSlot()
+    {
+        _selectedTestProcessId = -1;
+        _selectedTestSlotId = -1;
+        _testCaseEditMessage = "Process 색 슬롯 선택이 해제되었습니다.";
+        RefreshAll();
+    }
+
+    private void DeleteTestCase(string testCaseListPath, int testCaseIndex)
+    {
+        if (_activeTestCaseIndex == testCaseIndex)
+        {
+            _activeTestCaseIndex = -1;
+            _selectedTestProcessId = -1;
+            _selectedTestSlotId = -1;
+            _testCaseEditMessage = string.Empty;
+        }
+        else if (_activeTestCaseIndex > testCaseIndex)
+        {
+            _activeTestCaseIndex--;
+        }
+
+        DeleteArrayElement(testCaseListPath, testCaseIndex);
+    }
+
+    private void UpsertTestAssignment(int testCaseIndex, int processId, int slotId, int resourceId)
+    {
+        if (_serializedObject == null)
+        {
+            return;
+        }
+
+        BeginEdit("Edit Test Assignment");
+        SerializedProperty testCaseProperty = FindTestCaseProperty(testCaseIndex);
+
+        if (testCaseProperty == null)
+        {
+            EndEdit();
+            return;
+        }
+
+        SerializedProperty assignedConnectionListProperty = testCaseProperty.FindPropertyRelative("_assignedConnectionDataList");
+
+        for (int i = 0; i < assignedConnectionListProperty.arraySize; i++)
+        {
+            SerializedProperty assignedConnectionProperty = assignedConnectionListProperty.GetArrayElementAtIndex(i);
+
+            if (assignedConnectionProperty.FindPropertyRelative("_processId").intValue == processId &&
+                assignedConnectionProperty.FindPropertyRelative("_slotId").intValue == slotId)
+            {
+                assignedConnectionProperty.FindPropertyRelative("_resourceId").intValue = resourceId;
+                EndEdit();
+                return;
+            }
+        }
+
+        int arrayIndex = assignedConnectionListProperty.arraySize;
+        assignedConnectionListProperty.InsertArrayElementAtIndex(arrayIndex);
+        SerializedProperty newAssignedConnectionProperty = assignedConnectionListProperty.GetArrayElementAtIndex(arrayIndex);
+        newAssignedConnectionProperty.FindPropertyRelative("_processId").intValue = processId;
+        newAssignedConnectionProperty.FindPropertyRelative("_slotId").intValue = slotId;
+        newAssignedConnectionProperty.FindPropertyRelative("_resourceId").intValue = resourceId;
+        EndEdit();
+    }
+
+    private void WriteDefaultTestCase(SerializedProperty testCaseProperty, int index)
+    {
+        testCaseProperty.FindPropertyRelative("_name").stringValue = $"Test {index + 1}";
+        testCaseProperty.FindPropertyRelative("_maxRoundCount").intValue = 20;
+        testCaseProperty.FindPropertyRelative("_expectedEndState").enumValueIndex = (int)ESimulationEndState.Succeeded;
+        testCaseProperty.FindPropertyRelative("_assignedConnectionDataList").ClearArray();
+    }
+
     private void WriteDefaultRule(SerializedProperty ruleProperty)
     {
         ruleProperty.FindPropertyRelative("_ruleType").enumValueIndex = (int)ELevelResourceRuleType.Basic;
@@ -2481,6 +3246,19 @@ public sealed class LevelEditorWindow : EditorWindow
         EndEdit();
     }
 
+    private void SetStringProperty(string propertyPath, string value)
+    {
+        BeginEdit("Edit Level");
+        SerializedProperty property = _serializedObject.FindProperty(propertyPath);
+
+        if (property != null)
+        {
+            property.stringValue = value ?? string.Empty;
+        }
+
+        EndEdit();
+    }
+
     private void SetNodePositionProperty(string nodePropertyPath, string positionPropertyName, int value)
     {
         BeginEdit("Edit Node Position");
@@ -2488,7 +3266,9 @@ public sealed class LevelEditorWindow : EditorWindow
 
         if (nodeProperty != null)
         {
+            bool isProcessNode = nodePropertyPath.StartsWith("_processDataList", StringComparison.Ordinal);
             bool isResourceNode = nodePropertyPath.StartsWith("_resourceDataList", StringComparison.Ordinal);
+            int oldProcessId = isProcessNode ? nodeProperty.FindPropertyRelative("_id").intValue : -1;
             int oldResourceId = isResourceNode ? nodeProperty.FindPropertyRelative("_id").intValue : -1;
 
             nodeProperty.FindPropertyRelative(positionPropertyName).intValue = value;
@@ -2497,10 +3277,17 @@ public sealed class LevelEditorWindow : EditorWindow
             int column = nodeProperty.FindPropertyRelative("_column").intValue;
             nodeProperty.FindPropertyRelative("_id").intValue = GetDefaultNodeId(row, column);
 
+            if (isProcessNode)
+            {
+                int newProcessId = nodeProperty.FindPropertyRelative("_id").intValue;
+                UpdateTestCaseProcessReferences(oldProcessId, newProcessId);
+            }
+
             if (isResourceNode)
             {
                 int newResourceId = nodeProperty.FindPropertyRelative("_id").intValue;
                 UpdateRelayResourceReferences(oldResourceId, newResourceId);
+                UpdateTestCaseResourceReferences(oldResourceId, newResourceId);
             }
         }
 
@@ -2542,7 +3329,17 @@ public sealed class LevelEditorWindow : EditorWindow
         _serializedObject.ApplyModifiedProperties();
         EditorUtility.SetDirty(_levelSO);
         _finalValidationText = string.Empty;
+        ClearTestRunState();
         RefreshAll();
+    }
+
+    private void ClearTestRunState()
+    {
+        _testRunText = string.Empty;
+        _lastTestSimulationReport = null;
+        _lastTestConnectionRunDataList.Clear();
+        _lastRunTestCaseIndex = -1;
+        _selectedTestRoundIndex = -1;
     }
 
     private void CreateNewLevel()
@@ -2601,6 +3398,282 @@ public sealed class LevelEditorWindow : EditorWindow
         RefreshValidationLog();
     }
 
+    private void RunTestCase(int testCaseIndex)
+    {
+        if (_levelSO == null || _serializedObject == null)
+        {
+            ClearTestRunState();
+            _testRunText = "테스트 실행 실패: LevelSO가 선택되지 않았습니다.";
+            RefreshAll();
+            return;
+        }
+
+        _serializedObject.Update();
+        SerializedProperty testCaseProperty = FindTestCaseProperty(testCaseIndex);
+
+        if (testCaseProperty == null)
+        {
+            ClearTestRunState();
+            _testRunText = $"테스트 실행 실패: 테스트 케이스 {testCaseIndex}를 찾을 수 없습니다.";
+            RefreshAll();
+            return;
+        }
+
+        LevelSOMapper mapper = new LevelSOMapper();
+        LevelDefinitionValidator validator = new LevelDefinitionValidator();
+        LevelDefinition definition = mapper.ToLevelDefinition(_levelSO);
+        LevelValidationResult validationResult = validator.Validate(definition);
+
+        if (!validationResult.IsValid)
+        {
+            ClearTestRunState();
+            _testRunText = BuildValidationFailureText(validationResult);
+            RefreshAll();
+            return;
+        }
+
+        LevelBoardFactory factory = new LevelBoardFactory();
+        Board board = factory.CreateBoard(definition);
+        Dictionary<int, string> connectionLabelByIdDict = new Dictionary<int, string>();
+        List<LevelTestConnectionRunData> connectionRunDataList = new List<LevelTestConnectionRunData>();
+        List<string> lineList = new List<string>();
+
+        string testName = testCaseProperty.FindPropertyRelative("_name").stringValue;
+        int maxRoundCount = testCaseProperty.FindPropertyRelative("_maxRoundCount").intValue;
+        ESimulationEndState expectedEndState = (ESimulationEndState)testCaseProperty.FindPropertyRelative("_expectedEndState").enumValueIndex;
+        SerializedProperty assignedConnectionListProperty = testCaseProperty.FindPropertyRelative("_assignedConnectionDataList");
+
+        lineList.Add($"테스트: {GetTestCaseDisplayName(testName, testCaseIndex)}");
+        lineList.Add($"예약 연결 수: {assignedConnectionListProperty.arraySize}");
+
+        bool hasAssignFailure = AssignTestConnections(board,
+                                                       assignedConnectionListProperty,
+                                                       connectionLabelByIdDict,
+                                                       connectionRunDataList,
+                                                       lineList);
+
+        if (hasAssignFailure)
+        {
+            ClearTestRunState();
+            _testRunText = string.Join("\n", lineList);
+            RefreshAll();
+            return;
+        }
+
+        SimulationReport report = board.RunSimulation(maxRoundCount);
+        bool passed = report.EndState == expectedEndState;
+
+        lineList.Add($"결과: {report.EndState} / 예상: {expectedEndState} / {(passed ? "통과" : "실패")}");
+        lineList.Add($"완료 Process: {FormatIdArray(report.CompletedProcessIdList)}");
+        lineList.Add($"차단 Connection: {FormatConnectionIdArray(report.BlockedConnectionIdList, connectionLabelByIdDict)}");
+        AddRoundResultLines(lineList, report, connectionLabelByIdDict);
+
+        SetTestRunState(testCaseIndex, report, connectionRunDataList);
+        _testRunText = string.Join("\n", lineList);
+        RefreshAll();
+    }
+
+    private bool AssignTestConnections(Board board,
+                                       SerializedProperty assignedConnectionListProperty,
+                                       Dictionary<int, string> connectionLabelByIdDict,
+                                       List<LevelTestConnectionRunData> connectionRunDataList,
+                                       List<string> lineList)
+    {
+        bool hasAssignFailure = false;
+
+        for (int i = 0; i < assignedConnectionListProperty.arraySize; i++)
+        {
+            SerializedProperty assignedConnectionProperty = assignedConnectionListProperty.GetArrayElementAtIndex(i);
+            int processId = assignedConnectionProperty.FindPropertyRelative("_processId").intValue;
+            int slotId = assignedConnectionProperty.FindPropertyRelative("_slotId").intValue;
+            int resourceId = assignedConnectionProperty.FindPropertyRelative("_resourceId").intValue;
+            string label = CreateConnectionLabel(processId, slotId, resourceId);
+
+            AssignConnectionResult result = board.AssignConnection(processId, slotId, resourceId);
+
+            if (result.Success)
+            {
+                connectionLabelByIdDict[result.ConnectionId] = label;
+                connectionRunDataList.Add(new LevelTestConnectionRunData(result.ConnectionId,
+                                                                         processId,
+                                                                         slotId,
+                                                                         resourceId));
+                lineList.Add($"예약 성공: C{result.ConnectionId} {label}");
+                continue;
+            }
+
+            hasAssignFailure = true;
+            lineList.Add($"예약 실패: {label} / {result.Error}");
+        }
+
+        return hasAssignFailure;
+    }
+
+    private void SetTestRunState(int testCaseIndex,
+                                 SimulationReport report,
+                                 IReadOnlyList<LevelTestConnectionRunData> connectionRunDataList)
+    {
+        _lastRunTestCaseIndex = testCaseIndex;
+        _lastTestSimulationReport = report;
+        _lastTestConnectionRunDataList.Clear();
+
+        for (int i = 0; i < connectionRunDataList.Count; i++)
+        {
+            _lastTestConnectionRunDataList.Add(connectionRunDataList[i]);
+        }
+
+        _selectedTestRoundIndex = report.RoundResultList.Length > 0 ? 0 : -1;
+    }
+
+    private void AddRoundResultLines(List<string> lineList,
+                                     SimulationReport report,
+                                     Dictionary<int, string> connectionLabelByIdDict)
+    {
+        if (report.RoundResultList.Length == 0)
+        {
+            lineList.Add("라운드 결과 없음.");
+            return;
+        }
+
+        for (int i = 0; i < report.RoundResultList.Length; i++)
+        {
+            RoundResult roundResult = report.RoundResultList[i];
+            lineList.Add($"라운드 {roundResult.RoundIndex + 1}");
+
+            bool hasAnyLine = false;
+            hasAnyLine |= AddConnectionListLine(lineList, "점유", roundResult.OccupiedConnectionIdList, connectionLabelByIdDict);
+            hasAnyLine |= AddConnectionListLine(lineList, "대기", roundResult.WaitingConnectionIdList, connectionLabelByIdDict);
+            hasAnyLine |= AddConnectionListLine(lineList, "재투입", roundResult.RequeuedConnectionIdList, connectionLabelByIdDict);
+            hasAnyLine |= AddIdListLine(lineList, "완료 Process", roundResult.CompletedProcessIdList);
+            hasAnyLine |= AddConnectionListLine(lineList, "반환", roundResult.ReleasedConnectionIdList, connectionLabelByIdDict);
+            hasAnyLine |= AddIdListLine(lineList, "실패 Process", roundResult.FailedProcessIdList);
+            hasAnyLine |= AddConnectionListLine(lineList, "차단", roundResult.BlockedConnectionIdList, connectionLabelByIdDict);
+
+            if (!hasAnyLine)
+            {
+                lineList.Add("- 변화 없음");
+            }
+        }
+    }
+
+    private bool AddConnectionListLine(List<string> lineList,
+                                       string label,
+                                       IReadOnlyList<int> connectionIdList,
+                                       Dictionary<int, string> connectionLabelByIdDict)
+    {
+        if (connectionIdList.Count == 0)
+        {
+            return false;
+        }
+
+        lineList.Add($"- {label}: {FormatConnectionIdList(connectionIdList, connectionLabelByIdDict)}");
+        return true;
+    }
+
+    private bool AddIdListLine(List<string> lineList, string label, IReadOnlyList<int> idList)
+    {
+        if (idList.Count == 0)
+        {
+            return false;
+        }
+
+        lineList.Add($"- {label}: {FormatIdList(idList)}");
+        return true;
+    }
+
+    private string BuildValidationFailureText(LevelValidationResult validationResult)
+    {
+        List<string> lineList = new List<string>
+        {
+            "테스트 실행 실패: 최종 검증 오류가 있습니다.",
+        };
+
+        for (int i = 0; i < validationResult.ErrorList.Length; i++)
+        {
+            lineList.Add("- " + validationResult.ErrorList[i].Message);
+        }
+
+        return string.Join("\n", lineList);
+    }
+
+    private SerializedProperty FindTestCaseProperty(int testCaseIndex)
+    {
+        SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
+
+        if (testCaseListProperty == null ||
+            testCaseIndex < 0 ||
+            testCaseIndex >= testCaseListProperty.arraySize)
+        {
+            return null;
+        }
+
+        return testCaseListProperty.GetArrayElementAtIndex(testCaseIndex);
+    }
+
+    private string GetTestCaseDisplayName(string testName, int testCaseIndex)
+    {
+        return string.IsNullOrEmpty(testName) ? $"Test {testCaseIndex + 1}" : testName;
+    }
+
+    private string CreateConnectionLabel(int processId, int slotId, int resourceId)
+    {
+        return $"P{processId}:S{slotId} -> R{resourceId}";
+    }
+
+    private string FormatConnectionIdArray(int[] connectionIdArray, Dictionary<int, string> connectionLabelByIdDict)
+    {
+        return FormatConnectionIdList(connectionIdArray, connectionLabelByIdDict);
+    }
+
+    private string FormatConnectionIdList(IReadOnlyList<int> connectionIdList,
+                                          Dictionary<int, string> connectionLabelByIdDict)
+    {
+        if (connectionIdList.Count == 0)
+        {
+            return "없음";
+        }
+
+        List<string> labelList = new List<string>();
+
+        for (int i = 0; i < connectionIdList.Count; i++)
+        {
+            int connectionId = connectionIdList[i];
+
+            if (connectionLabelByIdDict.TryGetValue(connectionId, out string label))
+            {
+                labelList.Add($"C{connectionId} {label}");
+            }
+            else
+            {
+                labelList.Add($"C{connectionId}");
+            }
+        }
+
+        return string.Join(", ", labelList);
+    }
+
+    private string FormatIdArray(int[] idArray)
+    {
+        return FormatIdList(idArray);
+    }
+
+    private string FormatIdList(IReadOnlyList<int> idList)
+    {
+        if (idList.Count == 0)
+        {
+            return "없음";
+        }
+
+        List<string> labelList = new List<string>();
+
+        for (int i = 0; i < idList.Count; i++)
+        {
+            labelList.Add(idList[i].ToString());
+        }
+
+        return string.Join(", ", labelList);
+    }
+
     private void ReloadColors()
     {
         _colorMap.Reload();
@@ -2633,6 +3706,72 @@ public sealed class LevelEditorWindow : EditorWindow
             _validationContainer.Add(CreateSectionTitle("최종 검증"));
             _validationContainer.Add(new Label(_finalValidationText));
         }
+
+        if (!string.IsNullOrEmpty(_testRunText))
+        {
+            _validationContainer.Add(CreateSectionTitle("테스트 실행"));
+            BuildRoundVisualizationControls();
+            Label testRunLabel = new Label(_testRunText);
+            testRunLabel.style.whiteSpace = WhiteSpace.Normal;
+            _validationContainer.Add(testRunLabel);
+        }
+    }
+
+    private void BuildRoundVisualizationControls()
+    {
+        if (_lastTestSimulationReport == null || _lastTestSimulationReport.RoundResultList.Length == 0)
+        {
+            return;
+        }
+
+        VisualElement box = CreateNestedBox();
+        _validationContainer.Add(box);
+
+        Label titleLabel = new Label("라운드 보드 표시");
+        titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        box.Add(titleLabel);
+
+        VisualElement controlRow = CreateButtonRow();
+        Button previousButton = CreateHeaderButton("이전", () => SetSelectedTestRoundIndex(_selectedTestRoundIndex - 1));
+        previousButton.SetEnabled(_selectedTestRoundIndex > 0);
+        controlRow.Add(previousButton);
+
+        IntegerField roundField = new IntegerField("라운드");
+        roundField.SetValueWithoutNotify(_selectedTestRoundIndex + 1);
+        roundField.style.width = 120f;
+        roundField.RegisterValueChangedCallback(changeEvent =>
+        {
+            SetSelectedTestRoundIndex(changeEvent.newValue - 1);
+        });
+        controlRow.Add(roundField);
+
+        Button nextButton = CreateHeaderButton("다음", () => SetSelectedTestRoundIndex(_selectedTestRoundIndex + 1));
+        nextButton.SetEnabled(_selectedTestRoundIndex < _lastTestSimulationReport.RoundResultList.Length - 1);
+        controlRow.Add(nextButton);
+
+        Label countLabel = new Label($"/ {_lastTestSimulationReport.RoundResultList.Length}");
+        countLabel.style.alignSelf = Align.Center;
+        countLabel.style.marginLeft = 4f;
+        controlRow.Add(countLabel);
+        box.Add(controlRow);
+
+        Label legendLabel = new Label("색상: 미출발=숨김, 점유=초록, waiting=노랑, 차단=빨강, 완료 Process=반투명");
+        legendLabel.style.color = new StyleColor(new Color(0.78f, 0.82f, 0.88f));
+        legendLabel.style.whiteSpace = WhiteSpace.Normal;
+        box.Add(legendLabel);
+    }
+
+    private void SetSelectedTestRoundIndex(int roundIndex)
+    {
+        if (_lastTestSimulationReport == null || _lastTestSimulationReport.RoundResultList.Length == 0)
+        {
+            _selectedTestRoundIndex = -1;
+            RefreshAll();
+            return;
+        }
+
+        _selectedTestRoundIndex = Mathf.Clamp(roundIndex, 0, _lastTestSimulationReport.RoundResultList.Length - 1);
+        RefreshAll();
     }
 
     private LevelProcessData FindProcessData(int row, int column)
@@ -2657,6 +3796,29 @@ public sealed class LevelEditorWindow : EditorWindow
         return null;
     }
 
+    private bool TryGetProcessDataById(int processId, out LevelProcessData processData)
+    {
+        processData = null;
+
+        if (_levelSO == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _levelSO.ProcessDataList.Count; i++)
+        {
+            LevelProcessData currentProcessData = _levelSO.ProcessDataList[i];
+
+            if (currentProcessData != null && currentProcessData.Id == processId)
+            {
+                processData = currentProcessData;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private LevelResourceData FindResourceData(int row, int column)
     {
         if (_levelSO == null)
@@ -2677,6 +3839,52 @@ public sealed class LevelEditorWindow : EditorWindow
         }
 
         return null;
+    }
+
+    private bool TryGetResourceDataById(int resourceId, out LevelResourceData resourceData)
+    {
+        resourceData = null;
+
+        if (_levelSO == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _levelSO.ResourceDataList.Count; i++)
+        {
+            LevelResourceData currentResourceData = _levelSO.ResourceDataList[i];
+
+            if (currentResourceData != null && currentResourceData.Id == resourceId)
+            {
+                resourceData = currentResourceData;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetSlotData(LevelProcessData processData, int slotId, out LevelProcessSlotData slotData)
+    {
+        slotData = null;
+
+        if (processData == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < processData.SlotDataList.Count; i++)
+        {
+            LevelProcessSlotData currentSlotData = processData.SlotDataList[i];
+
+            if (currentSlotData != null && currentSlotData.Id == slotId)
+            {
+                slotData = currentSlotData;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private SerializedProperty FindProcessProperty(int row, int column, out int processIndex)

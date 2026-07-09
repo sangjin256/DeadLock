@@ -17,6 +17,7 @@ internal sealed class LevelBoardGraphView : GraphView
     private static readonly Color SimultaneousBadgeColor = new Color(0.38f, 0.54f, 0.25f);
     private static readonly Color RelayLinkBadgeColor = new Color(0.44f, 0.32f, 0.64f);
     private static readonly Color RelayTransferBadgeColor = new Color(0.70f, 0.28f, 0.34f);
+    private static readonly Color AssignmentBadgeColor = new Color(0.18f, 0.58f, 0.62f);
 
     private readonly LevelEditorWindow _window;
     private readonly LevelEditorColorMap _colorMap;
@@ -24,6 +25,7 @@ internal sealed class LevelBoardGraphView : GraphView
     private LevelSO _levelSO;
     private LevelBoardBoundsElement _boundsElement;
     private LevelRelayLineElement _relayLineElement;
+    private LevelAssignmentLineElement _assignmentLineElement;
     private LevelBoardNodeView _draggingNodeView;
     private Vector2 _dragStartMousePosition;
     private Vector2 _dragStartNodePosition;
@@ -66,11 +68,14 @@ internal sealed class LevelBoardGraphView : GraphView
         _boundsElement = null;
         _relayLineElement?.RemoveFromHierarchy();
         _relayLineElement = null;
+        _assignmentLineElement?.RemoveFromHierarchy();
+        _assignmentLineElement = null;
 
         if (levelSO != null)
         {
             AddBoardBounds(levelSO);
             AddRelayLines(levelSO);
+            AddAssignmentLines(levelSO);
             AddProcessNodes(levelSO);
             AddResourceNodes(levelSO);
         }
@@ -101,7 +106,7 @@ internal sealed class LevelBoardGraphView : GraphView
         float width = CanvasPadding * 2f + levelSO.ColumnCount * GridUnit;
         float height = CanvasPadding * 2f + levelSO.RowCount * GridUnit;
         _relayLineElement = new LevelRelayLineElement(lineDataList, width, height);
-        contentViewContainer.Insert(1, _relayLineElement);
+        InsertContentLayer(_relayLineElement, 1);
     }
 
     private List<LevelRelayLineData> CreateRelayLineDataList(LevelSO levelSO)
@@ -158,6 +163,80 @@ internal sealed class LevelBoardGraphView : GraphView
         }
     }
 
+    private void RefreshConnectionLines()
+    {
+        _relayLineElement?.RemoveFromHierarchy();
+        _relayLineElement = null;
+        _assignmentLineElement?.RemoveFromHierarchy();
+        _assignmentLineElement = null;
+
+        if (_levelSO != null)
+        {
+            AddRelayLines(_levelSO);
+            AddAssignmentLines(_levelSO);
+        }
+    }
+
+    private void AddAssignmentLines(LevelSO levelSO)
+    {
+        List<LevelAssignmentLineData> lineDataList = CreateAssignmentLineDataList(levelSO);
+
+        if (lineDataList.Count == 0)
+        {
+            return;
+        }
+
+        float width = CanvasPadding * 2f + levelSO.ColumnCount * GridUnit;
+        float height = CanvasPadding * 2f + levelSO.RowCount * GridUnit;
+        _assignmentLineElement = new LevelAssignmentLineElement(lineDataList, width, height);
+        InsertContentLayer(_assignmentLineElement, 2);
+    }
+
+    private void InsertContentLayer(VisualElement element, int index)
+    {
+        int safeIndex = Mathf.Clamp(index, 0, contentViewContainer.childCount);
+        contentViewContainer.Insert(safeIndex, element);
+    }
+
+    private List<LevelAssignmentLineData> CreateAssignmentLineDataList(LevelSO levelSO)
+    {
+        Dictionary<int, Vector2> processCenterByIdDict = CreateProcessCenterByIdDict(levelSO);
+        Dictionary<int, Vector2> resourceCenterByIdDict = CreateResourceCenterByIdDict(levelSO);
+        IReadOnlyList<LevelTestAssignmentPreviewData> assignmentList = _window.GetActiveTestAssignmentPreviewList();
+        List<LevelAssignmentLineData> lineDataList = new List<LevelAssignmentLineData>();
+
+        for (int i = 0; i < assignmentList.Count; i++)
+        {
+            LevelTestAssignmentPreviewData assignment = assignmentList[i];
+
+            if (!processCenterByIdDict.TryGetValue(assignment.ProcessId, out Vector2 startPosition) ||
+                !resourceCenterByIdDict.TryGetValue(assignment.ResourceId, out Vector2 endPosition))
+            {
+                continue;
+            }
+
+            bool isFocused = _window.SelectedResourceId == assignment.ResourceId ||
+                             _window.IsSelectedTestSlot(assignment.ProcessId, assignment.SlotId);
+            bool isConnectionVisible = _window.IsConnectionVisibleBySelectedRound(assignment.ProcessId,
+                                                                                  assignment.SlotId,
+                                                                                  assignment.ResourceId);
+            bool isProcessCompleted = _window.IsProcessCompletedBySelectedRound(assignment.ProcessId);
+            ELevelTestConnectionVisualState visualState = _window.GetTestConnectionVisualState(assignment.ProcessId,
+                                                                                               assignment.SlotId,
+                                                                                               assignment.ResourceId);
+
+            lineDataList.Add(new LevelAssignmentLineData(startPosition,
+                                                         endPosition,
+                                                         assignment.Order,
+                                                         isFocused,
+                                                         isConnectionVisible,
+                                                         isProcessCompleted,
+                                                         visualState));
+        }
+
+        return lineDataList;
+    }
+
     private bool IsRelayConnectedToResource(LevelRelayData relayData, int resourceId)
     {
         return resourceId >= 0 &&
@@ -179,6 +258,23 @@ internal sealed class LevelBoardGraphView : GraphView
         }
 
         return resourceCenterByIdDict;
+    }
+
+    private Dictionary<int, Vector2> CreateProcessCenterByIdDict(LevelSO levelSO)
+    {
+        Dictionary<int, Vector2> processCenterByIdDict = new Dictionary<int, Vector2>();
+
+        for (int i = 0; i < levelSO.ProcessDataList.Count; i++)
+        {
+            LevelProcessData processData = levelSO.ProcessDataList[i];
+
+            if (processData != null)
+            {
+                processCenterByIdDict[processData.Id] = GetCellCenterPosition(processData.Row, processData.Column);
+            }
+        }
+
+        return processCenterByIdDict;
     }
 
     private bool TryGetRelayLinePositions(LevelRelayData relayData,
@@ -252,6 +348,7 @@ internal sealed class LevelBoardGraphView : GraphView
         for (int i = 0; i < levelSO.ProcessDataList.Count; i++)
         {
             LevelProcessData processData = levelSO.ProcessDataList[i];
+            int processIndex = i;
 
             if (processData == null)
             {
@@ -259,13 +356,14 @@ internal sealed class LevelBoardGraphView : GraphView
             }
 
             LevelBoardNodeView nodeView = new LevelBoardNodeView(ELevelEditorNodeKind.Process,
-                                                                 i,
+                                                                 processIndex,
                                                                  processData.Row,
                                                                  processData.Column,
-                                                                 _window.GetProcessColorIds(processData),
+                                                                 _window.GetProcessColorChips(processData),
                                                                  null,
                                                                  _window.HasProcessIssue(processData),
-                                                                 _colorMap);
+                                                                 _colorMap,
+                                                                 slotId => _window.SelectProcessSlotForTestCaseFromGraph(processIndex, slotId));
             AddNode(nodeView, processData.Row, processData.Column);
         }
     }
@@ -285,10 +383,11 @@ internal sealed class LevelBoardGraphView : GraphView
                                                                  i,
                                                                  resourceData.Row,
                                                                  resourceData.Column,
-                                                                 _window.GetResourceColorIds(resourceData),
+                                                                 _window.GetResourceColorChips(resourceData),
                                                                  GetResourceBadgeDataList(levelSO, resourceData),
                                                                  _window.HasResourceIssue(resourceData),
-                                                                 _colorMap);
+                                                                 _colorMap,
+                                                                 null);
             AddNode(nodeView, resourceData.Row, resourceData.Column);
         }
     }
@@ -298,6 +397,7 @@ internal sealed class LevelBoardGraphView : GraphView
         List<LevelResourceBadgeData> badgeDataList = new List<LevelResourceBadgeData>();
         AddRuleBadges(resourceData, badgeDataList);
         AddRelayBadges(levelSO, resourceData, badgeDataList);
+        AddAssignmentBadges(resourceData, badgeDataList);
         return badgeDataList;
     }
 
@@ -370,6 +470,43 @@ internal sealed class LevelBoardGraphView : GraphView
         }
     }
 
+    private void AddAssignmentBadges(LevelResourceData resourceData, List<LevelResourceBadgeData> badgeDataList)
+    {
+        if (!_window.IsTestCaseEditActive)
+        {
+            return;
+        }
+
+        IReadOnlyList<LevelTestAssignmentPreviewData> assignmentList = _window.GetActiveTestAssignmentPreviewList();
+        int assignmentCount = 0;
+
+        for (int i = 0; i < assignmentList.Count; i++)
+        {
+            LevelTestAssignmentPreviewData assignment = assignmentList[i];
+
+            if (assignment.ResourceId != resourceData.Id)
+            {
+                continue;
+            }
+
+            assignmentCount++;
+
+            if (_window.SelectedResourceId == resourceData.Id)
+            {
+                badgeDataList.Add(new LevelResourceBadgeData(assignment.Order.ToString(),
+                                                             $"테스트 예약 순서 {assignment.Order}: P{assignment.ProcessId}:S{assignment.SlotId}",
+                                                             AssignmentBadgeColor));
+            }
+        }
+
+        if (assignmentCount > 0 && _window.SelectedResourceId != resourceData.Id)
+        {
+            badgeDataList.Add(new LevelResourceBadgeData($"A{assignmentCount}",
+                                                         $"테스트 예약 {assignmentCount}개",
+                                                         AssignmentBadgeColor));
+        }
+    }
+
     private void AddNode(LevelBoardNodeView nodeView, int row, int column)
     {
         AddElement(nodeView);
@@ -402,9 +539,16 @@ internal sealed class LevelBoardGraphView : GraphView
             return;
         }
 
+        if (_window.IsTestCaseEditActive && nodeView.NodeKind == ELevelEditorNodeKind.Resource)
+        {
+            _window.SelectResourceForTestAssignmentFromGraph(nodeView.DataIndex);
+            mouseDownEvent.StopPropagation();
+            return;
+        }
+
         SelectNodeView(nodeView, mouseDownEvent.ctrlKey || mouseDownEvent.commandKey);
         _window.SelectNodeFromGraph(nodeView.NodeKind, nodeView.DataIndex);
-        RefreshRelayLines();
+        RefreshConnectionLines();
         BeginNodeDrag(nodeView, mouseDownEvent);
         mouseDownEvent.StopPropagation();
     }
@@ -530,7 +674,7 @@ internal sealed class LevelBoardGraphView : GraphView
         {
             nodeView.SetGridPoint(point.x, point.y);
             nodeView.SetPosition(new Rect(snappedPosition, position.size));
-            RefreshRelayLines();
+            RefreshConnectionLines();
         }
         else
         {
@@ -565,9 +709,16 @@ internal sealed class LevelBoardGraphView : GraphView
                 return;
             }
 
+            if (_window.IsTestCaseEditActive && clickedNodeView.NodeKind == ELevelEditorNodeKind.Resource)
+            {
+                _window.SelectResourceForTestAssignmentFromGraph(clickedNodeView.DataIndex);
+                mouseDownEvent.StopPropagation();
+                return;
+            }
+
             SelectNodeView(clickedNodeView, mouseDownEvent.ctrlKey || mouseDownEvent.commandKey);
             _window.SelectNodeFromGraph(clickedNodeView.NodeKind, clickedNodeView.DataIndex);
-            RefreshRelayLines();
+            RefreshConnectionLines();
             return;
         }
 
@@ -586,7 +737,7 @@ internal sealed class LevelBoardGraphView : GraphView
                 Vector2Int selectedPoint = GetMouseGridPoint(mouseDownEvent);
                 ClearNodeSelection();
                 _window.SelectGridPointFromGraph(selectedPoint.x, selectedPoint.y);
-                RefreshRelayLines();
+                RefreshConnectionLines();
                 mouseDownEvent.StopPropagation();
             }
 

@@ -70,25 +70,53 @@
 - Level Editor에 Relay Link/Transfer 편집 UI를 추가했다. Relay 추가 툴로 Resource 두 개를 순서대로 선택해 Link 또는 Transfer를 생성하고, Transfer Sender는 capacity 1 Resource만 선택할 수 있다.
 - Level Editor canvas에 Relay 선 시각화를 추가했다. Link는 보라색 무방향 선, Transfer는 Sender에서 Receiver로 향하는 붉은색 방향 선과 화살표로 표시하며, draft Relay와 선택 Relay는 강조 표시한다.
 - 기존 Relay는 Inspector의 Relay 편집 패널에서 타입 변경, Transfer Sender 변경, 삭제를 할 수 있다. endpoint 변경은 v1에서 삭제 후 재생성으로 처리한다.
+- Level Editor에 test case 편집과 자동 라운드 재생을 추가했다. test case는 이름, 최대 라운드 수, 예상 종료 상태, 예약 연결 목록을 저장하고, 실행 버튼은 `LevelSOMapper -> LevelDefinitionValidator -> LevelBoardFactory -> Board.AssignConnection() -> Board.RunSimulation()` 흐름으로 Domain 시뮬레이션을 실행한다.
+- Test case 실행 로그는 하단 검증 패널에 표시한다. 예약 성공/실패, 최종 상태와 예상 상태 비교, 완료 process, 차단 connection, 라운드별 점유/대기/재투입/완료/반환/실패/차단 목록을 확인할 수 있다.
+- Level Editor test case 예약 연결 UX를 보드 기반으로 바꿨다. test case 편집 시작 후 Process의 슬롯 color chip을 선택하고 Resource를 클릭해 예약 연결을 생성/교체하며, 숫자 ID 직접 입력은 노출하지 않는다.
+- Test case 편집 중 보드에는 예약 연결선, 슬롯별 예약 순서 번호, Resource별 예약 배지를 표시한다. Resource를 선택하면 해당 Resource에 연결된 Process 슬롯과 예약선이 강조되어 인게임 플레이 순서를 더 쉽게 확인할 수 있다.
+- Test case 실행 결과를 라운드별로 보드에서 확인할 수 있게 했다. 실행 후 하단 로그의 라운드 선택 컨트롤로 라운드를 바꾸면 선택 라운드까지 아직 시작되지 않은 connection은 숨기고, 점유는 초록, waiting은 노랑, 차단은 빨강으로 표시하며, 해당 라운드까지 완료된 Process의 연결선은 반투명하게 표시된다.
+- 다음 검증/제작 자동화 방향을 정했다. 최적 해 찾기와 난이도 평가는 Unity Editor 내부 서비스로 만들고, 자동 레벨 생성은 Codex/AI 스킬이 후보를 만들고 Unity solver가 검증하는 반복 루프로 분리한다.
+- 챕터 설계는 "현재 챕터의 신규 Rule은 필수, 이전 챕터 Rule은 선택적으로 재등장 가능"한 구조로 잡는다. 이를 위해 후속 작업에서 챕터별 필수/허용 Rule, 목표 난이도 범위, 목표 라운드 범위를 담는 `ChapterRuleProfile` 계열 정의가 필요하다.
 
 ## 다음 작업 순서
 
-1. Level Editor에 test case 편집과 자동 라운드 재생을 추가한다.
-    - test case는 예약 연결 목록, 예상 결과, 최대 라운드 수를 저장한다.
-    - 에디터는 test case를 적용해 `Board.AssignConnection()`과 `Board.RunSimulation()`을 자동 실행하고 round-by-round 결과를 보여준다.
-    - 난이도 지표는 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
+1. `LevelSolutionFinder`를 추가한다.
+    - `LevelSO -> LevelDefinition -> Board` 흐름을 사용해 가능한 예약 연결 조합을 탐색한다.
+    - 성공하는 조합 중 가장 적은 라운드로 클리어되는 해를 찾는다.
+    - 후보가 적은 slot부터 탐색하고, 색/예약 가능 여부 기반으로 후보를 줄이며, 탐색 노드 수와 시간 제한을 둔다.
+    - 결과에는 최적 라운드 수, 예약 연결 목록, 실패/중단 이유, 탐색 통계를 포함한다.
+    - Level Editor에 `최적 해 찾기`와 `최적 해로 테스트 케이스 생성` 버튼을 추가한다.
 
-2. Unity Test Framework 기반 테스트 구조를 준비한다.
+2. `LevelDifficultyAnalyzer`를 추가한다.
+    - 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
+    - 가능한 성공 해 개수, 후보 분기 수, Rule 복잡도, capacity 압박, 색 압박 같은 지표를 점진적으로 추가한다.
+    - 라운드별 보드 하이라이트 결과를 난이도 지표 요약과 연결한다.
+
+3. 챕터별 Rule profile을 설계한다.
+    - 각 챕터의 필수 Rule과 허용 Rule을 정의한다.
+    - 현재 챕터 신규 Rule은 모든 스테이지에 반드시 포함되도록 검증한다.
+    - 챕터별 목표 난이도 범위와 목표 최적 라운드 범위를 정의한다.
+
+4. Level Editor에 난이도/챕터 적합성 패널과 batch 실행 UI를 추가한다.
+    - 여러 test case 또는 여러 LevelSO를 한 번에 분석한다.
+    - 최적 라운드, 난이도 점수, 챕터 Rule 포함 여부, 경고를 요약 표시한다.
+
+5. Codex/AI 기반 레벨 생성 스킬을 설계한다.
+    - 입력 조건: 보드 크기, 챕터, 필수/허용 Rule, process 수, 색 수, 목표 난이도, 목표 최적 라운드.
+    - Codex 스킬이 후보 LevelSO/LevelDefinition을 만들고, Unity solver/analyzer가 검증한다.
+    - 조건 불만족 시 AI가 후보를 수정하는 반복 루프로 둔다.
+
+6. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
    - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-3. `LevelPlayManager`와 DTO를 작성한다.
+7. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-4. MVP UI와 Bootstrap을 연결한다.
+8. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-5. 저장/플랫폼/모바일 입력을 분리한다.
+9. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -105,10 +133,10 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - Composite Resource Rule 추가 뒤 Domain Unity 의존, 다중 rule 변환 경계, 단일 rule 잔존, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 도구 추가 뒤 Domain Unity 의존, Editor 폴더 위치, `LevelCreator` 타입 직접 참조, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 실행 뒤 생성 결과를 파일 기준으로 검수했다. 61개 source asset과 61개 migrated `LevelSO`를 비교했고 process/resource 수, 좌표, 색 ID, capacity, rule 설정이 일치했다. 리포트의 failed asset과 validation error는 없었다.
-- Level Editor Window v1/v1.5와 Relay 편집 UI 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit/Relay line 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
+- Level Editor Window v1/v1.5, Relay 편집 UI, test case 자동 라운드 재생, 보드 기반 test assignment 편집, 라운드별 보드 하이라이트 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit/Relay/assignment line 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 Level Editor에 test case 편집과 자동 라운드 재생을 추가하는 것이다. 이후 난이도 지표를 확장한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 `LevelSolutionFinder`를 추가해 Level Editor에서 최적 해를 찾고, 그 결과로 테스트 케이스를 자동 생성하는 것이다. 이 solver가 난이도 평가와 Codex/AI 기반 레벨 생성 검증 루프의 기반이 된다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 

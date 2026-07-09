@@ -47,7 +47,7 @@ Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하�
 
 `LevelSOMapper`는 Unity authoring 데이터인 `LevelSO`를 Domain 입력 모델인 `LevelDefinition`으로 변환만 한다. Mapper는 `LevelDefinitionValidator`를 직접 호출하지 않으며, EditorWindow, 마이그레이션 도구, Bootstrap 같은 호출자가 필요 시 `LevelSOMapper.ToLevelDefinition(levelSO)` 뒤 `LevelDefinitionValidator.Validate(definition)`를 실행한다.
 
-레벨 에디터는 uGUI가 아니라 UI Toolkit 기반 `EditorWindow`로 만든다. uGUI는 런타임 GameObject 기반 UI에 가깝고, 에디터 확장 UI는 UI Toolkit을 우선한다. 에디터는 `Tools/DeadLock/Levels/Level Editor` 메뉴로 열고, 좌측 `ColorId` 팔레트, 중앙 canvas, 우측 선택 항목 inspector, 하단 validation log 구조를 사용한다. Process는 실제 게임 시각 언어에 맞춰 원형 노드로, Resource는 사각 노드로 표시한다. test case 편집과 자동 라운드 재생은 후속 단계로 둔다.
+레벨 에디터는 uGUI가 아니라 UI Toolkit 기반 `EditorWindow`로 만든다. uGUI는 런타임 GameObject 기반 UI에 가깝고, 에디터 확장 UI는 UI Toolkit을 우선한다. 에디터는 `Tools/DeadLock/Levels/Level Editor` 메뉴로 열고, 좌측 `ColorId` 팔레트, 중앙 canvas, 우측 선택 항목 inspector, 하단 validation log 구조를 사용한다. Process는 실제 게임 시각 언어에 맞춰 원형 노드로, Resource는 사각 노드로 표시한다.
 
 중앙 canvas는 `UnityEditor.Experimental.GraphView` 기반으로 구성한다. 사용자는 행동 트리 편집기처럼 pan/zoom 가능한 공간에서 노드를 직접 끌어 배치할 수 있지만, 저장 데이터에는 임의 pixel 좌표를 남기지 않는다. GraphView 좌표는 에디터 전용 표현이고, `LevelSO`에는 항상 정수 `Row`, `Column`, 위치 기반 `Id`만 저장한다. 노드 이동은 정수 grid point로 snap되며, 현재 단계에서는 `LevelSO.RowCount x ColumnCount` 범위 안으로 clamp한다. canvas에는 실제 인게임 보드로 쓰일 `RowCount x ColumnCount` 영역을 별도 테두리와 내부 격자선, 중앙 포인트로 표시한다. `Ctrl+C`/`Ctrl+V` 복제도 원본 data를 복사한 뒤 비어 있는 정수 좌표에 새 노드를 배치하는 방식으로 처리한다.
 
@@ -58,6 +58,10 @@ Level Editor의 색상 swatch는 `LevelSO`에 실제 색상 hex를 저장하지 
 Level Editor의 Resource 노드는 보드에서 개인 Rule과 Relay 참여 상태를 작은 배지로 요약 표시한다. `Basic`, `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous` 같은 resource rule은 리소스 상단 배지로 표시하고, `RelayLink`, `RelayTransfer Sender`, `RelayTransfer Receiver`도 별도 배지로 표시한다. 상세 설정은 Inspector에서 편집하고, 보드 배지는 빠른 식별용 요약으로만 사용한다.
 
 Relay 편집은 Level Editor에서 Resource 두 개를 순서대로 선택하는 방식으로 시작한다. `RelayLink`는 방향 없는 보라색 선으로 표시하고, `RelayTransfer`는 Sender에서 Receiver로 향하는 붉은색 방향 선과 화살표로 표시한다. 신규 Relay 생성 전 draft 선은 강조 색으로 미리 표시하고, 기존 Relay를 Inspector에서 선택하면 해당 선도 강조한다. Relay endpoint 변경은 v1에서 직접 지원하지 않고 삭제 후 재생성으로 처리하며, Transfer Sender 후보는 capacity 1 Resource만 활성화한다.
+
+Test case 편집은 `LevelSO` 내부의 `LevelTestCaseData`를 직접 수정한다. 각 test case는 이름, 최대 라운드 수, 예상 종료 상태, 예약 연결 목록을 저장한다. 예약 연결은 숫자 ID를 직접 입력하기보다 보드에서 test case 편집을 시작한 뒤 Process의 슬롯 color chip을 선택하고 Resource를 클릭해 생성/교체한다. 보드에는 test case 예약선과 Resource별 예약 순서 배지를 표시하며, Resource 선택 시 연결된 Process 슬롯과 순서를 강조한다. 에디터 실행 버튼은 `LevelSOMapper.ToLevelDefinition(levelSO)` 뒤 `LevelDefinitionValidator.Validate(definition)`를 먼저 수행하고, 통과하면 `LevelBoardFactory.CreateBoard(definition)`로 새 `Board`를 만든다. 이후 test case의 예약 연결 목록을 `Board.AssignConnection()`으로 적용하고 `Board.RunSimulation(maxRoundCount)` 결과를 하단 로그에 라운드별로 표시한다. 실행 성공 후에는 선택한 라운드까지 아직 시작되지 않은 connection은 숨기고, 점유, waiting, 차단 connection은 보드 예약선 색으로 하이라이트하며, 해당 라운드까지 완료된 Process의 연결선은 반투명하게 표시한다. 실행 결과 로그와 라운드 선택 상태는 에디터 표시 상태일 뿐 `LevelSO`에 저장하지 않는다.
+
+최적 해 찾기와 난이도 평가는 Unity Editor 내부 서비스로 둔다. `LevelSolutionFinder`는 `LevelSOMapper`, `LevelDefinitionValidator`, `LevelBoardFactory`, `Board.AssignConnection()`, `Board.RunSimulation()`을 사용해 성공 가능한 예약 연결 조합을 탐색하고 가장 적은 라운드 해를 찾는다. `LevelDifficultyAnalyzer`는 solver 결과와 라운드 리포트, Rule 구성, 후보 분기 수를 바탕으로 난이도 지표를 계산한다. 반면 자동 레벨 생성은 Unity 코드만으로 닫지 않고 Codex/AI 스킬이 후보를 만들고 Unity solver/analyzer가 검증하는 반복 루프로 둔다.
 
 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 변환 도구는 레거시 타입을 직접 참조하지 않고 YAML을 읽어 `LevelSO`를 생성한다. 레거시 `Node.colors`의 실제 Unity 색상값은 전체 변환 대상의 첫 등장 순서대로 `ColorId` 1부터 자동 매핑하고, 매핑표는 변환 리포트에 남긴다. 레거시 `fixedNum`은 아직 새 Domain 규칙으로 구현하지 않고, 변환 리포트에 미지원 경고로 남긴다.
 
