@@ -21,7 +21,9 @@ internal sealed class LevelBoardGraphView : GraphView
     private readonly LevelEditorWindow _window;
     private readonly LevelEditorColorMap _colorMap;
     private readonly List<LevelBoardNodeView> _selectedNodeViewList = new List<LevelBoardNodeView>();
+    private LevelSO _levelSO;
     private LevelBoardBoundsElement _boundsElement;
+    private LevelRelayLineElement _relayLineElement;
     private LevelBoardNodeView _draggingNodeView;
     private Vector2 _dragStartMousePosition;
     private Vector2 _dragStartNodePosition;
@@ -43,13 +45,14 @@ internal sealed class LevelBoardGraphView : GraphView
         this.AddManipulator(new RectangleSelector());
 
         graphViewChanged = OnGraphViewChanged;
-        RegisterCallback<MouseDownEvent>(OnMouseDown);
+        RegisterCallback<MouseDownEvent>(OnMouseDown, TrickleDown.TrickleDown);
         RegisterCallback<KeyDownEvent>(OnKeyDown);
     }
 
     public void Populate(LevelSO levelSO)
     {
         _isRefreshing = true;
+        _levelSO = levelSO;
         ClearNodeSelection();
         List<GraphElement> elementList = new List<GraphElement>();
 
@@ -61,10 +64,13 @@ internal sealed class LevelBoardGraphView : GraphView
         DeleteElements(elementList);
         _boundsElement?.RemoveFromHierarchy();
         _boundsElement = null;
+        _relayLineElement?.RemoveFromHierarchy();
+        _relayLineElement = null;
 
         if (levelSO != null)
         {
             AddBoardBounds(levelSO);
+            AddRelayLines(levelSO);
             AddProcessNodes(levelSO);
             AddResourceNodes(levelSO);
         }
@@ -81,6 +87,164 @@ internal sealed class LevelBoardGraphView : GraphView
         _boundsElement.style.top = CanvasPadding;
         contentViewContainer.Insert(0, _boundsElement);
         _boundsElement.SendToBack();
+    }
+
+    private void AddRelayLines(LevelSO levelSO)
+    {
+        List<LevelRelayLineData> lineDataList = CreateRelayLineDataList(levelSO);
+
+        if (lineDataList.Count == 0)
+        {
+            return;
+        }
+
+        float width = CanvasPadding * 2f + levelSO.ColumnCount * GridUnit;
+        float height = CanvasPadding * 2f + levelSO.RowCount * GridUnit;
+        _relayLineElement = new LevelRelayLineElement(lineDataList, width, height);
+        contentViewContainer.Insert(1, _relayLineElement);
+    }
+
+    private List<LevelRelayLineData> CreateRelayLineDataList(LevelSO levelSO)
+    {
+        Dictionary<int, Vector2> resourceCenterByIdDict = CreateResourceCenterByIdDict(levelSO);
+        List<LevelRelayLineData> lineDataList = new List<LevelRelayLineData>();
+
+        for (int i = 0; i < levelSO.RelayDataList.Count; i++)
+        {
+            LevelRelayData relayData = levelSO.RelayDataList[i];
+
+            if (relayData == null ||
+                !TryGetRelayLinePositions(relayData,
+                                          resourceCenterByIdDict,
+                                          out Vector2 startPosition,
+                                          out Vector2 endPosition))
+            {
+                continue;
+            }
+
+            bool isHighlighted = _window.SelectedRelayIndex == i;
+            bool isFocused = IsRelayConnectedToResource(relayData, _window.SelectedResourceId);
+
+            lineDataList.Add(new LevelRelayLineData(startPosition,
+                                                    endPosition,
+                                                    relayData.RelayType,
+                                                    isHighlighted,
+                                                    isFocused,
+                                                    false));
+        }
+
+        if (_window.HasRelayDraftPair &&
+            TryGetDraftRelayLinePositions(resourceCenterByIdDict, out Vector2 draftStart, out Vector2 draftEnd))
+        {
+            lineDataList.Add(new LevelRelayLineData(draftStart,
+                                                    draftEnd,
+                                                    _window.RelayDraftType,
+                                                    true,
+                                                    true,
+                                                    true));
+        }
+
+        return lineDataList;
+    }
+
+    private void RefreshRelayLines()
+    {
+        _relayLineElement?.RemoveFromHierarchy();
+        _relayLineElement = null;
+
+        if (_levelSO != null)
+        {
+            AddRelayLines(_levelSO);
+        }
+    }
+
+    private bool IsRelayConnectedToResource(LevelRelayData relayData, int resourceId)
+    {
+        return resourceId >= 0 &&
+               (relayData.FirstResourceId == resourceId || relayData.SecondResourceId == resourceId);
+    }
+
+    private Dictionary<int, Vector2> CreateResourceCenterByIdDict(LevelSO levelSO)
+    {
+        Dictionary<int, Vector2> resourceCenterByIdDict = new Dictionary<int, Vector2>();
+
+        for (int i = 0; i < levelSO.ResourceDataList.Count; i++)
+        {
+            LevelResourceData resourceData = levelSO.ResourceDataList[i];
+
+            if (resourceData != null)
+            {
+                resourceCenterByIdDict[resourceData.Id] = GetCellCenterPosition(resourceData.Row, resourceData.Column);
+            }
+        }
+
+        return resourceCenterByIdDict;
+    }
+
+    private bool TryGetRelayLinePositions(LevelRelayData relayData,
+                                          Dictionary<int, Vector2> resourceCenterByIdDict,
+                                          out Vector2 startPosition,
+                                          out Vector2 endPosition)
+    {
+        int startResourceId = relayData.FirstResourceId;
+        int endResourceId = relayData.SecondResourceId;
+
+        if (relayData.RelayType == ERelayType.Transfer &&
+            (relayData.SenderResourceId == relayData.FirstResourceId ||
+             relayData.SenderResourceId == relayData.SecondResourceId))
+        {
+            startResourceId = relayData.SenderResourceId;
+            endResourceId = relayData.SenderResourceId == relayData.FirstResourceId ?
+                relayData.SecondResourceId :
+                relayData.FirstResourceId;
+        }
+
+        return TryGetLinePositions(resourceCenterByIdDict,
+                                   startResourceId,
+                                   endResourceId,
+                                   out startPosition,
+                                   out endPosition);
+    }
+
+    private bool TryGetDraftRelayLinePositions(Dictionary<int, Vector2> resourceCenterByIdDict,
+                                               out Vector2 startPosition,
+                                               out Vector2 endPosition)
+    {
+        int startResourceId = _window.RelayDraftFirstResourceId;
+        int endResourceId = _window.RelayDraftSecondResourceId;
+
+        if (_window.RelayDraftType == ERelayType.Transfer &&
+            (_window.RelayDraftSenderResourceId == _window.RelayDraftFirstResourceId ||
+             _window.RelayDraftSenderResourceId == _window.RelayDraftSecondResourceId))
+        {
+            startResourceId = _window.RelayDraftSenderResourceId;
+            endResourceId = _window.RelayDraftSenderResourceId == _window.RelayDraftFirstResourceId ?
+                _window.RelayDraftSecondResourceId :
+                _window.RelayDraftFirstResourceId;
+        }
+
+        return TryGetLinePositions(resourceCenterByIdDict,
+                                   startResourceId,
+                                   endResourceId,
+                                   out startPosition,
+                                   out endPosition);
+    }
+
+    private bool TryGetLinePositions(Dictionary<int, Vector2> resourceCenterByIdDict,
+                                     int startResourceId,
+                                     int endResourceId,
+                                     out Vector2 startPosition,
+                                     out Vector2 endPosition)
+    {
+        if (!resourceCenterByIdDict.TryGetValue(startResourceId, out startPosition) ||
+            !resourceCenterByIdDict.TryGetValue(endResourceId, out endPosition))
+        {
+            startPosition = Vector2.zero;
+            endPosition = Vector2.zero;
+            return false;
+        }
+
+        return true;
     }
 
     private void AddProcessNodes(LevelSO levelSO)
@@ -231,8 +395,16 @@ internal sealed class LevelBoardGraphView : GraphView
             return;
         }
 
+        if (_window.CurrentTool == ELevelEditorTool.AddRelay)
+        {
+            _window.SelectNodeForRelayFromGraph(nodeView.NodeKind, nodeView.DataIndex);
+            mouseDownEvent.StopPropagation();
+            return;
+        }
+
         SelectNodeView(nodeView, mouseDownEvent.ctrlKey || mouseDownEvent.commandKey);
         _window.SelectNodeFromGraph(nodeView.NodeKind, nodeView.DataIndex);
+        RefreshRelayLines();
         BeginNodeDrag(nodeView, mouseDownEvent);
         mouseDownEvent.StopPropagation();
     }
@@ -358,6 +530,7 @@ internal sealed class LevelBoardGraphView : GraphView
         {
             nodeView.SetGridPoint(point.x, point.y);
             nodeView.SetPosition(new Rect(snappedPosition, position.size));
+            RefreshRelayLines();
         }
         else
         {
@@ -385,19 +558,35 @@ internal sealed class LevelBoardGraphView : GraphView
                 return;
             }
 
+            if (_window.CurrentTool == ELevelEditorTool.AddRelay)
+            {
+                _window.SelectNodeForRelayFromGraph(clickedNodeView.NodeKind, clickedNodeView.DataIndex);
+                mouseDownEvent.StopPropagation();
+                return;
+            }
+
             SelectNodeView(clickedNodeView, mouseDownEvent.ctrlKey || mouseDownEvent.commandKey);
             _window.SelectNodeFromGraph(clickedNodeView.NodeKind, clickedNodeView.DataIndex);
+            RefreshRelayLines();
             return;
         }
 
         if (_window.CurrentTool != ELevelEditorTool.AddProcess &&
             _window.CurrentTool != ELevelEditorTool.AddResource)
         {
+            if (_window.CurrentTool == ELevelEditorTool.AddRelay)
+            {
+                _window.RejectRelaySelectionFromGraph("Relay는 Resource 두 개를 선택해 생성합니다.");
+                mouseDownEvent.StopPropagation();
+                return;
+            }
+
             if (_window.CurrentTool == ELevelEditorTool.Select)
             {
                 Vector2Int selectedPoint = GetMouseGridPoint(mouseDownEvent);
                 ClearNodeSelection();
                 _window.SelectGridPointFromGraph(selectedPoint.x, selectedPoint.y);
+                RefreshRelayLines();
                 mouseDownEvent.StopPropagation();
             }
 
@@ -559,5 +748,11 @@ internal sealed class LevelBoardGraphView : GraphView
         float left = CanvasPadding + column * GridUnit + GridUnit * 0.5f - LevelBoardNodeView.BodyCenterX;
         float top = CanvasPadding + row * GridUnit + GridUnit * 0.5f - LevelBoardNodeView.BodyCenterY;
         return new Vector2(left, top);
+    }
+
+    private Vector2 GetCellCenterPosition(int row, int column)
+    {
+        return new Vector2(CanvasPadding + column * GridUnit + GridUnit * 0.5f,
+                           CanvasPadding + row * GridUnit + GridUnit * 0.5f);
     }
 }

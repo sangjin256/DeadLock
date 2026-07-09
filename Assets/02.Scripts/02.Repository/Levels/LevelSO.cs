@@ -9,11 +9,11 @@ public sealed class LevelSO : ScriptableObject
     public int Id => _id;
 
     [SerializeField]
-    private int _rowCount;
+    private int _rowCount = 3;
     public int RowCount => _rowCount;
 
     [SerializeField]
-    private int _columnCount;
+    private int _columnCount = 5;
     public int ColumnCount => _columnCount;
 
     [SerializeField]

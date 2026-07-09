@@ -67,29 +67,28 @@
 - Level Editor 보드에서 `Ctrl+C`/`Ctrl+V`로 process/resource 노드를 복제할 수 있게 했다. 복제된 노드는 원본의 slot/rule 데이터를 유지하고 비어 있는 정수 좌표에 배치되며, id는 위치 기반으로 다시 계산한다.
 - Level Editor GraphView canvas에 실제 인게임 보드 영역을 보여주는 외곽 테두리, row/column 격자선, 중앙 포인트를 추가했다. 노드는 색 chip을 포함한 전체 박스가 아니라 P/R 본체 중심이 각 셀 중심에 맞도록 배치된다.
 - Level Editor Resource 노드에 Rule/Relay 요약 배지를 추가했다. `B`, `SW`, `EM`, `CK`, `xN`, `L`, `TX`, `RX` 배지로 Basic, ColorSwitch, EmptyColor, Clock, Simultaneous, RelayLink, RelayTransfer Sender/Receiver 여부를 보드에서 바로 식별할 수 있다.
+- Level Editor에 Relay Link/Transfer 편집 UI를 추가했다. Relay 추가 툴로 Resource 두 개를 순서대로 선택해 Link 또는 Transfer를 생성하고, Transfer Sender는 capacity 1 Resource만 선택할 수 있다.
+- Level Editor canvas에 Relay 선 시각화를 추가했다. Link는 보라색 무방향 선, Transfer는 Sender에서 Receiver로 향하는 붉은색 방향 선과 화살표로 표시하며, draft Relay와 선택 Relay는 강조 표시한다.
+- 기존 Relay는 Inspector의 Relay 편집 패널에서 타입 변경, Transfer Sender 변경, 삭제를 할 수 있다. endpoint 변경은 v1에서 삭제 후 재생성으로 처리한다.
 
 ## 다음 작업 순서
 
-1. Level Editor에 Relay Link/Transfer 편집 UI를 추가한다.
-    - v1에서는 기존 relay 데이터를 읽기 전용 요약과 검증 로그로만 보여준다.
-    - 다음 단계에서는 board grid에서 두 resource를 선택해 Link/Transfer를 만들고, Transfer sender는 capacity 1 resource만 후보로 제한한다.
-
-2. Level Editor에 test case 편집과 자동 라운드 재생을 추가한다.
+1. Level Editor에 test case 편집과 자동 라운드 재생을 추가한다.
     - test case는 예약 연결 목록, 예상 결과, 최대 라운드 수를 저장한다.
     - 에디터는 test case를 적용해 `Board.AssignConnection()`과 `Board.RunSimulation()`을 자동 실행하고 round-by-round 결과를 보여준다.
     - 난이도 지표는 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
 
-3. Unity Test Framework 기반 테스트 구조를 준비한다.
+2. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
    - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-4. `LevelPlayManager`와 DTO를 작성한다.
+3. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-5. MVP UI와 Bootstrap을 연결한다.
+4. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-6. 저장/플랫폼/모바일 입력을 분리한다.
+5. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -106,10 +105,10 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - Composite Resource Rule 추가 뒤 Domain Unity 의존, 다중 rule 변환 경계, 단일 rule 잔존, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 도구 추가 뒤 Domain Unity 의존, Editor 폴더 위치, `LevelCreator` 타입 직접 참조, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 실행 뒤 생성 결과를 파일 기준으로 검수했다. 61개 source asset과 61개 migrated `LevelSO`를 비교했고 process/resource 수, 좌표, 색 ID, capacity, rule 설정이 일치했다. 리포트의 failed asset과 validation error는 없었다.
-- Level Editor Window v1/v1.5 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
+- Level Editor Window v1/v1.5와 Relay 편집 UI 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit/Relay line 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 Level Editor에 Relay Link/Transfer 편집 UI를 추가하는 것이다. 이후 test case 편집, 자동 라운드 재생, 난이도 지표를 확장한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 Level Editor에 test case 편집과 자동 라운드 재생을 추가하는 것이다. 이후 난이도 지표를 확장한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 

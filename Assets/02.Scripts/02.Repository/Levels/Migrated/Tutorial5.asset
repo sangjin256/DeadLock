@@ -26,8 +26,8 @@ MonoBehaviour:
     - _id: 1
       _requiredColorId: 36
       _selectionOrder: 1
-  - _id: 9
-    _row: 1
+  - _id: 4
+    _row: 0
     _column: 4
     _slotDataList:
     - _id: 0

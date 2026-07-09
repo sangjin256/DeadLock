@@ -38,9 +38,22 @@ public sealed class LevelEditorWindow : EditorWindow
     private int _selectedRow = -1;
     private int _selectedColumn = -1;
     private int _selectedColorId = 1;
+    private int _relayDraftFirstResourceId = -1;
+    private int _relayDraftSecondResourceId = -1;
+    private int _relayDraftSenderResourceId = -1;
+    private int _selectedRelayIndex = -1;
+    private ERelayType _relayDraftType = ERelayType.Link;
+    private string _relayDraftMessage = string.Empty;
     private string _finalValidationText = string.Empty;
 
     internal ELevelEditorTool CurrentTool => _currentTool;
+    internal int SelectedRelayIndex => _selectedRelayIndex;
+    internal int RelayDraftFirstResourceId => _relayDraftFirstResourceId;
+    internal int RelayDraftSecondResourceId => _relayDraftSecondResourceId;
+    internal int RelayDraftSenderResourceId => _relayDraftSenderResourceId;
+    internal ERelayType RelayDraftType => _relayDraftType;
+    internal bool HasRelayDraftPair => _relayDraftFirstResourceId >= 0 && _relayDraftSecondResourceId >= 0;
+    internal int SelectedResourceId => GetSelectedResourceId();
 
     [MenuItem("Tools/DeadLock/Levels/Level Editor")]
     public static void Open()
@@ -177,6 +190,8 @@ public sealed class LevelEditorWindow : EditorWindow
         _serializedObject = _levelSO == null ? null : new SerializedObject(_levelSO);
         _selectedRow = -1;
         _selectedColumn = -1;
+        ClearRelayDraft();
+        _selectedRelayIndex = -1;
         _finalValidationText = string.Empty;
         RefreshAll();
     }
@@ -283,6 +298,7 @@ public sealed class LevelEditorWindow : EditorWindow
         AddToolButton(ELevelEditorTool.Select, "선택", "보드 칸을 선택하고 세부 정보를 확인합니다.");
         AddToolButton(ELevelEditorTool.AddProcess, "프로세스 추가", "선택한 ColorId로 원형 프로세스 노드를 배치합니다.");
         AddToolButton(ELevelEditorTool.AddResource, "리소스 추가", "선택한 ColorId로 사각 리소스 노드를 배치합니다.");
+        AddToolButton(ELevelEditorTool.AddRelay, "Relay 추가", "Resource 두 개를 순서대로 선택해 Relay를 생성합니다.");
         AddToolButton(ELevelEditorTool.Erase, "지우기", "클릭한 칸의 노드를 삭제합니다.");
     }
 
@@ -291,8 +307,20 @@ public sealed class LevelEditorWindow : EditorWindow
         Button button = new Button(() =>
         {
             _currentTool = tool;
+            _selectedRelayIndex = -1;
+
+            if (_currentTool != ELevelEditorTool.AddRelay)
+            {
+                ClearRelayDraft();
+            }
+            else
+            {
+                _relayDraftMessage = "첫 번째 Resource를 선택해 주세요.";
+            }
+
             RefreshPalette();
             RefreshBoard();
+            RefreshInspector();
         })
         {
             text = label,
@@ -503,6 +531,9 @@ public sealed class LevelEditorWindow : EditorWindow
 
             case ELevelEditorTool.AddResource:
                 return "리소스 추가";
+
+            case ELevelEditorTool.AddRelay:
+                return "Relay 추가";
 
             case ELevelEditorTool.Erase:
                 return "지우기";
@@ -794,6 +825,13 @@ public sealed class LevelEditorWindow : EditorWindow
             return;
         }
 
+        if (_currentTool == ELevelEditorTool.AddRelay)
+        {
+            _relayDraftMessage = "Relay는 보드의 Resource 두 개를 순서대로 선택해 생성합니다.";
+            RefreshInspector();
+            return;
+        }
+
         if (_currentTool == ELevelEditorTool.Erase)
         {
             EraseCell(row, column);
@@ -804,6 +842,7 @@ public sealed class LevelEditorWindow : EditorWindow
     {
         _selectedRow = row;
         _selectedColumn = column;
+        _selectedRelayIndex = -1;
         RefreshBoard();
         RefreshInspector();
     }
@@ -1079,27 +1118,501 @@ public sealed class LevelEditorWindow : EditorWindow
     {
         VisualElement box = CreateBox();
         _inspectorContainer.Add(box);
-        box.Add(CreateSectionTitle("Relay 요약"));
+        box.Add(CreateSectionTitle("Relay 편집"));
+
+        BuildRelayDraftPanel(box);
 
         if (_levelSO.RelayDataList.Count == 0)
         {
-            box.Add(new Label("Relay 데이터가 없습니다. Relay 편집은 다음 에디터 단계에서 추가합니다."));
+            box.Add(new Label("생성된 Relay가 없습니다."));
             return;
         }
 
         for (int i = 0; i < _levelSO.RelayDataList.Count; i++)
         {
+            BuildRelayInspector(box, i);
+        }
+    }
+
+    private void BuildRelayDraftPanel(VisualElement parent)
+    {
+        VisualElement draftBox = CreateNestedBox();
+        parent.Add(draftBox);
+        draftBox.Add(CreateSectionTitle("새 Relay"));
+
+        string message = string.IsNullOrEmpty(_relayDraftMessage) ?
+            "Relay 추가 툴을 선택하고 Resource 두 개를 순서대로 누르세요." :
+            _relayDraftMessage;
+
+        Label messageLabel = new Label(message);
+        messageLabel.style.color = new StyleColor(new Color(0.78f, 0.82f, 0.88f));
+        messageLabel.style.whiteSpace = WhiteSpace.Normal;
+        draftBox.Add(messageLabel);
+
+        if (_relayDraftFirstResourceId >= 0)
+        {
+            draftBox.Add(new Label($"첫 번째: {GetResourceDisplayName(_relayDraftFirstResourceId)}"));
+        }
+
+        if (_relayDraftSecondResourceId >= 0)
+        {
+            draftBox.Add(new Label($"두 번째: {GetResourceDisplayName(_relayDraftSecondResourceId)}"));
+        }
+
+        if (!HasRelayDraftPair)
+        {
+            draftBox.Add(CreateHeaderButton("선택 초기화", () =>
+            {
+                ClearRelayDraft();
+                RefreshAll();
+            }));
+            return;
+        }
+
+        EnumField relayTypeField = new EnumField("타입", _relayDraftType);
+        relayTypeField.RegisterValueChangedCallback(changeEvent =>
+        {
+            _relayDraftType = (ERelayType)changeEvent.newValue;
+            EnsureRelayDraftSender();
+            RefreshAll();
+        });
+        relayTypeField.style.marginTop = 6f;
+        draftBox.Add(relayTypeField);
+
+        if (_relayDraftType == ERelayType.Transfer)
+        {
+            BuildDraftSenderSelector(draftBox);
+        }
+
+        bool canCreate = CanCreateRelayDraft(out string reason);
+
+        if (!canCreate)
+        {
+            Label warningLabel = new Label(reason);
+            warningLabel.style.color = new StyleColor(WarningColor);
+            warningLabel.style.whiteSpace = WhiteSpace.Normal;
+            draftBox.Add(warningLabel);
+        }
+
+        VisualElement buttonRow = CreateButtonRow();
+        Button createButton = CreateHeaderButton("Relay 생성", AddRelayFromDraft);
+        createButton.SetEnabled(canCreate);
+        buttonRow.Add(createButton);
+        buttonRow.Add(CreateHeaderButton("선택 초기화", () =>
+        {
+            ClearRelayDraft();
+            RefreshAll();
+        }));
+        draftBox.Add(buttonRow);
+    }
+
+    private void BuildDraftSenderSelector(VisualElement parent)
+    {
+        parent.Add(CreateSectionTitle("Sender"));
+
+        VisualElement row = CreateButtonRow();
+        row.Add(CreateSenderButton(_relayDraftFirstResourceId, () =>
+        {
+            _relayDraftSenderResourceId = _relayDraftFirstResourceId;
+            RefreshAll();
+        }));
+        row.Add(CreateSenderButton(_relayDraftSecondResourceId, () =>
+        {
+            _relayDraftSenderResourceId = _relayDraftSecondResourceId;
+            RefreshAll();
+        }));
+        parent.Add(row);
+    }
+
+    private Button CreateSenderButton(int resourceId, Action action)
+    {
+        Button button = CreateHeaderButton(GetResourceDisplayName(resourceId), action);
+        bool isValidSender = IsCapacityOneResource(resourceId);
+        button.SetEnabled(isValidSender);
+
+        if (_relayDraftSenderResourceId == resourceId)
+        {
+            button.style.backgroundColor = new StyleColor(new Color(0.30f, 0.42f, 0.58f));
+        }
+
+        return button;
+    }
+
+    private void BuildRelayInspector(VisualElement parent, int relayIndex)
+    {
+        SerializedProperty relayProperty = FindRelayProperty(relayIndex);
+
+        if (relayProperty == null)
+        {
+            return;
+        }
+
+        VisualElement relayBox = CreateNestedBox();
+        parent.Add(relayBox);
+
+        if (_selectedRelayIndex == relayIndex)
+        {
+            SetBorder(relayBox, 1f, SelectedColor);
+        }
+
+        int relayId = relayProperty.FindPropertyRelative("_id").intValue;
+        int firstResourceId = relayProperty.FindPropertyRelative("_firstResourceId").intValue;
+        int secondResourceId = relayProperty.FindPropertyRelative("_secondResourceId").intValue;
+        int senderResourceId = relayProperty.FindPropertyRelative("_senderResourceId").intValue;
+        ERelayType relayType = (ERelayType)relayProperty.FindPropertyRelative("_relayType").enumValueIndex;
+
+        relayBox.Add(CreateSectionTitle($"Relay {relayId}"));
+        relayBox.Add(new Label($"{GetResourceDisplayName(firstResourceId)} ↔ {GetResourceDisplayName(secondResourceId)}"));
+
+        VisualElement headerRow = CreateButtonRow();
+        headerRow.Add(CreateHeaderButton("선택", () =>
+        {
+            _selectedRelayIndex = relayIndex;
+            ClearRelayDraft();
+            RefreshAll();
+        }));
+        headerRow.Add(CreateHeaderButton("삭제", () => DeleteRelay(relayIndex)));
+        relayBox.Add(headerRow);
+
+        EnumField relayTypeField = new EnumField("타입", relayType);
+        relayTypeField.RegisterValueChangedCallback(changeEvent => SetRelayType(relayIndex, (ERelayType)changeEvent.newValue));
+        relayBox.Add(relayTypeField);
+
+        if (relayType == ERelayType.Link)
+        {
+            relayBox.Add(new Label("Link는 방향 없이 두 Resource 사용을 서로 막습니다."));
+            return;
+        }
+
+        relayBox.Add(new Label($"Sender: {GetResourceDisplayName(senderResourceId)}"));
+        BuildExistingRelaySenderSelector(relayBox, relayIndex, firstResourceId, secondResourceId, senderResourceId);
+    }
+
+    private void BuildExistingRelaySenderSelector(VisualElement parent,
+                                                  int relayIndex,
+                                                  int firstResourceId,
+                                                  int secondResourceId,
+                                                  int senderResourceId)
+    {
+        VisualElement row = CreateButtonRow();
+        row.Add(CreateExistingSenderButton(firstResourceId, senderResourceId, () => SetRelaySender(relayIndex, firstResourceId)));
+        row.Add(CreateExistingSenderButton(secondResourceId, senderResourceId, () => SetRelaySender(relayIndex, secondResourceId)));
+        parent.Add(row);
+
+        if (!IsCapacityOneResource(firstResourceId) &&
+            !IsCapacityOneResource(secondResourceId))
+        {
+            Label warningLabel = new Label("Transfer Sender 후보가 없습니다. Sender Resource의 Capacity는 1이어야 합니다.");
+            warningLabel.style.color = new StyleColor(WarningColor);
+            warningLabel.style.whiteSpace = WhiteSpace.Normal;
+            parent.Add(warningLabel);
+        }
+    }
+
+    private Button CreateExistingSenderButton(int resourceId, int senderResourceId, Action action)
+    {
+        Button button = CreateHeaderButton(GetResourceDisplayName(resourceId), action);
+        bool isValidSender = IsCapacityOneResource(resourceId);
+        button.SetEnabled(isValidSender);
+
+        if (senderResourceId == resourceId)
+        {
+            button.style.backgroundColor = new StyleColor(new Color(0.30f, 0.42f, 0.58f));
+        }
+
+        return button;
+    }
+
+    private bool CanCreateRelayDraft(out string reason)
+    {
+        if (!HasRelayDraftPair)
+        {
+            reason = "Resource 두 개를 먼저 선택해야 합니다.";
+            return false;
+        }
+
+        if (IsDuplicateRelay(_relayDraftType,
+                             _relayDraftFirstResourceId,
+                             _relayDraftSecondResourceId,
+                             GetDraftStoredSenderResourceId(),
+                             -1))
+        {
+            reason = "같은 설정의 Relay가 이미 있습니다.";
+            return false;
+        }
+
+        if (_relayDraftType == ERelayType.Link)
+        {
+            reason = string.Empty;
+            return true;
+        }
+
+        if (_relayDraftSenderResourceId != _relayDraftFirstResourceId &&
+            _relayDraftSenderResourceId != _relayDraftSecondResourceId)
+        {
+            reason = "Transfer Sender는 선택한 두 Resource 중 하나여야 합니다.";
+            return false;
+        }
+
+        if (!IsCapacityOneResource(_relayDraftSenderResourceId))
+        {
+            reason = "Transfer Sender Resource의 Capacity는 1이어야 합니다.";
+            return false;
+        }
+
+        reason = string.Empty;
+        return true;
+    }
+
+    private int GetDraftStoredSenderResourceId()
+    {
+        return _relayDraftType == ERelayType.Link ? 0 : _relayDraftSenderResourceId;
+    }
+
+    private void AddRelayFromDraft()
+    {
+        if (!CanCreateRelayDraft(out string reason))
+        {
+            _relayDraftMessage = reason;
+            RefreshInspector();
+            return;
+        }
+
+        BeginEdit("Add Relay");
+        SerializedProperty relayListProperty = _serializedObject.FindProperty("_relayDataList");
+        int arrayIndex = relayListProperty.arraySize;
+        relayListProperty.InsertArrayElementAtIndex(arrayIndex);
+
+        SerializedProperty relayProperty = relayListProperty.GetArrayElementAtIndex(arrayIndex);
+        relayProperty.FindPropertyRelative("_id").intValue = GetNextRelayId();
+        relayProperty.FindPropertyRelative("_relayType").enumValueIndex = (int)_relayDraftType;
+        relayProperty.FindPropertyRelative("_firstResourceId").intValue = _relayDraftFirstResourceId;
+        relayProperty.FindPropertyRelative("_secondResourceId").intValue = _relayDraftSecondResourceId;
+        relayProperty.FindPropertyRelative("_senderResourceId").intValue = GetDraftStoredSenderResourceId();
+
+        _selectedRelayIndex = arrayIndex;
+        ClearRelayDraft();
+        EndEdit();
+    }
+
+    private void SetRelayType(int relayIndex, ERelayType relayType)
+    {
+        SerializedProperty relayProperty = FindRelayProperty(relayIndex);
+
+        if (relayProperty == null)
+        {
+            return;
+        }
+
+        int firstResourceId = relayProperty.FindPropertyRelative("_firstResourceId").intValue;
+        int secondResourceId = relayProperty.FindPropertyRelative("_secondResourceId").intValue;
+        int senderResourceId = GetDefaultRelaySender(relayType, firstResourceId, secondResourceId);
+
+        if (IsDuplicateRelay(relayType, firstResourceId, secondResourceId, senderResourceId, relayIndex))
+        {
+            _relayDraftMessage = "같은 설정의 Relay가 이미 있어 타입을 변경할 수 없습니다.";
+            RefreshInspector();
+            return;
+        }
+
+        BeginEdit("Edit Relay Type");
+        relayProperty = FindRelayProperty(relayIndex);
+        relayProperty.FindPropertyRelative("_relayType").enumValueIndex = (int)relayType;
+        relayProperty.FindPropertyRelative("_senderResourceId").intValue = senderResourceId;
+        _selectedRelayIndex = relayIndex;
+        EndEdit();
+    }
+
+    private int GetDefaultRelaySender(ERelayType relayType, int firstResourceId, int secondResourceId)
+    {
+        if (relayType == ERelayType.Link)
+        {
+            return 0;
+        }
+
+        if (IsCapacityOneResource(firstResourceId))
+        {
+            return firstResourceId;
+        }
+
+        if (IsCapacityOneResource(secondResourceId))
+        {
+            return secondResourceId;
+        }
+
+        return firstResourceId;
+    }
+
+    private void SetRelaySender(int relayIndex, int senderResourceId)
+    {
+        SerializedProperty relayProperty = FindRelayProperty(relayIndex);
+
+        if (relayProperty == null || !IsCapacityOneResource(senderResourceId))
+        {
+            return;
+        }
+
+        ERelayType relayType = (ERelayType)relayProperty.FindPropertyRelative("_relayType").enumValueIndex;
+        int firstResourceId = relayProperty.FindPropertyRelative("_firstResourceId").intValue;
+        int secondResourceId = relayProperty.FindPropertyRelative("_secondResourceId").intValue;
+
+        if (relayType != ERelayType.Transfer ||
+            (senderResourceId != firstResourceId && senderResourceId != secondResourceId))
+        {
+            return;
+        }
+
+        if (IsDuplicateRelay(relayType, firstResourceId, secondResourceId, senderResourceId, relayIndex))
+        {
+            _relayDraftMessage = "같은 설정의 Relay가 이미 있어 Sender를 변경할 수 없습니다.";
+            RefreshInspector();
+            return;
+        }
+
+        BeginEdit("Edit Relay Sender");
+        relayProperty = FindRelayProperty(relayIndex);
+        relayProperty.FindPropertyRelative("_senderResourceId").intValue = senderResourceId;
+        _selectedRelayIndex = relayIndex;
+        EndEdit();
+    }
+
+    private void DeleteRelay(int relayIndex)
+    {
+        BeginEdit("Delete Relay");
+        SerializedProperty relayListProperty = _serializedObject.FindProperty("_relayDataList");
+
+        if (relayListProperty != null &&
+            relayIndex >= 0 &&
+            relayIndex < relayListProperty.arraySize)
+        {
+            relayListProperty.DeleteArrayElementAtIndex(relayIndex);
+        }
+
+        if (_selectedRelayIndex == relayIndex)
+        {
+            _selectedRelayIndex = -1;
+        }
+        else if (_selectedRelayIndex > relayIndex)
+        {
+            _selectedRelayIndex--;
+        }
+
+        EndEdit();
+    }
+
+    private SerializedProperty FindRelayProperty(int relayIndex)
+    {
+        if (_serializedObject == null)
+        {
+            return null;
+        }
+
+        SerializedProperty relayListProperty = _serializedObject.FindProperty("_relayDataList");
+
+        if (relayListProperty == null ||
+            relayIndex < 0 ||
+            relayIndex >= relayListProperty.arraySize)
+        {
+            return null;
+        }
+
+        return relayListProperty.GetArrayElementAtIndex(relayIndex);
+    }
+
+    private int GetNextRelayId()
+    {
+        int maxId = -1;
+
+        for (int i = 0; i < _levelSO.RelayDataList.Count; i++)
+        {
             LevelRelayData relayData = _levelSO.RelayDataList[i];
 
-            if (relayData == null)
+            if (relayData != null && relayData.Id > maxId)
             {
-                box.Add(new Label($"Relay {i}: 비어 있음"));
+                maxId = relayData.Id;
+            }
+        }
+
+        return maxId + 1;
+    }
+
+    private bool IsDuplicateRelay(ERelayType relayType,
+                                  int firstResourceId,
+                                  int secondResourceId,
+                                  int senderResourceId,
+                                  int skipRelayIndex)
+    {
+        if (_levelSO == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _levelSO.RelayDataList.Count; i++)
+        {
+            if (i == skipRelayIndex)
+            {
                 continue;
             }
 
-            box.Add(new Label(
-                $"Relay {relayData.Id}: {relayData.RelayType} {relayData.FirstResourceId} <-> {relayData.SecondResourceId}, Sender {relayData.SenderResourceId}"));
+            LevelRelayData relayData = _levelSO.RelayDataList[i];
+
+            if (relayData == null ||
+                relayData.RelayType != relayType ||
+                !IsSameResourcePair(relayData.FirstResourceId, relayData.SecondResourceId, firstResourceId, secondResourceId))
+            {
+                continue;
+            }
+
+            if (relayType == ERelayType.Link || relayData.SenderResourceId == senderResourceId)
+            {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    private bool IsSameResourcePair(int firstA, int secondA, int firstB, int secondB)
+    {
+        return (firstA == firstB && secondA == secondB) ||
+               (firstA == secondB && secondA == firstB);
+    }
+
+    private string GetResourceDisplayName(int resourceId)
+    {
+        return $"Resource {resourceId}";
+    }
+
+    private bool IsCapacityOneResource(int resourceId)
+    {
+        LevelResourceData resourceData = FindResourceDataById(resourceId);
+        return resourceData != null && resourceData.Capacity == 1;
+    }
+
+    private LevelResourceData FindResourceDataById(int resourceId)
+    {
+        if (_levelSO == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < _levelSO.ResourceDataList.Count; i++)
+        {
+            LevelResourceData resourceData = _levelSO.ResourceDataList[i];
+
+            if (resourceData != null && resourceData.Id == resourceId)
+            {
+                return resourceData;
+            }
+        }
+
+        return null;
+    }
+
+    private int GetSelectedResourceId()
+    {
+        LevelResourceData resourceData = FindResourceData(_selectedRow, _selectedColumn);
+        return resourceData == null ? -1 : resourceData.Id;
     }
 
     private void AddIntegerField(VisualElement parent, string label, string propertyPath)
@@ -1231,6 +1744,29 @@ public sealed class LevelEditorWindow : EditorWindow
         return box;
     }
 
+    private VisualElement CreateNestedBox()
+    {
+        VisualElement box = new VisualElement();
+        box.style.marginTop = 6f;
+        box.style.marginBottom = 8f;
+        box.style.paddingLeft = 8f;
+        box.style.paddingRight = 8f;
+        box.style.paddingTop = 8f;
+        box.style.paddingBottom = 8f;
+        box.style.backgroundColor = new StyleColor(new Color(0.10f, 0.11f, 0.13f));
+        SetBorder(box, 1f, new Color(0.22f, 0.24f, 0.27f));
+        return box;
+    }
+
+    private VisualElement CreateButtonRow()
+    {
+        VisualElement row = new VisualElement();
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.flexWrap = Wrap.Wrap;
+        row.style.marginTop = 6f;
+        return row;
+    }
+
     private Label CreateSectionTitle(string text)
     {
         Label label = new Label(text);
@@ -1301,6 +1837,8 @@ public sealed class LevelEditorWindow : EditorWindow
             return;
         }
 
+        _selectedRelayIndex = -1;
+
         if (nodeKind == ELevelEditorNodeKind.Process)
         {
             if (dataIndex < 0 || dataIndex >= _levelSO.ProcessDataList.Count)
@@ -1331,15 +1869,120 @@ public sealed class LevelEditorWindow : EditorWindow
         }
     }
 
+    internal void SelectNodeForRelayFromGraph(ELevelEditorNodeKind nodeKind, int dataIndex)
+    {
+        if (_levelSO == null)
+        {
+            return;
+        }
+
+        if (nodeKind != ELevelEditorNodeKind.Resource)
+        {
+            _relayDraftMessage = "Relay는 Resource끼리만 연결할 수 있습니다.";
+            RefreshInspector();
+            return;
+        }
+
+        if (dataIndex < 0 || dataIndex >= _levelSO.ResourceDataList.Count)
+        {
+            return;
+        }
+
+        LevelResourceData resourceData = _levelSO.ResourceDataList[dataIndex];
+
+        if (resourceData == null)
+        {
+            return;
+        }
+
+        SelectResourceForRelay(resourceData);
+    }
+
+    internal void RejectRelaySelectionFromGraph(string message)
+    {
+        _relayDraftMessage = message;
+        RefreshInspector();
+    }
+
     internal void SelectGridPointFromGraph(int row, int column)
     {
+        _selectedRelayIndex = -1;
         SelectCellFromGraph(row, column);
+    }
+
+    private void SelectResourceForRelay(LevelResourceData resourceData)
+    {
+        _selectedRow = resourceData.Row;
+        _selectedColumn = resourceData.Column;
+        _selectedRelayIndex = -1;
+
+        if (_relayDraftFirstResourceId < 0)
+        {
+            _relayDraftFirstResourceId = resourceData.Id;
+            _relayDraftSecondResourceId = -1;
+            _relayDraftSenderResourceId = -1;
+            _relayDraftMessage = "두 번째 Resource를 선택해 주세요.";
+            RefreshAll();
+            return;
+        }
+
+        if (_relayDraftFirstResourceId == resourceData.Id)
+        {
+            _relayDraftMessage = "같은 Resource는 Relay로 연결할 수 없습니다. 다른 Resource를 선택해 주세요.";
+            RefreshAll();
+            return;
+        }
+
+        _relayDraftSecondResourceId = resourceData.Id;
+        EnsureRelayDraftSender();
+        _relayDraftMessage = "Relay 설정을 선택하고 생성하세요.";
+        RefreshAll();
+    }
+
+    private void ClearRelayDraft()
+    {
+        _relayDraftFirstResourceId = -1;
+        _relayDraftSecondResourceId = -1;
+        _relayDraftSenderResourceId = -1;
+        _relayDraftType = ERelayType.Link;
+        _relayDraftMessage = string.Empty;
+    }
+
+    private void EnsureRelayDraftSender()
+    {
+        if (_relayDraftType == ERelayType.Link)
+        {
+            _relayDraftSenderResourceId = 0;
+            return;
+        }
+
+        if ((_relayDraftSenderResourceId == _relayDraftFirstResourceId ||
+             _relayDraftSenderResourceId == _relayDraftSecondResourceId) &&
+            IsCapacityOneResource(_relayDraftSenderResourceId))
+        {
+            return;
+        }
+
+        if (IsCapacityOneResource(_relayDraftFirstResourceId))
+        {
+            _relayDraftSenderResourceId = _relayDraftFirstResourceId;
+            return;
+        }
+
+        if (IsCapacityOneResource(_relayDraftSecondResourceId))
+        {
+            _relayDraftSenderResourceId = _relayDraftSecondResourceId;
+            return;
+        }
+
+        _relayDraftSenderResourceId = _relayDraftFirstResourceId;
     }
 
     private void SelectCellFromGraph(int row, int column)
     {
         _selectedRow = row;
         _selectedColumn = column;
+        _selectedRelayIndex = -1;
         RefreshInspector();
     }
 
@@ -1363,7 +2006,18 @@ public sealed class LevelEditorWindow : EditorWindow
         }
 
         SerializedProperty nodeProperty = listProperty.GetArrayElementAtIndex(dataIndex);
+        int oldResourceId = nodeKind == ELevelEditorNodeKind.Resource ?
+            nodeProperty.FindPropertyRelative("_id").intValue :
+            -1;
+
         WriteNodePosition(nodeProperty, row, column);
+
+        if (nodeKind == ELevelEditorNodeKind.Resource)
+        {
+            int newResourceId = nodeProperty.FindPropertyRelative("_id").intValue;
+            UpdateRelayResourceReferences(oldResourceId, newResourceId);
+        }
+
         ApplyGraphEdit(row, column);
         return true;
     }
@@ -1558,6 +2212,50 @@ public sealed class LevelEditorWindow : EditorWindow
         nodeProperty.FindPropertyRelative("_id").intValue = GetDefaultNodeId(row, column);
         nodeProperty.FindPropertyRelative("_row").intValue = row;
         nodeProperty.FindPropertyRelative("_column").intValue = column;
+    }
+
+    private void UpdateRelayResourceReferences(int oldResourceId, int newResourceId)
+    {
+        if (oldResourceId == newResourceId)
+        {
+            return;
+        }
+
+        SerializedProperty relayListProperty = _serializedObject.FindProperty("_relayDataList");
+
+        if (relayListProperty != null)
+        {
+            for (int i = 0; i < relayListProperty.arraySize; i++)
+            {
+                SerializedProperty relayProperty = relayListProperty.GetArrayElementAtIndex(i);
+                ReplaceResourceId(relayProperty.FindPropertyRelative("_firstResourceId"), oldResourceId, newResourceId);
+                ReplaceResourceId(relayProperty.FindPropertyRelative("_secondResourceId"), oldResourceId, newResourceId);
+                ReplaceResourceId(relayProperty.FindPropertyRelative("_senderResourceId"), oldResourceId, newResourceId);
+            }
+        }
+
+        if (_relayDraftFirstResourceId == oldResourceId)
+        {
+            _relayDraftFirstResourceId = newResourceId;
+        }
+
+        if (_relayDraftSecondResourceId == oldResourceId)
+        {
+            _relayDraftSecondResourceId = newResourceId;
+        }
+
+        if (_relayDraftSenderResourceId == oldResourceId)
+        {
+            _relayDraftSenderResourceId = newResourceId;
+        }
+    }
+
+    private void ReplaceResourceId(SerializedProperty property, int oldResourceId, int newResourceId)
+    {
+        if (property != null && property.intValue == oldResourceId)
+        {
+            property.intValue = newResourceId;
+        }
     }
 
     private void ApplyGraphEdit(int row, int column)
@@ -1790,11 +2488,20 @@ public sealed class LevelEditorWindow : EditorWindow
 
         if (nodeProperty != null)
         {
+            bool isResourceNode = nodePropertyPath.StartsWith("_resourceDataList", StringComparison.Ordinal);
+            int oldResourceId = isResourceNode ? nodeProperty.FindPropertyRelative("_id").intValue : -1;
+
             nodeProperty.FindPropertyRelative(positionPropertyName).intValue = value;
 
             int row = nodeProperty.FindPropertyRelative("_row").intValue;
             int column = nodeProperty.FindPropertyRelative("_column").intValue;
             nodeProperty.FindPropertyRelative("_id").intValue = GetDefaultNodeId(row, column);
+
+            if (isResourceNode)
+            {
+                int newResourceId = nodeProperty.FindPropertyRelative("_id").intValue;
+                UpdateRelayResourceReferences(oldResourceId, newResourceId);
+            }
         }
 
         EndEdit();

@@ -33,6 +33,16 @@ MonoBehaviour:
     - _id: 1
       _requiredColorId: 22
       _selectionOrder: 1
+  - _id: 14
+    _row: 2
+    _column: 4
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 20
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 22
+      _selectionOrder: 1
   _resourceDataList:
   - _id: 2
     _row: 0
