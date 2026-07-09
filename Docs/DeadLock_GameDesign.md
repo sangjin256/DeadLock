@@ -11,6 +11,17 @@
 - 리소스는 수용량, 색상, 동시 연결, 색상 전환, 빈 색상, 시계 제약을 가질 수 있다.
 - 성공 조건은 레벨 규칙 안에서 모든 프로세스 노드가 완료되는 것이다.
 
+## 별 보상 기준
+
+레벨은 해가 하나만 존재한다고 가정하지 않는다. 플레이어는 여러 예약 연결 조합으로 클리어할 수 있고, 별 보상은 정답 유일성이 아니라 클리어 라운드 효율을 평가한다.
+
+- 3별: 자동 해 찾기로 확인한 최적 라운드 이하로 클리어한다.
+- 2별: 3별 기준보다 느리지만 권장 중간 라운드 이하로 클리어한다.
+- 1별: 2별 기준보다 느리지만 허용 최대 라운드 이하로 클리어한다.
+- 0별: 실패, deadlock, 또는 허용 최대 라운드 초과다.
+
+별 기준은 `3별 = 최적 라운드`, `2별 = 최적 라운드 + max(1, ceil(최적 라운드 * 0.5))`, `1별 = 2별 + max(1, ceil(최적 라운드 * 0.5))`를 기본 추천값으로 시작한다. 실제 탐색에서 더 느린 성공 해가 발견되면 1별 기준은 그 범위도 참고해 너무 낮게 잡지 않는다. 별은 진행도/보상 기준이며, Domain 시뮬레이션 성공 규칙 자체를 바꾸지 않는다.
+
 ## 색상 판정과 실제 표현
 
 도메인에서 색상은 실제 화면 색상 코드가 아니라 `ColorId`로 표현되는 규칙 판정용 ID다. 프로세스 슬롯과 리소스가 같은 색인지, ColorSwitch의 현재 색과 슬롯 색이 맞는지, Relay Transfer가 전달한 색이 Receiver에 맞는지는 `ColorId` 비교로 판단한다.
@@ -28,9 +39,13 @@
 - 리소스 슬롯은 개별 색 작업이 끝났다고 바로 반환되지 않는다. 해당 슬롯을 점유한 프로세스의 모든 작업이 완료될 때 반환된다.
 - 다른 프로세스가 이미 점유된 리소스에 접근하면 그 리소스의 대기열에 들어가고 waiting 상태가 된다.
 - waiting은 재선택 상태가 아니다. waiting 중인 프로세스는 다른 리소스로 진행하지 않고, 대기 중인 리소스 앞에서 기다린다.
-- 리소스 슬롯이 풀리면 대기열의 맨 앞 항목만 다음 라운드 맨 앞으로 재투입된다. 맨 앞 항목이 실패해도 뒤 항목이 먼저 재투입되지 않는 strict FIFO를 유지한다.
+- waiting 중인 프로세스의 다음 슬롯 작업 차례가 와도 그 작업은 실패로 사라지지 않고 다음 라운드 일반 후보로 이월된다.
+- 리소스 슬롯이 풀리면 대기열의 앞쪽 항목을 남은 capacity 수만큼 다음 라운드 priority 후보로 올린다. 같은 리소스 안에서는 맨 앞 항목이 성공해 queue에서 제거되기 전까지 뒤 항목이 먼저 실행되지 않는 strict FIFO를 유지한다.
+- waiting queue 재투입은 priority 후보이고, 다시 거리 정렬하지 않고 재투입된 순서를 보존한다.
+- 한 프로세스는 한 라운드에 하나의 슬롯 행동만 한다. waiting에서 풀린 항목이 그 라운드에 실행되면 같은 프로세스의 다른 슬롯은 다음 라운드 일반 후보로 밀린다.
+- waiting 때문에 밀린 미래 슬롯은 priority가 아니라 일반 후보로 다시 정렬한다.
 - 모든 프로세스가 완료되면 성공한다.
-- 모든 미완료 프로세스가 waiting이고 풀릴 가능성이 없으면 deadlock 실패다.
+- 모든 미완료 프로세스가 waiting이고 다음 라운드 재투입 후보나 이월 후보가 없으면 deadlock 실패다.
 - fixed finish order가 있는 프로세스는 지정된 완료 순서를 어기면 실패한다.
 - Clock 리소스가 닫히는 시점에 미완료 프로세스가 해당 리소스를 점유 중이면 실패한다.
 
@@ -111,13 +126,15 @@ Relay Transfer는 "먼 곳의 리소스 색을 간접적으로 만드는 흐름"
 
 ## 레벨 에디터 방향
 
-레벨 하나는 `LevelSO` 하나로 저장한다. `LevelSO` 안에는 보드 크기, process, process slot, resource, relay, test case 데이터가 함께 들어가며, 내부 데이터 타입은 별도 ScriptableObject가 아니라 직렬화 데이터로 둔다.
+레벨 하나는 `LevelSO` 하나로 저장한다. `LevelSO` 안에는 보드 크기, process, process slot, resource, relay, test case, 별 기준 데이터가 함께 들어가며, 내부 데이터 타입은 별도 ScriptableObject가 아니라 직렬화 데이터로 둔다.
 
 레벨 에디터는 UI Toolkit 기반 전용 창으로 만든다. 목표 UX는 인스펙터에서 칸마다 버튼을 누르는 방식이 아니라, grid canvas에 process/resource를 배치하고, relay link/transfer를 시각적으로 연결하며, 선택 항목 inspector에서 세부 값을 편집하는 방식이다.
 
 에디터는 제작 중 검증과 테스트를 우선 기능으로 가진다. `LevelSO`를 Domain `LevelDefinition`으로 변환한 뒤 `LevelDefinitionValidator` 결과를 에러 리스트로 보여주고, 에러를 선택하면 관련 노드나 relay를 강조하는 흐름을 목표로 한다.
 
-자동 플레이 검증은 test case 기반으로 시작한다. `LevelSO`에 저장된 test case는 process slot과 resource의 예약 연결 목록, 예상 결과, 최대 라운드 수를 가진다. 에디터는 이를 자동으로 `Board.AssignConnection()`에 적용하고 `Board.RunSimulation()`을 실행해 round-by-round 결과를 재생한다. 이후 클리어 라운드 수, waiting 횟수, relay 사용 여부, clock 여유 라운드 같은 지표로 난이도 분석을 확장한다.
+자동 플레이 검증은 test case 기반으로 시작한다. `LevelSO`에 저장된 test case는 process slot과 resource의 예약 연결 목록, 예상 결과, 최대 라운드 수를 가진다. 에디터는 이를 자동으로 `Board.AssignConnection()`에 적용하고 `Board.RunSimulation()`을 실행해 round-by-round 결과를 재생한다. 자동 해 찾기는 성공 가능한 예약 연결 조합 중 가장 적은 라운드 해를 찾고, 3/2/1별 추천 기준과 `Auto Optimal` 테스트 케이스를 만든다.
+
+난이도 분석 v1은 제작 보조용 휴리스틱으로 둔다. 점수는 `1.0 ~ 5.0` 범위이며 최적 라운드와 이론상 최소 라운드의 차이, waiting/requeue/deferred 압박, 성공 해 희소성, Rule/Relay 복잡도, 평균 연결 거리를 기반으로 계산한다. 이 점수는 플레이어 별 보상 기준을 직접 대체하지 않고, 스테이지 제작자가 난이도 편차를 빠르게 확인하기 위한 에디터 표시값이다.
 
 ## 열린 디자인 메모
 
@@ -126,3 +143,16 @@ Relay Transfer는 "먼 곳의 리소스 색을 간접적으로 만드는 흐름"
 - 정적 레벨 ScriptableObject는 유지할 수 있지만, 런타임 규칙은 순수 Domain 객체로 이동하는 것을 목표로 한다.
 - ScriptableObject 레벨 데이터는 Domain의 `LevelDefinition`으로 변환하고, `LevelDefinitionValidator`로 authoring 오류를 검증한 뒤 `LevelBoardFactory`가 런타임 `Board`를 생성한다.
 
+## SelectionOrder 실행 순서 메모
+
+`ProcessColorSlot.SelectionOrder`는 슬롯 배열 index가 아니라 실제 연결 선택 순서를 뜻한다. 라운드 스케줄은 각 프로세스의 슬롯 배열 위치가 아니라 `SelectionOrder`를 기준으로 만든다. `LevelSO` test case에서는 예약 연결 목록의 저장 순서를 플레이어가 연결한 순서로 해석하고, 실행 직전에 각 프로세스별 상대 `SelectionOrder`로 변환한다.
+## 2026-07-09 Waiting And Auto Solve Policy
+
+- Waiting queue는 색 우선 검색 없이 strict FIFO다.
+- Resource가 여러 capacity를 비웠을 때는 FIFO 앞쪽 항목들을 capacity 수만큼 다음 라운드 priority 후보로 올린다.
+- waiting priority 후보는 거리 정렬을 다시 적용하지 않고 재투입 순서를 보존한다.
+- 같은 resource 안에서는 waiting queue 순서가 항상 유지된다.
+- waiting에서 풀려 실행된 process는 같은 라운드에 다음 slot까지 이어서 실행하지 않는다.
+- Process가 waiting 중이라 아직 출발하지 못한 미래 slot은 waiting queue가 아니라 deferred 일반 후보로 다음 라운드에 이월된다.
+- 자동 해 찾기는 플레이어가 process 색을 선택하는 순서도 해의 일부로 본다.
+- 특히 OffToOn Clock은 일부러 먼저 연결해 waiting에 들어간 뒤 열리는 시점에 진행하는 해가 존재할 수 있으므로, solver가 early-wait 순서와 deterministic random 순서를 함께 평가한다.

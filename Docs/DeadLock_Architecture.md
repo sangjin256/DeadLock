@@ -43,7 +43,7 @@ Assets/02.Scripts/
 
 `ColorId`는 실제 색상 코드가 아니라 도메인 규칙 판정용 ID다. Domain은 `ColorId` 값이 같은지만 판단하고, 실제 `UnityEngine.Color`, 아이콘, 머티리얼, 색약 보정 팔레트 같은 표현 데이터는 이후 ScriptableObject, VisualSettings, View 계층에서 `ColorId`에 매핑한다.
 
-Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하나가 스테이지 하나를 나타내며, 그 안에 process, process slot, resource, relay, test case 데이터를 모두 저장한다. `LevelProcessData`, `LevelProcessSlotData`, `LevelResourceData`, `LevelRelayData`, `LevelTestCaseData` 같은 내부 데이터 타입은 ScriptableObject가 아니라 Unity 직렬화용 `[Serializable]` 데이터이므로 `SO` 접미사를 붙이지 않는다.
+Unity authoring 에셋은 `LevelSO`라는 이름을 사용한다. `LevelSO` 하나가 스테이지 하나를 나타내며, 그 안에 process, process slot, resource, relay, test case, star threshold 데이터를 모두 저장한다. `LevelProcessData`, `LevelProcessSlotData`, `LevelResourceData`, `LevelRelayData`, `LevelTestCaseData`, `LevelStarThresholdData` 같은 내부 데이터 타입은 ScriptableObject가 아니라 Unity 직렬화용 `[Serializable]` 데이터이므로 `SO` 접미사를 붙이지 않는다.
 
 `LevelSOMapper`는 Unity authoring 데이터인 `LevelSO`를 Domain 입력 모델인 `LevelDefinition`으로 변환만 한다. Mapper는 `LevelDefinitionValidator`를 직접 호출하지 않으며, EditorWindow, 마이그레이션 도구, Bootstrap 같은 호출자가 필요 시 `LevelSOMapper.ToLevelDefinition(levelSO)` 뒤 `LevelDefinitionValidator.Validate(definition)`를 실행한다.
 
@@ -61,7 +61,9 @@ Relay 편집은 Level Editor에서 Resource 두 개를 순서대로 선택하는
 
 Test case 편집은 `LevelSO` 내부의 `LevelTestCaseData`를 직접 수정한다. 각 test case는 이름, 최대 라운드 수, 예상 종료 상태, 예약 연결 목록을 저장한다. 예약 연결은 숫자 ID를 직접 입력하기보다 보드에서 test case 편집을 시작한 뒤 Process의 슬롯 color chip을 선택하고 Resource를 클릭해 생성/교체한다. 보드에는 test case 예약선과 Resource별 예약 순서 배지를 표시하며, Resource 선택 시 연결된 Process 슬롯과 순서를 강조한다. 에디터 실행 버튼은 `LevelSOMapper.ToLevelDefinition(levelSO)` 뒤 `LevelDefinitionValidator.Validate(definition)`를 먼저 수행하고, 통과하면 `LevelBoardFactory.CreateBoard(definition)`로 새 `Board`를 만든다. 이후 test case의 예약 연결 목록을 `Board.AssignConnection()`으로 적용하고 `Board.RunSimulation(maxRoundCount)` 결과를 하단 로그에 라운드별로 표시한다. 실행 성공 후에는 선택한 라운드까지 아직 시작되지 않은 connection은 숨기고, 점유, waiting, 차단 connection은 보드 예약선 색으로 하이라이트하며, 해당 라운드까지 완료된 Process의 연결선은 반투명하게 표시한다. 실행 결과 로그와 라운드 선택 상태는 에디터 표시 상태일 뿐 `LevelSO`에 저장하지 않는다.
 
-최적 해 찾기와 난이도 평가는 Unity Editor 내부 서비스로 둔다. `LevelSolutionFinder`는 `LevelSOMapper`, `LevelDefinitionValidator`, `LevelBoardFactory`, `Board.AssignConnection()`, `Board.RunSimulation()`을 사용해 성공 가능한 예약 연결 조합을 탐색하고 가장 적은 라운드 해를 찾는다. `LevelDifficultyAnalyzer`는 solver 결과와 라운드 리포트, Rule 구성, 후보 분기 수를 바탕으로 난이도 지표를 계산한다. 반면 자동 레벨 생성은 Unity 코드만으로 닫지 않고 Codex/AI 스킬이 후보를 만들고 Unity solver/analyzer가 검증하는 반복 루프로 둔다.
+별 기준은 Domain이 아니라 `LevelSO` authoring metadata다. `LevelStarThresholdData`는 3별, 2별, 1별 허용 라운드를 저장하고, 테스트 실행 결과는 이 기준과 실제 클리어 라운드를 비교해 별 평가를 표시한다. 별 기준은 진행도/보상 평가에 쓰이며 `Board.RunSimulation()`의 성공/실패 규칙에는 들어가지 않는다.
+
+최적 해 찾기와 난이도 평가는 Unity Editor 내부 서비스로 둔다. `LevelSolutionFinder`는 `LevelSOMapper`, `LevelDefinitionValidator`, `LevelBoardFactory`, `Board.AssignConnection()`, `Board.RunSimulation()`을 사용해 성공 가능한 예약 연결 조합을 탐색하고 가장 적은 라운드 해를 찾는다. Solver는 검증된 최적 라운드 또는 탐색 제한 전 현재 최선 라운드를 바탕으로 별 기준을 추천하고, `Auto Optimal` 테스트 케이스를 생성/갱신한다. `LevelDifficultyAnalyzer`는 solver 결과, 라운드 리포트, Rule/Relay 구성, 성공 해 희소성, 평균 연결 거리를 바탕으로 `1.0 ~ 5.0` 제작자용 난이도 점수와 등급을 계산한다. 이 난이도 결과는 `LevelSO`에 저장하지 않는 에디터 계산 결과이며, Domain 성공/실패 규칙이나 플레이어 보상 판정에는 들어가지 않는다. 반면 자동 레벨 생성은 Unity 코드만으로 닫지 않고 Codex/AI 스킬이 후보를 만들고 Unity solver/analyzer가 검증하는 반복 루프로 둔다.
 
 기존 `Assets/Outdated/Levels`의 `LevelCreator` 에셋은 삭제하거나 수동 재작성하지 않고, 새 `LevelSO`로 변환하는 호환 마이그레이션 경로를 둔다. 변환 도구는 레거시 타입을 직접 참조하지 않고 YAML을 읽어 `LevelSO`를 생성한다. 레거시 `Node.colors`의 실제 Unity 색상값은 전체 변환 대상의 첫 등장 순서대로 `ColorId` 1부터 자동 매핑하고, 매핑표는 변환 리포트에 남긴다. 레거시 `fixedNum`은 아직 새 Domain 규칙으로 구현하지 않고, 변환 리포트에 미지원 경고로 남긴다.
 
@@ -95,15 +97,19 @@ Relay는 자원 타입이 아니라 보드 범위 관계다.
 - 시작 전 예약 단계에서 `ResourceNode.Capacity`를 소모하지 않는다.
 - `ProcessColorSlot`은 할당된 리소스, 선택 순서, 완료 상태를 표현해야 한다.
 - `ResourceNode`는 capacity, available capacity, waiting queue, 현재 색/상태를 가진다.
-- 스케줄은 각 프로세스의 n번째 슬롯을 n번째 라운드 후보로 만든다.
+- 스케줄은 각 프로세스 슬롯의 `SelectionOrder`를 라운드 후보 번호로 사용한다. 슬롯 배열의 물리적 순서가 아니라 플레이어 또는 test case가 연결한 상대 순서가 실행 순서다.
 - 같은 라운드 안의 스케줄 항목은 프로세스와 리소스 사이 거리순, 동거리면 선택 순서순으로 처리한다.
 - 시뮬레이션 중 실제 연결 검증은 프로세스 상태, 현재 리소스 상태, 남은 capacity, Rule 조건으로 판단한다.
 - 연결에 성공하면 리소스를 점유하고 해당 슬롯을 완료 처리한다.
 - 리소스 점유는 개별 슬롯 작업이 아니라 프로세스 완료 시점까지 유지된다.
 - 연결할 수 없으면 프로세스는 해당 리소스의 waiting queue에 들어가고 다른 리소스로 진행하지 않는다.
+- waiting 중인 프로세스의 이후 슬롯 스케줄 항목은 사라지지 않고 다음 라운드 일반 후보로 이월된다.
 - 라운드 종료 시 완료 가능한 프로세스를 판정하고, 완료된 프로세스가 점유한 리소스를 반환한다.
-- 리소스가 반환되면 waiting queue의 맨 앞 항목만 다음 라운드 맨 앞으로 재투입한다. 맨 앞 항목이 현재 리소스 상태와 맞지 않아 실패해도 뒤 항목을 먼저 꺼내지 않는 strict FIFO를 유지한다.
-- 모든 미완료 프로세스가 waiting이고 clock waiting처럼 풀릴 가능성이 없으면 deadlock 실패로 본다.
+- 리소스가 반환되면 waiting queue의 앞쪽 항목을 남은 capacity 수만큼 다음 라운드 priority 후보로 재투입한다. 같은 resource 안에서는 맨 앞 항목이 현재 리소스 상태와 맞지 않아 실패해도 뒤 항목을 먼저 꺼내지 않는 strict FIFO를 유지한다.
+- waiting queue에서 깨어난 항목은 다음 라운드 priority 후보이고, priority 후보끼리는 거리순으로 다시 정렬하지 않고 재투입 순서를 보존한다.
+- 한 라운드에서 이미 행동한 process의 다른 슬롯 후보는 다음 라운드로 이월한다. waiting에서 풀린 항목이 실행된 process도 같은 라운드에 다음 슬롯을 이어서 실행하지 않는다.
+- process waiting 때문에 아직 출발 못 한 미래 슬롯은 priority가 아닌 일반 후보로 다시 정렬한다.
+- 모든 미완료 프로세스가 waiting이고 다음 라운드 priority 후보나 deferred 일반 후보가 없으면 deadlock 실패로 본다.
 
 ## Rule 책임
 
@@ -179,3 +185,14 @@ Manager가 Application 계층이다. Presenter는 프레젠테이션 어댑터�
 
 Unity 검증은 수동 전용이다. 명시 요청 없이는 리컴파일이나 테스트를 실행하지 않는다.
 
+## 2026-07-09 Waiting And Solver Notes
+
+- Resource waiting queue는 strict FIFO를 유지한다.
+- 다만 라운드 종료 후 resource에 남은 capacity가 여러 칸이면, waiting queue의 앞쪽 항목들을 capacity 수만큼 다음 라운드 priority 후보로 올린다.
+- waiting priority 후보는 queue index와 priority insertion order를 함께 들고 다니며, 다음 라운드에서 거리 정렬을 다시 적용하지 않는다.
+- priority 후보는 재투입 순서대로 실행하고, 같은 resource 안에서는 queue index로 FIFO를 보장한다.
+- priority waiting으로 행동한 process는 같은 라운드의 일반/deferred 후보를 실행하지 않고 다음 라운드로 넘긴다.
+- 뒤 항목은 앞 항목이 실제 점유에 성공해 queue head에서 제거된 뒤에만 실행될 수 있다.
+- LevelSolutionFinder는 resource 배정뿐 아니라 process별 slot 실행 순서도 후보로 본다.
+- deterministic random 순서는 같은 assignment 입력이면 같은 seed를 사용하므로 에디터에서 재현 가능하다.
+- Stage30 계열처럼 resource 선택은 고정되어 있지만 slot 순서가 핵심인 레벨을 위해 추가된 보강이다.

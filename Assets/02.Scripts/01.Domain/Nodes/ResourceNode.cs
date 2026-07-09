@@ -117,6 +117,26 @@ public sealed class ResourceNode
         return true;
     }
 
+    public WaitingRequest[] GetWaitingRequestSnapshot(int maxCount)
+    {
+        int count = maxCount < _waitingRequestQueue.Count ? maxCount : _waitingRequestQueue.Count;
+        WaitingRequest[] requestArray = new WaitingRequest[count];
+        int index = 0;
+
+        foreach (WaitingRequest request in _waitingRequestQueue)
+        {
+            if (index >= count)
+            {
+                break;
+            }
+
+            requestArray[index] = request;
+            index++;
+        }
+
+        return requestArray;
+    }
+
     public bool TryRemoveWaitingHead(int connectionId)
     {
         if (_waitingRequestQueue.Count == 0 ||

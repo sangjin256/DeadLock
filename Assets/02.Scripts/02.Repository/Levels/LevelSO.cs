@@ -29,6 +29,10 @@ public sealed class LevelSO : ScriptableObject
     public IReadOnlyList<LevelRelayData> RelayDataList => _relayDataList;
 
     [SerializeField]
+    private LevelStarThresholdData _starThresholdData = new();
+    public LevelStarThresholdData StarThresholdData => _starThresholdData;
+
+    [SerializeField]
     private List<LevelTestCaseData> _testCaseDataList = new();
     public IReadOnlyList<LevelTestCaseData> TestCaseDataList => _testCaseDataList;
 }

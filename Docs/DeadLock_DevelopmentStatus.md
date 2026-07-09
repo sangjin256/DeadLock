@@ -75,48 +75,45 @@
 - Level Editor test case 예약 연결 UX를 보드 기반으로 바꿨다. test case 편집 시작 후 Process의 슬롯 color chip을 선택하고 Resource를 클릭해 예약 연결을 생성/교체하며, 숫자 ID 직접 입력은 노출하지 않는다.
 - Test case 편집 중 보드에는 예약 연결선, 슬롯별 예약 순서 번호, Resource별 예약 배지를 표시한다. Resource를 선택하면 해당 Resource에 연결된 Process 슬롯과 예약선이 강조되어 인게임 플레이 순서를 더 쉽게 확인할 수 있다.
 - Test case 실행 결과를 라운드별로 보드에서 확인할 수 있게 했다. 실행 후 하단 로그의 라운드 선택 컨트롤로 라운드를 바꾸면 선택 라운드까지 아직 시작되지 않은 connection은 숨기고, 점유는 초록, waiting은 노랑, 차단은 빨강으로 표시하며, 해당 라운드까지 완료된 Process의 연결선은 반투명하게 표시된다.
+- `LevelSO`에 `LevelStarThresholdData`를 추가해 3/2/1별 허용 라운드를 저장하게 했다. 별 기준은 Domain 규칙이 아니라 레벨 authoring metadata이며, 테스트 실행 결과에서 실제 클리어 라운드와 비교해 별 평가를 표시한다.
+- Editor 전용 `LevelSolutionFinder`를 추가했다. `LevelSO -> LevelDefinition -> Board` 흐름으로 가능한 예약 연결 조합을 탐색하고, 가장 적은 라운드 해와 별 기준 추천값을 보고한다.
+- Level Editor의 테스트 케이스 섹션에 `자동 해 찾기 / 별 기준` 패널을 추가했다. 최적 해 찾기, 별 기준 저장, `Auto Optimal` 테스트 케이스 생성/갱신을 수행할 수 있다.
 - 다음 검증/제작 자동화 방향을 정했다. 최적 해 찾기와 난이도 평가는 Unity Editor 내부 서비스로 만들고, 자동 레벨 생성은 Codex/AI 스킬이 후보를 만들고 Unity solver가 검증하는 반복 루프로 분리한다.
 - 챕터 설계는 "현재 챕터의 신규 Rule은 필수, 이전 챕터 Rule은 선택적으로 재등장 가능"한 구조로 잡는다. 이를 위해 후속 작업에서 챕터별 필수/허용 Rule, 목표 난이도 범위, 목표 라운드 범위를 담는 `ChapterRuleProfile` 계열 정의가 필요하다.
+- Stage28 실패 원인을 분석했고, 마이그레이션 데이터보다 라운드 실행 규칙 차이가 핵심이라고 판단했다. waiting 중인 프로세스의 이후 슬롯 스케줄이 사라지지 않고 다음 라운드 일반 후보로 이월되도록 `Board.RunSimulation()`을 보강했다.
+- `RoundResult`에 deferred connection 목록을 추가해 라운드 로그에서 waiting queue 진입과 process-wait 이월을 구분할 수 있게 했다. 에디터 라운드 보드 시각화에서는 deferred를 출발 전 상태로 유지하고 로그에만 표시한다.
+- `LevelSolutionFinder`는 탐색 노드 제한을 상향하고 완성 후보 평가 수 제한을 별도로 추가했다. Stage28처럼 후보 평가 수는 139,968개지만 중간 탐색 노드가 20만을 조금 넘는 레벨도 탐색 제한 때문에 오판하지 않도록 했다.
+- Editor 전용 `LevelDifficultyAnalyzer`를 추가했다. `LevelSolutionFinder` 결과와 `LevelSO -> LevelDefinition` 정보를 사용해 최적 라운드, waiting/requeue/deferred, 성공 해 희소성, Rule/Relay 복잡도, 평균 연결 거리 기반의 `1.0 ~ 5.0` 난이도 점수와 등급을 계산한다.
+- Level Editor의 자동 해 찾기 패널과 하단 로그에 난이도 요약을 표시하도록 연결했다. 분석 결과는 `LevelSO`에 저장하지 않고 에디터 계산 결과로만 유지한다.
 
 ## 다음 작업 순서
 
-1. `LevelSolutionFinder`를 추가한다.
-    - `LevelSO -> LevelDefinition -> Board` 흐름을 사용해 가능한 예약 연결 조합을 탐색한다.
-    - 성공하는 조합 중 가장 적은 라운드로 클리어되는 해를 찾는다.
-    - 후보가 적은 slot부터 탐색하고, 색/예약 가능 여부 기반으로 후보를 줄이며, 탐색 노드 수와 시간 제한을 둔다.
-    - 결과에는 최적 라운드 수, 예약 연결 목록, 실패/중단 이유, 탐색 통계를 포함한다.
-    - Level Editor에 `최적 해 찾기`와 `최적 해로 테스트 케이스 생성` 버튼을 추가한다.
-
-2. `LevelDifficultyAnalyzer`를 추가한다.
-    - 클리어 라운드 수, waiting 횟수, 재투입 횟수, relay 사용, clock 여유 라운드부터 시작한다.
-    - 가능한 성공 해 개수, 후보 분기 수, Rule 복잡도, capacity 압박, 색 압박 같은 지표를 점진적으로 추가한다.
-    - 라운드별 보드 하이라이트 결과를 난이도 지표 요약과 연결한다.
-
-3. 챕터별 Rule profile을 설계한다.
+1. 챕터별 Rule profile을 설계한다.
     - 각 챕터의 필수 Rule과 허용 Rule을 정의한다.
     - 현재 챕터 신규 Rule은 모든 스테이지에 반드시 포함되도록 검증한다.
     - 챕터별 목표 난이도 범위와 목표 최적 라운드 범위를 정의한다.
+    - 챕터별 3/2/1별 라운드 허용 폭을 조정할 수 있게 한다.
 
-4. Level Editor에 난이도/챕터 적합성 패널과 batch 실행 UI를 추가한다.
+2. Level Editor에 난이도/챕터 적합성 패널과 batch 실행 UI를 추가한다.
     - 여러 test case 또는 여러 LevelSO를 한 번에 분석한다.
     - 최적 라운드, 난이도 점수, 챕터 Rule 포함 여부, 경고를 요약 표시한다.
 
-5. Codex/AI 기반 레벨 생성 스킬을 설계한다.
+3. Codex/AI 기반 레벨 생성 스킬을 설계한다.
     - 입력 조건: 보드 크기, 챕터, 필수/허용 Rule, process 수, 색 수, 목표 난이도, 목표 최적 라운드.
     - Codex 스킬이 후보 LevelSO/LevelDefinition을 만들고, Unity solver/analyzer가 검증한다.
     - 조건 불만족 시 AI가 후보를 수정하는 반복 루프로 둔다.
 
-6. Unity Test Framework 기반 테스트 구조를 준비한다.
+4. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
    - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-7. `LevelPlayManager`와 DTO를 작성한다.
+5. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-8. MVP UI와 Bootstrap을 연결한다.
+6. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-9. 저장/플랫폼/모바일 입력을 분리한다.
+7. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -133,10 +130,26 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - Composite Resource Rule 추가 뒤 Domain Unity 의존, 다중 rule 변환 경계, 단일 rule 잔존, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 도구 추가 뒤 Domain Unity 의존, Editor 폴더 위치, `LevelCreator` 타입 직접 참조, Repository/Levels `[SerializeField]` 한 줄 배치, `.meta` 누락, `git diff --check`를 확인했다.
 - Legacy Level 마이그레이션 실행 뒤 생성 결과를 파일 기준으로 검수했다. 61개 source asset과 61개 migrated `LevelSO`를 비교했고 process/resource 수, 좌표, 색 ID, capacity, rule 설정이 일치했다. 리포트의 failed asset과 validation error는 없었다.
-- Level Editor Window v1/v1.5, Relay 편집 UI, test case 자동 라운드 재생, 보드 기반 test assignment 편집, 라운드별 보드 하이라이트 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit/Relay/assignment line 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
+- Level Editor Window v1/v1.5, Relay 편집 UI, test case 자동 라운드 재생, 보드 기반 test assignment 편집, 라운드별 보드 하이라이트, Stage28 라운드 이월 규칙, LevelDifficultyAnalyzer 추가 뒤 Domain Unity 의존, Repository/Levels `[SerializeField]` 한 줄 배치, EditorWindow/UI Toolkit/Relay/assignment line/analysis 타입 존재, `.meta` 누락, `git diff --check`를 확인했다.
 - Unity Editor 컴파일/테스트는 아직 실행하지 않았다.
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 `LevelSolutionFinder`를 추가해 Level Editor에서 최적 해를 찾고, 그 결과로 테스트 케이스를 자동 생성하는 것이다. 이 solver가 난이도 평가와 Codex/AI 기반 레벨 생성 검증 루프의 기반이 된다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 챕터별 Rule profile을 설계해 각 챕터의 필수 Rule, 허용 Rule, 목표 난이도 범위, 목표 최적 라운드 범위를 정의하는 것이다. 이후 Level Editor에 챕터 적합성 패널과 batch 분석 UI를 추가한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 
+## 2026-07-09 SelectionOrder 라운드 순서 보정
+
+- `Board.RunSimulation()` 스케줄 생성 기준을 슬롯 배열 index에서 `ProcessColorSlot.SelectionOrder`로 변경했다.
+- Level Editor test case 실행은 예약 연결 목록의 저장 순서를 플레이어가 연결한 순서로 해석하고, 실행 직전에 임시 `LevelDefinition`의 각 프로세스 슬롯 `SelectionOrder`로 반영한다.
+- 순서 후보 탐색은 모든 순열 완전 탐색이 아니므로, 이론상 최소 라운드에 도달한 경우만 최적 증명으로 보고 그 외 성공 해는 현재 최선으로 표시한다.
+- 순서 후보 평가 증가에 맞춰 자동 해 찾기 기본 완성 후보 평가 제한을 2,000,000으로 올렸다.
+## 2026-07-09 Waiting Capacity And Solver Order Expansion
+
+- `Board.RunSimulation()`의 waiting 재투입을 capacity-aware strict FIFO로 보강했다.
+- 기존에는 resource별 waiting head 1개만 다음 라운드 priority 후보로 올렸지만, 이제 resource의 남은 capacity 수만큼 queue 앞쪽 항목을 priority 후보로 올린다.
+- 같은 resource에서 나온 waiting priority 후보는 queue index를 보관하고, 실행 정렬에서도 같은 resource 안에서는 FIFO 순서를 먼저 지킨다.
+- 뒤 waiting 항목은 앞 항목이 실제 점유에 성공해 queue head에서 제거되기 전에는 실행되지 않는다.
+- `LevelSolutionFinder`의 process slot order 후보를 확장했다.
+- 기존 기본/탐색/urgency/distance 순서에 더해 OffToOn early-wait 순서와 deterministic random process order 후보를 추가했다.
+- Stage30은 resource 선택보다 process별 slot 실행 순서가 핵심인 케이스로 확인되었고, 이번 solver 보강 대상에 해당한다.
+- Unity Editor 컴파일/테스트는 명시 요청이 없어 실행하지 않았다.

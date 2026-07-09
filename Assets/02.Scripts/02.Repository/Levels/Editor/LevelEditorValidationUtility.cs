@@ -16,6 +16,7 @@ internal sealed class LevelEditorValidationUtility
         ValidateProcessList(levelSO, messageList);
         Dictionary<int, LevelResourceData> resourceByIdDict = ValidateResourceList(levelSO, messageList);
         ValidateRelayList(levelSO, resourceByIdDict, messageList);
+        ValidateStarThreshold(levelSO, messageList);
 
         if (messageList.Count == 0)
         {
@@ -276,6 +277,34 @@ internal sealed class LevelEditorValidationUtility
             {
                 messageList.Add($"RelayTransfer {relayData.Id}의 sender 리소스 수용량은 1이어야 합니다.");
             }
+        }
+    }
+
+    private void ValidateStarThreshold(LevelSO levelSO, List<string> messageList)
+    {
+        LevelStarThresholdData starThresholdData = levelSO.StarThresholdData;
+
+        if (starThresholdData == null)
+        {
+            return;
+        }
+
+        int threeStarRoundCount = starThresholdData.ThreeStarRoundCount;
+        int twoStarRoundCount = starThresholdData.TwoStarRoundCount;
+        int oneStarRoundCount = starThresholdData.OneStarRoundCount;
+
+        if (threeStarRoundCount == 0 &&
+            twoStarRoundCount == 0 &&
+            oneStarRoundCount == 0)
+        {
+            return;
+        }
+
+        if (threeStarRoundCount <= 0 ||
+            twoStarRoundCount < threeStarRoundCount ||
+            oneStarRoundCount < twoStarRoundCount)
+        {
+            messageList.Add("별 기준은 0이 아니어야 하며 3별 <= 2별 <= 1별 라운드 순서를 지켜야 합니다.");
         }
     }
 

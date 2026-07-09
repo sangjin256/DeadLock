@@ -13,6 +13,9 @@ public sealed class RoundResult
     private readonly List<int> _requeuedConnectionIdList = new();
     public IReadOnlyList<int> RequeuedConnectionIdList => _requeuedConnectionIdList;
 
+    private readonly List<int> _deferredConnectionIdList = new();
+    public IReadOnlyList<int> DeferredConnectionIdList => _deferredConnectionIdList;
+
     private readonly List<int> _completedProcessIdList = new();
     public IReadOnlyList<int> CompletedProcessIdList => _completedProcessIdList;
 
@@ -29,6 +32,7 @@ public sealed class RoundResult
                                _completedProcessIdList.Count > 0 ||
                                _releasedConnectionIdList.Count > 0 ||
                                _requeuedConnectionIdList.Count > 0 ||
+                               _deferredConnectionIdList.Count > 0 ||
                                _failedProcessIdList.Count > 0 ||
                                _blockedConnectionIdList.Count > 0;
 
@@ -50,6 +54,11 @@ public sealed class RoundResult
     public void AddRequeuedConnection(int connectionId)
     {
         AddUnique(_requeuedConnectionIdList, connectionId);
+    }
+
+    public void AddDeferredConnection(int connectionId)
+    {
+        AddUnique(_deferredConnectionIdList, connectionId);
     }
 
     public void AddCompletedProcess(int processId)

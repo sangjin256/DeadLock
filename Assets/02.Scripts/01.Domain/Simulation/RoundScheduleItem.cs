@@ -8,6 +8,8 @@ public sealed class RoundScheduleItem
     public readonly int Distance;
     public readonly int SelectionOrder;
     public readonly bool IsPriorityFromWaiting;
+    public readonly int WaitingQueueIndex;
+    public readonly int PriorityOrder;
 
     public RoundScheduleItem(
         int processId,
@@ -17,7 +19,9 @@ public sealed class RoundScheduleItem
         int roundIndex,
         int distance,
         int selectionOrder,
-        bool isPriorityFromWaiting)
+        bool isPriorityFromWaiting,
+        int waitingQueueIndex,
+        int priorityOrder)
     {
         ProcessId = processId;
         SlotId = slotId;
@@ -27,13 +31,17 @@ public sealed class RoundScheduleItem
         Distance = distance;
         SelectionOrder = selectionOrder;
         IsPriorityFromWaiting = isPriorityFromWaiting;
+        WaitingQueueIndex = waitingQueueIndex;
+        PriorityOrder = priorityOrder;
     }
 
     public static RoundScheduleItem FromWaitingRequest(
         WaitingRequest request,
         int roundIndex,
         int distance,
-        int selectionOrder)
+        int selectionOrder,
+        int waitingQueueIndex,
+        int priorityOrder)
     {
         return new RoundScheduleItem(
             request.ProcessId,
@@ -43,6 +51,8 @@ public sealed class RoundScheduleItem
             roundIndex,
             distance,
             selectionOrder,
-            true);
+            true,
+            waitingQueueIndex,
+            priorityOrder);
     }
 }

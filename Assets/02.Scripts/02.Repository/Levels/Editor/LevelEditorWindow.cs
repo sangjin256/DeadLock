@@ -13,6 +13,7 @@ public sealed class LevelEditorWindow : EditorWindow
     private const float PaletteWidth = 260f;
     private const float InspectorWidth = 370f;
     private const float ValidationPanelHeight = 240f;
+    private const string AutoOptimalTestCaseName = "Auto Optimal";
 
     private static readonly Color BackgroundColor = new Color(0.12f, 0.13f, 0.15f);
     private static readonly Color PanelColor = new Color(0.17f, 0.18f, 0.20f);
@@ -24,6 +25,7 @@ public sealed class LevelEditorWindow : EditorWindow
 
     private readonly LevelEditorColorMap _colorMap = new LevelEditorColorMap();
     private readonly LevelEditorValidationUtility _validationUtility = new LevelEditorValidationUtility();
+    private readonly LevelDifficultyAnalyzer _difficultyAnalyzer = new LevelDifficultyAnalyzer();
 
     private LevelSO _levelSO;
     private SerializedObject _serializedObject;
@@ -47,8 +49,11 @@ public sealed class LevelEditorWindow : EditorWindow
     private string _relayDraftMessage = string.Empty;
     private string _finalValidationText = string.Empty;
     private string _testRunText = string.Empty;
+    private string _solutionFinderText = string.Empty;
     private string _testCaseEditMessage = string.Empty;
     private readonly List<LevelTestConnectionRunData> _lastTestConnectionRunDataList = new List<LevelTestConnectionRunData>();
+    private LevelSolveReport _lastSolveReport;
+    private LevelDifficultyReport _lastDifficultyReport;
     private SimulationReport _lastTestSimulationReport;
     private int _activeTestCaseIndex = -1;
     private int _lastRunTestCaseIndex = -1;
@@ -215,6 +220,7 @@ public sealed class LevelEditorWindow : EditorWindow
         _selectedRelayIndex = -1;
         _finalValidationText = string.Empty;
         ClearTestRunState();
+        ClearSolutionFinderState();
         _testCaseEditMessage = string.Empty;
         _activeTestCaseIndex = -1;
         _selectedTestProcessId = -1;
@@ -766,8 +772,8 @@ public sealed class LevelEditorWindow : EditorWindow
                 continue;
             }
 
-            int assignmentOrder = GetAssignmentOrder(processData.Id, slotData.Id);
-            bool isAssigned = assignmentOrder > 0;
+            int processExecutionOrder = GetProcessExecutionOrder(processData.Id, slotData.Id);
+            bool isAssigned = processExecutionOrder > 0;
             bool isSelected = IsSelectedTestSlot(processData.Id, slotData.Id);
             bool isFocused = !isAssigned ||
                              isSelected ||
@@ -775,7 +781,7 @@ public sealed class LevelEditorWindow : EditorWindow
 
             colorChipDataList.Add(new LevelNodeColorChipData(slotData.RequiredColorId,
                                                              slotData.Id,
-                                                             assignmentOrder,
+                                                             processExecutionOrder,
                                                              isAssigned,
                                                              isSelected,
                                                              isFocused));
@@ -871,6 +877,8 @@ public sealed class LevelEditorWindow : EditorWindow
             return previewDataList;
         }
 
+        Dictionary<int, int> nextSelectionOrderByProcessIdDict = new Dictionary<int, int>();
+
         for (int i = 0; i < testCaseData.AssignedConnectionDataList.Count; i++)
         {
             LevelAssignedConnectionData assignedConnectionData = testCaseData.AssignedConnectionDataList[i];
@@ -884,16 +892,28 @@ public sealed class LevelEditorWindow : EditorWindow
             }
 
             int distance = Mathf.Abs(processData.Row - resourceData.Row) + Mathf.Abs(processData.Column - resourceData.Column);
+            int selectionOrder = GetNextSelectionOrder(nextSelectionOrderByProcessIdDict, assignedConnectionData.ProcessId);
             previewDataList.Add(new LevelTestAssignmentPreviewData(assignedConnectionData.ProcessId,
                                                                    assignedConnectionData.SlotId,
                                                                    assignedConnectionData.ResourceId,
                                                                    0,
-                                                                   slotData.SelectionOrder,
+                                                                   selectionOrder,
                                                                    distance));
         }
 
         previewDataList.Sort(CompareAssignmentPreview);
         return BuildOrderedAssignmentPreviewList(previewDataList);
+    }
+
+    private int GetNextSelectionOrder(Dictionary<int, int> nextSelectionOrderByProcessIdDict, int processId)
+    {
+        if (!nextSelectionOrderByProcessIdDict.TryGetValue(processId, out int nextSelectionOrder))
+        {
+            nextSelectionOrder = 0;
+        }
+
+        nextSelectionOrderByProcessIdDict[processId] = nextSelectionOrder + 1;
+        return nextSelectionOrder;
     }
 
     private int GetVisualizedTestCaseIndex()
@@ -981,6 +1001,23 @@ public sealed class LevelEditorWindow : EditorWindow
             if (assignment.ProcessId == processId && assignment.SlotId == slotId)
             {
                 return assignment.Order;
+            }
+        }
+
+        return 0;
+    }
+
+    private int GetProcessExecutionOrder(int processId, int slotId)
+    {
+        IReadOnlyList<LevelTestAssignmentPreviewData> assignmentList = GetActiveTestAssignmentPreviewList();
+
+        for (int i = 0; i < assignmentList.Count; i++)
+        {
+            LevelTestAssignmentPreviewData assignment = assignmentList[i];
+
+            if (assignment.ProcessId == processId && assignment.SlotId == slotId)
+            {
+                return assignment.SelectionOrder + 1;
             }
         }
 
@@ -1512,6 +1549,7 @@ public sealed class LevelEditorWindow : EditorWindow
         VisualElement box = CreateBox();
         _inspectorContainer.Add(box);
         box.Add(CreateSectionTitle("테스트 케이스"));
+        BuildSolutionFinderPanel(box);
 
         SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
 
@@ -1535,6 +1573,56 @@ public sealed class LevelEditorWindow : EditorWindow
         }
 
         box.Add(CreateHeaderButton("테스트 케이스 추가", AddTestCase));
+    }
+
+    private void BuildSolutionFinderPanel(VisualElement parent)
+    {
+        VisualElement box = CreateNestedBox();
+        parent.Add(box);
+
+        box.Add(CreateSectionTitle("자동 해 찾기 / 별 기준"));
+
+        SerializedProperty starThresholdProperty = _serializedObject.FindProperty("_starThresholdData");
+
+        if (starThresholdProperty == null)
+        {
+            box.Add(new Label("별 기준 데이터를 찾을 수 없습니다."));
+        }
+        else
+        {
+            AddIntegerField(box, "3별 라운드", starThresholdProperty.FindPropertyRelative("_threeStarRoundCount").propertyPath);
+            AddIntegerField(box, "2별 라운드", starThresholdProperty.FindPropertyRelative("_twoStarRoundCount").propertyPath);
+            AddIntegerField(box, "1별 라운드", starThresholdProperty.FindPropertyRelative("_oneStarRoundCount").propertyPath);
+        }
+
+        if (_lastSolveReport != null)
+        {
+            Label reportLabel = new Label(BuildSolveReportSummary(_lastSolveReport));
+            reportLabel.style.whiteSpace = WhiteSpace.Normal;
+            reportLabel.style.color = new StyleColor(new Color(0.78f, 0.82f, 0.88f));
+            box.Add(reportLabel);
+        }
+
+        if (_lastDifficultyReport != null)
+        {
+            Label difficultyLabel = new Label(BuildDifficultySummary(_lastDifficultyReport));
+            difficultyLabel.style.whiteSpace = WhiteSpace.Normal;
+            difficultyLabel.style.color = new StyleColor(new Color(0.88f, 0.82f, 0.62f));
+            box.Add(difficultyLabel);
+        }
+
+        VisualElement buttonRow = CreateButtonRow();
+        buttonRow.Add(CreateHeaderButton("최적 해 찾기", RunSolutionFinder));
+
+        Button saveStarButton = CreateHeaderButton("별 기준 저장", SaveLastStarThresholdRecommendation);
+        saveStarButton.SetEnabled(HasUsableSolveRecommendation());
+        buttonRow.Add(saveStarButton);
+
+        Button updateTestButton = CreateHeaderButton("Auto Optimal 테스트 갱신", UpdateAutoOptimalTestCaseFromLastSolve);
+        updateTestButton.SetEnabled(HasUsableSolveCandidate());
+        buttonRow.Add(updateTestButton);
+
+        box.Add(buttonRow);
     }
 
     private void BuildTestCaseInspector(VisualElement parent,
@@ -1900,7 +1988,7 @@ public sealed class LevelEditorWindow : EditorWindow
 
         _selectedRelayIndex = arrayIndex;
         ClearRelayDraft();
-        EndEdit();
+        EndEdit(clearSolutionFinderState: false);
     }
 
     private void SetRelayType(int relayIndex, ERelayType relayType)
@@ -1928,7 +2016,7 @@ public sealed class LevelEditorWindow : EditorWindow
         relayProperty.FindPropertyRelative("_relayType").enumValueIndex = (int)relayType;
         relayProperty.FindPropertyRelative("_senderResourceId").intValue = senderResourceId;
         _selectedRelayIndex = relayIndex;
-        EndEdit();
+        EndEdit(clearSolutionFinderState: false);
     }
 
     private int GetDefaultRelaySender(ERelayType relayType, int firstResourceId, int secondResourceId)
@@ -1981,7 +2069,7 @@ public sealed class LevelEditorWindow : EditorWindow
         relayProperty = FindRelayProperty(relayIndex);
         relayProperty.FindPropertyRelative("_senderResourceId").intValue = senderResourceId;
         _selectedRelayIndex = relayIndex;
-        EndEdit();
+        EndEdit(clearSolutionFinderState: false);
     }
 
     private void DeleteRelay(int relayIndex)
@@ -2005,7 +2093,7 @@ public sealed class LevelEditorWindow : EditorWindow
             _selectedRelayIndex--;
         }
 
-        EndEdit();
+        EndEdit(clearSolutionFinderState: false);
     }
 
     private SerializedProperty FindRelayProperty(int relayIndex)
@@ -3193,6 +3281,258 @@ public sealed class LevelEditorWindow : EditorWindow
         testCaseProperty.FindPropertyRelative("_assignedConnectionDataList").ClearArray();
     }
 
+    private void WriteDefaultStarThreshold(SerializedProperty starThresholdProperty)
+    {
+        if (starThresholdProperty == null)
+        {
+            return;
+        }
+
+        starThresholdProperty.FindPropertyRelative("_threeStarRoundCount").intValue = 0;
+        starThresholdProperty.FindPropertyRelative("_twoStarRoundCount").intValue = 0;
+        starThresholdProperty.FindPropertyRelative("_oneStarRoundCount").intValue = 0;
+    }
+
+    private void RunSolutionFinder()
+    {
+        if (_levelSO == null)
+        {
+            ClearSolutionFinderState();
+            _solutionFinderText = "자동 해 찾기 실패: LevelSO가 선택되지 않았습니다.";
+            RefreshAll();
+            return;
+        }
+
+        LevelSolutionFinder finder = new LevelSolutionFinder();
+        LevelSolveSettings settings = new LevelSolveSettings(GetSolutionFinderMaxRoundCount(),
+                                                             LevelSolveSettings.DefaultMaxSearchNodeCount,
+                                                             LevelSolveSettings.DefaultMaxEvaluatedCandidateCount,
+                                                             true);
+
+        _lastSolveReport = finder.FindBestSolution(_levelSO, settings);
+        _lastDifficultyReport = _difficultyAnalyzer.Analyze(_levelSO, _lastSolveReport);
+        _solutionFinderText = BuildSolveReportText(_lastSolveReport, _lastDifficultyReport);
+        RefreshAll();
+    }
+
+    private int GetSolutionFinderMaxRoundCount()
+    {
+        if (TryGetStarThreshold(out int _, out int _, out int oneStarRoundCount))
+        {
+            return Math.Max(LevelSolveSettings.DefaultMaxRoundCount, oneStarRoundCount);
+        }
+
+        return LevelSolveSettings.DefaultMaxRoundCount;
+    }
+
+    private bool HasUsableSolveCandidate()
+    {
+        return _lastSolveReport?.BestCandidate != null &&
+               _lastSolveReport.StarThresholdRecommendation != null;
+    }
+
+    private bool HasUsableSolveRecommendation()
+    {
+        return _lastSolveReport?.StarThresholdRecommendation != null;
+    }
+
+    private void SaveLastStarThresholdRecommendation()
+    {
+        if (!HasUsableSolveRecommendation())
+        {
+            return;
+        }
+
+        LevelSolveReport report = _lastSolveReport;
+        LevelStarThresholdRecommendation recommendation = report.StarThresholdRecommendation;
+        BeginEdit("Save Star Threshold");
+        SerializedProperty starThresholdProperty = _serializedObject.FindProperty("_starThresholdData");
+
+        if (starThresholdProperty != null)
+        {
+            starThresholdProperty.FindPropertyRelative("_threeStarRoundCount").intValue = recommendation.ThreeStarRoundCount;
+            starThresholdProperty.FindPropertyRelative("_twoStarRoundCount").intValue = recommendation.TwoStarRoundCount;
+            starThresholdProperty.FindPropertyRelative("_oneStarRoundCount").intValue = recommendation.OneStarRoundCount;
+        }
+
+        EndEdit(clearSolutionFinderState: false);
+        _lastSolveReport = report;
+        _solutionFinderText = BuildSolveReportText(report, _lastDifficultyReport) + "\n별 기준 저장 완료.";
+        RefreshAll();
+    }
+
+    private void UpdateAutoOptimalTestCaseFromLastSolve()
+    {
+        if (!HasUsableSolveCandidate())
+        {
+            return;
+        }
+
+        LevelSolveReport report = _lastSolveReport;
+        int testCaseIndex = FindAutoOptimalTestCaseIndex();
+
+        BeginEdit("Update Auto Optimal Test Case");
+        SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
+
+        if (testCaseIndex < 0)
+        {
+            testCaseIndex = testCaseListProperty.arraySize;
+            testCaseListProperty.InsertArrayElementAtIndex(testCaseIndex);
+        }
+
+        WriteAutoOptimalTestCase(testCaseListProperty.GetArrayElementAtIndex(testCaseIndex),
+                                 report.BestCandidate,
+                                 report.StarThresholdRecommendation);
+        EndEdit(clearSolutionFinderState: false);
+
+        _lastSolveReport = report;
+        _solutionFinderText = BuildSolveReportText(report, _lastDifficultyReport) + "\nAuto Optimal 테스트 케이스 갱신 완료.";
+        RunTestCase(testCaseIndex);
+    }
+
+    private int FindAutoOptimalTestCaseIndex()
+    {
+        SerializedProperty testCaseListProperty = _serializedObject.FindProperty("_testCaseDataList");
+
+        if (testCaseListProperty == null)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < testCaseListProperty.arraySize; i++)
+        {
+            SerializedProperty testCaseProperty = testCaseListProperty.GetArrayElementAtIndex(i);
+            string testCaseName = testCaseProperty.FindPropertyRelative("_name").stringValue;
+
+            if (string.Equals(testCaseName, AutoOptimalTestCaseName, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void WriteAutoOptimalTestCase(
+        SerializedProperty testCaseProperty,
+        LevelSolveCandidate candidate,
+        LevelStarThresholdRecommendation recommendation)
+    {
+        testCaseProperty.FindPropertyRelative("_name").stringValue = AutoOptimalTestCaseName;
+        testCaseProperty.FindPropertyRelative("_maxRoundCount").intValue = recommendation.OneStarRoundCount;
+        testCaseProperty.FindPropertyRelative("_expectedEndState").enumValueIndex = (int)ESimulationEndState.Succeeded;
+
+        SerializedProperty assignedConnectionListProperty = testCaseProperty.FindPropertyRelative("_assignedConnectionDataList");
+        assignedConnectionListProperty.ClearArray();
+
+        for (int i = 0; i < candidate.AssignmentArray.Length; i++)
+        {
+            LevelSolveAssignment assignment = candidate.AssignmentArray[i];
+            assignedConnectionListProperty.InsertArrayElementAtIndex(i);
+            SerializedProperty assignmentProperty = assignedConnectionListProperty.GetArrayElementAtIndex(i);
+            assignmentProperty.FindPropertyRelative("_processId").intValue = assignment.ProcessId;
+            assignmentProperty.FindPropertyRelative("_slotId").intValue = assignment.SlotId;
+            assignmentProperty.FindPropertyRelative("_resourceId").intValue = assignment.ResourceId;
+        }
+    }
+
+    private string BuildSolveReportSummary(LevelSolveReport report)
+    {
+        if (report.BestCandidate == null)
+        {
+            return $"{report.EndState}: {report.Message}";
+        }
+
+        LevelStarThresholdRecommendation recommendation = report.StarThresholdRecommendation;
+        string provenText = report.IsOptimalProven ? "최적 증명됨" : "최적 미증명";
+        return $"{provenText} / 최선 {report.BestCandidate.ClearRoundCount}R / " +
+               $"3별 {recommendation.ThreeStarRoundCount}R, " +
+               $"2별 {recommendation.TwoStarRoundCount}R, " +
+               $"1별 {recommendation.OneStarRoundCount}R";
+    }
+
+    private string BuildDifficultySummary(LevelDifficultyReport report)
+    {
+        if (report == null)
+        {
+            return string.Empty;
+        }
+
+        if (!report.IsAvailable)
+        {
+            return $"난이도 분석 불가: {report.UnavailableReason}";
+        }
+
+        return report.Summary;
+    }
+
+    private string BuildSolveReportText(LevelSolveReport report, LevelDifficultyReport difficultyReport)
+    {
+        if (report == null)
+        {
+            return string.Empty;
+        }
+
+        List<string> lineList = new List<string>
+        {
+            $"자동 해 찾기: {report.EndState}",
+            report.Message,
+            $"탐색: 노드 {report.ExploredNodeCount:N0}, 후보 평가 {report.EvaluatedCandidateCount:N0}, 성공 해 {report.FoundSolutionCount:N0}",
+            $"이론상 최소 라운드: {report.MinimumPossibleRoundCount}",
+        };
+
+        if (report.ValidationResult != null && !report.ValidationResult.IsValid)
+        {
+            for (int i = 0; i < report.ValidationResult.ErrorList.Length; i++)
+            {
+                lineList.Add("- " + report.ValidationResult.ErrorList[i].Message);
+            }
+        }
+
+        if (report.BestCandidate == null)
+        {
+            AddDifficultyReportLines(lineList, difficultyReport);
+            return string.Join("\n", lineList);
+        }
+
+        LevelSolveCandidate candidate = report.BestCandidate;
+        LevelStarThresholdRecommendation recommendation = report.StarThresholdRecommendation;
+        lineList.Add($"최선 해: {candidate.ClearRoundCount} 라운드 / waiting {candidate.WaitingCount}, 재투입 {candidate.RequeuedCount}, 차단 {candidate.BlockedCount}");
+        lineList.Add($"별 기준 추천: 3별 {recommendation.ThreeStarRoundCount}R, 2별 {recommendation.TwoStarRoundCount}R, 1별 {recommendation.OneStarRoundCount}R");
+        lineList.Add(recommendation.Reason);
+        AddDifficultyReportLines(lineList, difficultyReport);
+        lineList.Add("예약 연결:");
+
+        for (int i = 0; i < candidate.AssignmentArray.Length; i++)
+        {
+            LevelSolveAssignment assignment = candidate.AssignmentArray[i];
+            lineList.Add($"- {CreateConnectionLabel(assignment.ProcessId, assignment.SlotId, assignment.ResourceId)}");
+        }
+
+        return string.Join("\n", lineList);
+    }
+
+    private void AddDifficultyReportLines(List<string> lineList, LevelDifficultyReport report)
+    {
+        if (report == null)
+        {
+            return;
+        }
+
+        if (!report.IsAvailable)
+        {
+            lineList.Add($"난이도 분석 불가: {report.UnavailableReason}");
+            return;
+        }
+
+        lineList.Add(report.Summary);
+
+        for (int i = 0; i < report.ReasonList.Length; i++)
+        {
+            lineList.Add("- " + report.ReasonList[i]);
+        }
+    }
+
     private void WriteDefaultRule(SerializedProperty ruleProperty)
     {
         ruleProperty.FindPropertyRelative("_ruleType").enumValueIndex = (int)ELevelResourceRuleType.Basic;
@@ -3319,7 +3659,7 @@ public sealed class LevelEditorWindow : EditorWindow
         _serializedObject.Update();
     }
 
-    private void EndEdit()
+    private void EndEdit(bool clearSolutionFinderState = true)
     {
         if (_levelSO == null || _serializedObject == null)
         {
@@ -3330,6 +3670,11 @@ public sealed class LevelEditorWindow : EditorWindow
         EditorUtility.SetDirty(_levelSO);
         _finalValidationText = string.Empty;
         ClearTestRunState();
+        if (clearSolutionFinderState)
+        {
+            ClearSolutionFinderState();
+        }
+
         RefreshAll();
     }
 
@@ -3340,6 +3685,13 @@ public sealed class LevelEditorWindow : EditorWindow
         _lastTestConnectionRunDataList.Clear();
         _lastRunTestCaseIndex = -1;
         _selectedTestRoundIndex = -1;
+    }
+
+    private void ClearSolutionFinderState()
+    {
+        _solutionFinderText = string.Empty;
+        _lastSolveReport = null;
+        _lastDifficultyReport = null;
     }
 
     private void CreateNewLevel()
@@ -3355,6 +3707,7 @@ public sealed class LevelEditorWindow : EditorWindow
         serializedObject.FindProperty("_processDataList").ClearArray();
         serializedObject.FindProperty("_resourceDataList").ClearArray();
         serializedObject.FindProperty("_relayDataList").ClearArray();
+        WriteDefaultStarThreshold(serializedObject.FindProperty("_starThresholdData"));
         serializedObject.FindProperty("_testCaseDataList").ClearArray();
         serializedObject.ApplyModifiedPropertiesWithoutUndo();
 
@@ -3432,16 +3785,18 @@ public sealed class LevelEditorWindow : EditorWindow
             return;
         }
 
-        LevelBoardFactory factory = new LevelBoardFactory();
-        Board board = factory.CreateBoard(definition);
-        Dictionary<int, string> connectionLabelByIdDict = new Dictionary<int, string>();
-        List<LevelTestConnectionRunData> connectionRunDataList = new List<LevelTestConnectionRunData>();
-        List<string> lineList = new List<string>();
-
         string testName = testCaseProperty.FindPropertyRelative("_name").stringValue;
         int maxRoundCount = testCaseProperty.FindPropertyRelative("_maxRoundCount").intValue;
         ESimulationEndState expectedEndState = (ESimulationEndState)testCaseProperty.FindPropertyRelative("_expectedEndState").enumValueIndex;
         SerializedProperty assignedConnectionListProperty = testCaseProperty.FindPropertyRelative("_assignedConnectionDataList");
+        LevelSolveAssignment[] orderedAssignmentArray = CreateAssignmentArray(assignedConnectionListProperty);
+        LevelDefinition orderedDefinition = LevelDefinitionSelectionOrderUtility.CreateWithAssignmentOrder(definition,
+                                                                                                          orderedAssignmentArray);
+        LevelBoardFactory factory = new LevelBoardFactory();
+        Board board = factory.CreateBoard(orderedDefinition);
+        Dictionary<int, string> connectionLabelByIdDict = new Dictionary<int, string>();
+        List<LevelTestConnectionRunData> connectionRunDataList = new List<LevelTestConnectionRunData>();
+        List<string> lineList = new List<string>();
 
         lineList.Add($"테스트: {GetTestCaseDisplayName(testName, testCaseIndex)}");
         lineList.Add($"예약 연결 수: {assignedConnectionListProperty.arraySize}");
@@ -3464,6 +3819,7 @@ public sealed class LevelEditorWindow : EditorWindow
         bool passed = report.EndState == expectedEndState;
 
         lineList.Add($"결과: {report.EndState} / 예상: {expectedEndState} / {(passed ? "통과" : "실패")}");
+        lineList.Add(BuildStarEvaluationLine(report));
         lineList.Add($"완료 Process: {FormatIdArray(report.CompletedProcessIdList)}");
         lineList.Add($"차단 Connection: {FormatConnectionIdArray(report.BlockedConnectionIdList, connectionLabelByIdDict)}");
         AddRoundResultLines(lineList, report, connectionLabelByIdDict);
@@ -3471,6 +3827,26 @@ public sealed class LevelEditorWindow : EditorWindow
         SetTestRunState(testCaseIndex, report, connectionRunDataList);
         _testRunText = string.Join("\n", lineList);
         RefreshAll();
+    }
+
+    private LevelSolveAssignment[] CreateAssignmentArray(SerializedProperty assignedConnectionListProperty)
+    {
+        if (assignedConnectionListProperty == null)
+        {
+            return new LevelSolveAssignment[0];
+        }
+
+        LevelSolveAssignment[] assignmentArray = new LevelSolveAssignment[assignedConnectionListProperty.arraySize];
+
+        for (int i = 0; i < assignedConnectionListProperty.arraySize; i++)
+        {
+            SerializedProperty assignedConnectionProperty = assignedConnectionListProperty.GetArrayElementAtIndex(i);
+            assignmentArray[i] = new LevelSolveAssignment(assignedConnectionProperty.FindPropertyRelative("_processId").intValue,
+                                                          assignedConnectionProperty.FindPropertyRelative("_slotId").intValue,
+                                                          assignedConnectionProperty.FindPropertyRelative("_resourceId").intValue);
+        }
+
+        return assignmentArray;
     }
 
     private bool AssignTestConnections(Board board,
@@ -3544,6 +3920,7 @@ public sealed class LevelEditorWindow : EditorWindow
             hasAnyLine |= AddConnectionListLine(lineList, "점유", roundResult.OccupiedConnectionIdList, connectionLabelByIdDict);
             hasAnyLine |= AddConnectionListLine(lineList, "대기", roundResult.WaitingConnectionIdList, connectionLabelByIdDict);
             hasAnyLine |= AddConnectionListLine(lineList, "재투입", roundResult.RequeuedConnectionIdList, connectionLabelByIdDict);
+            hasAnyLine |= AddConnectionListLine(lineList, "이월", roundResult.DeferredConnectionIdList, connectionLabelByIdDict);
             hasAnyLine |= AddIdListLine(lineList, "완료 Process", roundResult.CompletedProcessIdList);
             hasAnyLine |= AddConnectionListLine(lineList, "반환", roundResult.ReleasedConnectionIdList, connectionLabelByIdDict);
             hasAnyLine |= AddIdListLine(lineList, "실패 Process", roundResult.FailedProcessIdList);
@@ -3579,6 +3956,68 @@ public sealed class LevelEditorWindow : EditorWindow
 
         lineList.Add($"- {label}: {FormatIdList(idList)}");
         return true;
+    }
+
+    private string BuildStarEvaluationLine(SimulationReport report)
+    {
+        if (!TryGetStarThreshold(out int threeStarRoundCount,
+                                 out int twoStarRoundCount,
+                                 out int oneStarRoundCount))
+        {
+            return "별 평가: 별 기준 없음";
+        }
+
+        if (report.EndState != ESimulationEndState.Succeeded)
+        {
+            return $"별 평가: 0별 / 기준 3별 {threeStarRoundCount}R, 2별 {twoStarRoundCount}R, 1별 {oneStarRoundCount}R";
+        }
+
+        int clearRoundCount = report.RoundResultList.Length;
+        int starCount = 0;
+
+        if (clearRoundCount <= threeStarRoundCount)
+        {
+            starCount = 3;
+        }
+        else if (clearRoundCount <= twoStarRoundCount)
+        {
+            starCount = 2;
+        }
+        else if (clearRoundCount <= oneStarRoundCount)
+        {
+            starCount = 1;
+        }
+
+        return $"별 평가: {starCount}별 / 클리어 {clearRoundCount}R / 기준 3별 {threeStarRoundCount}R, 2별 {twoStarRoundCount}R, 1별 {oneStarRoundCount}R";
+    }
+
+    private bool TryGetStarThreshold(out int threeStarRoundCount,
+                                     out int twoStarRoundCount,
+                                     out int oneStarRoundCount)
+    {
+        threeStarRoundCount = 0;
+        twoStarRoundCount = 0;
+        oneStarRoundCount = 0;
+
+        if (_serializedObject == null)
+        {
+            return false;
+        }
+
+        SerializedProperty starThresholdProperty = _serializedObject.FindProperty("_starThresholdData");
+
+        if (starThresholdProperty == null)
+        {
+            return false;
+        }
+
+        threeStarRoundCount = starThresholdProperty.FindPropertyRelative("_threeStarRoundCount").intValue;
+        twoStarRoundCount = starThresholdProperty.FindPropertyRelative("_twoStarRoundCount").intValue;
+        oneStarRoundCount = starThresholdProperty.FindPropertyRelative("_oneStarRoundCount").intValue;
+
+        return threeStarRoundCount > 0 &&
+               twoStarRoundCount >= threeStarRoundCount &&
+               oneStarRoundCount >= twoStarRoundCount;
     }
 
     private string BuildValidationFailureText(LevelValidationResult validationResult)
@@ -3705,6 +4144,14 @@ public sealed class LevelEditorWindow : EditorWindow
         {
             _validationContainer.Add(CreateSectionTitle("최종 검증"));
             _validationContainer.Add(new Label(_finalValidationText));
+        }
+
+        if (!string.IsNullOrEmpty(_solutionFinderText))
+        {
+            _validationContainer.Add(CreateSectionTitle("자동 해 찾기"));
+            Label solutionLabel = new Label(_solutionFinderText);
+            solutionLabel.style.whiteSpace = WhiteSpace.Normal;
+            _validationContainer.Add(solutionLabel);
         }
 
         if (!string.IsNullOrEmpty(_testRunText))

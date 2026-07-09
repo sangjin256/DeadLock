@@ -110,27 +110,27 @@ public sealed class Board
 
         List<RoundScheduleItem> scheduleItemList = CreateScheduleItemList();
         List<RoundScheduleItem> priorityScheduleItemList = new List<RoundScheduleItem>();
+        List<RoundScheduleItem> deferredScheduleItemList = new List<RoundScheduleItem>();
 
         for (int round = 0; round < maxRoundCount; round++)
         {
             RoundResult roundResult = new RoundResult(round);
             List<RoundScheduleItem> currentPriorityScheduleItemList = priorityScheduleItemList;
             priorityScheduleItemList = new List<RoundScheduleItem>();
+            List<RoundScheduleItem> currentRoundScheduleItemList = BuildCurrentRoundSchedule(
+                scheduleItemList,
+                deferredScheduleItemList,
+                round);
+            deferredScheduleItemList = new List<RoundScheduleItem>();
+            HashSet<int> actedProcessIdSet = new HashSet<int>();
 
-            currentPriorityScheduleItemList.Sort(CompareScheduleItems);
-
-            foreach (RoundScheduleItem item in currentPriorityScheduleItemList)
-            {
-                TryExecuteScheduleItem(item, roundResult);
-            }
-
-            List<RoundScheduleItem> currentRoundScheduleItemList = GetScheduleItemsForRound(scheduleItemList, round);
-
-            foreach (RoundScheduleItem item in currentRoundScheduleItemList)
-            {
-                TryExecuteScheduleItem(item, roundResult);
-            }
-
+            ExecutePrioritySchedule(currentPriorityScheduleItemList, roundResult, actedProcessIdSet);
+            ExecuteRoundSchedule(
+                currentRoundScheduleItemList,
+                round + 1,
+                roundResult,
+                deferredScheduleItemList,
+                actedProcessIdSet);
             CompleteReadyProcesses(roundResult);
             ApplyRoundEndedEffects(round, roundResult);
 
@@ -149,7 +149,7 @@ public sealed class Board
                 return CreateSimulationReport(ESimulationEndState.Succeeded, roundResultList);
             }
 
-            if (IsDeadlocked(priorityScheduleItemList))
+            if (IsDeadlocked(priorityScheduleItemList, deferredScheduleItemList))
             {
                 return CreateSimulationReport(ESimulationEndState.Deadlocked, roundResultList);
             }
@@ -211,6 +211,72 @@ public sealed class Board
         return true;
     }
 
+    private void ExecutePrioritySchedule(
+        List<RoundScheduleItem> priorityScheduleItemList,
+        RoundResult roundResult,
+        HashSet<int> actedProcessIdSet)
+    {
+        priorityScheduleItemList.Sort(ComparePriorityScheduleItems);
+
+        foreach (RoundScheduleItem item in priorityScheduleItemList)
+        {
+            if (actedProcessIdSet.Contains(item.ProcessId))
+            {
+                continue;
+            }
+
+            TryExecuteScheduleItem(item, roundResult, out bool didAct);
+
+            if (didAct)
+            {
+                actedProcessIdSet.Add(item.ProcessId);
+            }
+        }
+    }
+
+    private List<RoundScheduleItem> BuildCurrentRoundSchedule(
+        List<RoundScheduleItem> scheduleItemList,
+        List<RoundScheduleItem> deferredScheduleItemList,
+        int round)
+    {
+        List<RoundScheduleItem> currentRoundScheduleItemList = GetScheduleItemsForRound(scheduleItemList, round);
+        currentRoundScheduleItemList.AddRange(deferredScheduleItemList);
+        currentRoundScheduleItemList.Sort(CompareScheduleItems);
+
+        return currentRoundScheduleItemList;
+    }
+
+    private void ExecuteRoundSchedule(
+        List<RoundScheduleItem> currentRoundScheduleItemList,
+        int nextRoundIndex,
+        RoundResult roundResult,
+        List<RoundScheduleItem> deferredScheduleItemList,
+        HashSet<int> actedProcessIdSet)
+    {
+        foreach (RoundScheduleItem item in currentRoundScheduleItemList)
+        {
+            if (actedProcessIdSet.Contains(item.ProcessId))
+            {
+                deferredScheduleItemList.Add(CreateDeferredScheduleItem(item, nextRoundIndex));
+                roundResult.AddDeferredConnection(item.ConnectionId);
+                continue;
+            }
+
+            if (TryExecuteScheduleItem(item, roundResult, out bool didAct))
+            {
+                if (didAct)
+                {
+                    actedProcessIdSet.Add(item.ProcessId);
+                }
+
+                continue;
+            }
+
+            deferredScheduleItemList.Add(CreateDeferredScheduleItem(item, nextRoundIndex));
+            roundResult.AddDeferredConnection(item.ConnectionId);
+        }
+    }
+
     private List<RoundScheduleItem> CreateScheduleItemList()
     {
         List<RoundScheduleItem> scheduleItemList = new List<RoundScheduleItem>();
@@ -234,7 +300,7 @@ public sealed class Board
                     continue;
                 }
 
-                scheduleItemList.Add(CreateScheduleItem(process, slot, connection, resource, slotIndex, false));
+                scheduleItemList.Add(CreateScheduleItem(process, slot, connection, resource, slot.SelectionOrder, false));
             }
         }
 
@@ -260,7 +326,9 @@ public sealed class Board
             roundIndex,
             distance,
             slot.SelectionOrder,
-            isPriorityFromWaiting);
+            isPriorityFromWaiting,
+            -1,
+            -1);
     }
 
     private List<RoundScheduleItem> GetScheduleItemsForRound(List<RoundScheduleItem> scheduleItemList, int round)
@@ -305,20 +373,65 @@ public sealed class Board
         return left.SlotId.CompareTo(right.SlotId);
     }
 
-    private void TryExecuteScheduleItem(RoundScheduleItem item, RoundResult roundResult)
+    private static int ComparePriorityScheduleItems(RoundScheduleItem left, RoundScheduleItem right)
     {
+        int result = left.PriorityOrder.CompareTo(right.PriorityOrder);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = left.WaitingQueueIndex.CompareTo(right.WaitingQueueIndex);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        result = left.ProcessId.CompareTo(right.ProcessId);
+
+        if (result != 0)
+        {
+            return result;
+        }
+
+        return left.SlotId.CompareTo(right.SlotId);
+    }
+
+    private static RoundScheduleItem CreateDeferredScheduleItem(RoundScheduleItem item, int roundIndex)
+    {
+        return new RoundScheduleItem(item.ProcessId,
+                                     item.SlotId,
+                                     item.ConnectionId,
+                                     item.ResourceId,
+                                     roundIndex,
+                                     item.Distance,
+                                     item.SelectionOrder,
+                                     false,
+                                     -1,
+                                     -1);
+    }
+
+    private bool TryExecuteScheduleItem(
+        RoundScheduleItem item,
+        RoundResult roundResult,
+        out bool didAct)
+    {
+        didAct = false;
+
         ProcessNode process = GetProcess(item.ProcessId);
         ResourceNode resource = GetResource(item.ResourceId);
         Connection connection = GetConnection(item.ConnectionId);
 
         if (process is null || resource is null || connection is null)
         {
-            return;
+            return true;
         }
 
         if (!process.TryGetSlot(item.SlotId, out ProcessColorSlot slot))
         {
-            return;
+            return true;
         }
 
         if (process.State == EProcessState.Completed ||
@@ -328,17 +441,17 @@ public sealed class Board
             connection.State == EConnectionState.Occupied ||
             connection.State == EConnectionState.Blocked)
         {
-            return;
+            return true;
         }
 
         if (process.State == EProcessState.Waiting && !item.IsPriorityFromWaiting)
         {
-            return;
+            return false;
         }
 
         if (item.IsPriorityFromWaiting && !resource.IsWaitingHead(connection.Id))
         {
-            return;
+            return true;
         }
 
         ConnectionContext context = new ConnectionContext(process, slot, resource);
@@ -346,15 +459,18 @@ public sealed class Board
         if (!CanOccupy(context))
         {
             WaitForResource(process, resource, connection, slot, roundResult);
-            return;
+            didAct = true;
+            return true;
         }
 
         if (item.IsPriorityFromWaiting && !resource.TryRemoveWaitingHead(connection.Id))
         {
-            return;
+            return true;
         }
 
         OccupyResource(context, connection, roundResult);
+        didAct = true;
+        return true;
     }
 
     private bool CanOccupy(ConnectionContext context)
@@ -516,6 +632,8 @@ public sealed class Board
         RoundResult roundResult,
         List<RoundScheduleItem> priorityScheduleItemList)
     {
+        int priorityOrder = priorityScheduleItemList.Count;
+
         foreach (ResourceNode resource in _resourceList)
         {
             if (resource.AvailableCapacity <= 0)
@@ -523,24 +641,33 @@ public sealed class Board
                 continue;
             }
 
-            if (!resource.TryPeekWaiting(out WaitingRequest request))
+            WaitingRequest[] requestArray = resource.GetWaitingRequestSnapshot(resource.AvailableCapacity);
+
+            for (int i = 0; i < requestArray.Length; i++)
             {
-                continue;
+                RoundScheduleItem item = CreateScheduleItemFromWaitingRequest(
+                    requestArray[i],
+                    roundIndex,
+                    i,
+                    priorityOrder);
+
+                if (item is null)
+                {
+                    continue;
+                }
+
+                priorityScheduleItemList.Add(item);
+                priorityOrder++;
+                roundResult.AddRequeuedConnection(requestArray[i].ConnectionId);
             }
-
-            RoundScheduleItem item = CreateScheduleItemFromWaitingRequest(request, roundIndex);
-
-            if (item is null)
-            {
-                continue;
-            }
-
-            priorityScheduleItemList.Add(item);
-            roundResult.AddRequeuedConnection(request.ConnectionId);
         }
     }
 
-    private RoundScheduleItem CreateScheduleItemFromWaitingRequest(WaitingRequest request, int roundIndex)
+    private RoundScheduleItem CreateScheduleItemFromWaitingRequest(
+        WaitingRequest request,
+        int roundIndex,
+        int waitingQueueIndex,
+        int priorityOrder)
     {
         ProcessNode process = GetProcess(request.ProcessId);
         ResourceNode resource = GetResource(request.ResourceId);
@@ -562,7 +689,9 @@ public sealed class Board
             request,
             roundIndex,
             distance,
-            slot.SelectionOrder);
+            slot.SelectionOrder,
+            waitingQueueIndex,
+            priorityOrder);
     }
 
     private bool AreAllProcessesCompleted()
@@ -578,9 +707,11 @@ public sealed class Board
         return true;
     }
 
-    private bool IsDeadlocked(List<RoundScheduleItem> priorityScheduleItemList)
+    private bool IsDeadlocked(
+        List<RoundScheduleItem> priorityScheduleItemList,
+        List<RoundScheduleItem> deferredScheduleItemList)
     {
-        if (priorityScheduleItemList.Count > 0)
+        if (priorityScheduleItemList.Count > 0 || deferredScheduleItemList.Count > 0)
         {
             return false;
         }
