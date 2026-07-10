@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deadlock.local/schemas/LevelGenerationProfile.schema.json",
+  "title": "DeadLock LevelGenerationProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "displayName",
+    "board",
+    "colors",
+    "processes",
+    "resources",
+    "rules",
+    "difficulty",
+    "solverLimits"
+  ],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chapterId": {
+          "type": "string"
+        },
+        "chapterName": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "board": {
+      "$ref": "#/$defs/boardRange"
+    },
+    "colors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "colorCount",
+        "allowedColorIdRange"
+      ],
+      "properties": {
+        "colorCount": {
+          "$ref": "#/$defs/intRange"
+        },
+        "allowedColorIdRange": {
+          "$ref": "#/$defs/intRange"
+        }
+      }
+    },
+    "processes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "count",
+        "slotCountPerProcess"
+      ],
+      "properties": {
+        "count": {
+          "$ref": "#/$defs/intRange"
+        },
+        "slotCountPerProcess": {
+          "$ref": "#/$defs/intRange"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "count",
+        "capacity"
+      ],
+      "properties": {
+        "count": {
+          "$ref": "#/$defs/intRange"
+        },
+        "capacity": {
+          "$ref": "#/$defs/intRange"
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredResourceRules",
+        "allowedResourceRules",
+        "forbiddenResourceRules",
+        "requiredRelayTypes",
+        "allowedRelayTypes",
+        "forbiddenRelayTypes"
+      ],
+      "properties": {
+        "requiredResourceRules": {
+          "$ref": "#/$defs/resourceRuleList"
+        },
+        "allowedResourceRules": {
+          "$ref": "#/$defs/resourceRuleList"
+        },
+        "forbiddenResourceRules": {
+          "$ref": "#/$defs/resourceRuleList"
+        },
+        "requiredBoardRules": {
+          "$ref": "#/$defs/boardRuleList"
+        },
+        "allowedBoardRules": {
+          "$ref": "#/$defs/boardRuleList"
+        },
+        "forbiddenBoardRules": {
+          "$ref": "#/$defs/boardRuleList"
+        },
+        "requiredRelayTypes": {
+          "$ref": "#/$defs/relayTypeList"
+        },
+        "allowedRelayTypes": {
+          "$ref": "#/$defs/relayTypeList"
+        },
+        "forbiddenRelayTypes": {
+          "$ref": "#/$defs/relayTypeList"
+        }
+      }
+    },
+    "difficulty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetScore",
+        "targetOptimalRoundCount"
+      ],
+      "properties": {
+        "targetScore": {
+          "$ref": "#/$defs/numberRange"
+        },
+        "targetOptimalRoundCount": {
+          "$ref": "#/$defs/intRange"
+        }
+      }
+    },
+    "solverLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxRoundCount",
+        "maxSearchNodeCount",
+        "maxEvaluatedCandidateCount"
+      ],
+      "properties": {
+        "maxRoundCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxSearchNodeCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxEvaluatedCandidateCount": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "intRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "integer"
+        },
+        "max": {
+          "type": "integer"
+        }
+      }
+    },
+    "numberRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    },
+    "boardRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rowCount",
+        "columnCount"
+      ],
+      "properties": {
+        "rowCount": {
+          "$ref": "#/$defs/intRange"
+        },
+        "columnCount": {
+          "$ref": "#/$defs/intRange"
+        }
+      }
+    },
+    "resourceRule": {
+      "type": "string",
+      "enum": [
+        "Basic",
+        "ColorSwitch",
+        "EmptyColor",
+        "Clock",
+        "Simultaneous"
+      ]
+    },
+    "resourceRuleList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resourceRule"
+      },
+      "uniqueItems": true
+    },
+    "boardRule": {
+      "type": "string",
+      "enum": [
+        "Relay"
+      ]
+    },
+    "boardRuleList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/boardRule"
+      },
+      "uniqueItems": true
+    },
+    "relayType": {
+      "type": "string",
+      "enum": [
+        "Link",
+        "Transfer"
+      ]
+    },
+    "relayTypeList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relayType"
+      },
+      "uniqueItems": true
+    }
+  }
+}
+

@@ -1,0 +1,5 @@
+interface:
+  display_name: "DeadLock Level Generator"
+  short_description: "Generate DeadLock level candidate JSON from profiles"
+  default_prompt: "Use $deadlock-level-generator to create a DeadLock level candidate JSON from a LevelGenerationProfile."
+

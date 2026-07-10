@@ -136,6 +136,8 @@ Relay Transfer는 "먼 곳의 리소스 색을 간접적으로 만드는 흐름"
 
 난이도 분석 v1은 제작 보조용 휴리스틱으로 둔다. 점수는 `1.0 ~ 5.0` 범위이며 최적 라운드와 이론상 최소 라운드의 차이, waiting/requeue/deferred 압박, 성공 해 희소성, Rule/Relay 복잡도, 평균 연결 거리를 기반으로 계산한다. 이 점수는 플레이어 별 보상 기준을 직접 대체하지 않고, 스테이지 제작자가 난이도 편차를 빠르게 확인하기 위한 에디터 표시값이다.
 
+AI 기반 레벨 생성은 `LevelGenerationProfile`을 입력 조건으로 사용한다. 챕터별 신규 Rule 필수 조건은 별도 챕터 검증 UI가 아니라 profile의 `requiredResourceRules`, `requiredBoardRules`, `requiredRelayTypes`로 표현한다. AI가 만든 후보는 Unity solver/analyzer 검증을 통과해야 제작 후보로 인정한다.
+
 ## 열린 디자인 메모
 
 - 현재 원/사각형 노드 비주얼은 변경될 수 있다.

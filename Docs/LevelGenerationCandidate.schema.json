@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deadlock.local/schemas/LevelGenerationCandidate.schema.json",
+  "title": "DeadLock LevelGenerationCandidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "rowCount",
+    "columnCount",
+    "processDataList",
+    "resourceDataList",
+    "relayDataList"
+  ],
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "rowCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "columnCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "processDataList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/processData"
+      }
+    },
+    "resourceDataList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resourceData"
+      }
+    },
+    "relayDataList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relayData"
+      }
+    },
+    "starThresholdData": {
+      "$ref": "#/$defs/starThresholdData"
+    },
+    "testCaseDataList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/testCaseData"
+      }
+    },
+    "generationNotes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "processData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "row",
+        "column",
+        "slotDataList"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "slotDataList": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/processSlotData"
+          }
+        }
+      }
+    },
+    "processSlotData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requiredColorId",
+        "selectionOrder"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "requiredColorId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selectionOrder": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "resourceData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "row",
+        "column",
+        "initialColorId",
+        "capacity",
+        "ruleDataList"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "initialColorId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ruleDataList": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/resourceRuleData"
+          }
+        }
+      }
+    },
+    "resourceRuleData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ruleType"
+      ],
+      "properties": {
+        "ruleType": {
+          "$ref": "#/$defs/resourceRule"
+        },
+        "colorIdList": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": false
+        },
+        "clockMode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/clockMode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "clockRoundCount": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "relayData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "relayType",
+        "firstResourceId",
+        "secondResourceId",
+        "senderResourceId"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "relayType": {
+          "$ref": "#/$defs/relayType"
+        },
+        "firstResourceId": {
+          "type": "integer"
+        },
+        "secondResourceId": {
+          "type": "integer"
+        },
+        "senderResourceId": {
+          "type": "integer"
+        }
+      }
+    },
+    "starThresholdData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "threeStarRoundCount",
+        "twoStarRoundCount",
+        "oneStarRoundCount"
+      ],
+      "properties": {
+        "threeStarRoundCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "twoStarRoundCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "oneStarRoundCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "testCaseData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "maxRoundCount",
+        "expectedEndState",
+        "assignedConnectionDataList"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "maxRoundCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expectedEndState": {
+          "type": "string",
+          "enum": [
+            "Succeeded",
+            "Deadlocked",
+            "Failed",
+            "MaxRoundExceeded"
+          ]
+        },
+        "assignedConnectionDataList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assignedConnectionData"
+          }
+        }
+      }
+    },
+    "assignedConnectionData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "processId",
+        "slotId",
+        "resourceId"
+      ],
+      "properties": {
+        "processId": {
+          "type": "integer"
+        },
+        "slotId": {
+          "type": "integer"
+        },
+        "resourceId": {
+          "type": "integer"
+        }
+      }
+    },
+    "resourceRule": {
+      "type": "string",
+      "enum": [
+        "Basic",
+        "ColorSwitch",
+        "EmptyColor",
+        "Clock",
+        "Simultaneous"
+      ]
+    },
+    "clockMode": {
+      "type": "string",
+      "enum": [
+        "OnToOff",
+        "OffToOn"
+      ]
+    },
+    "relayType": {
+      "type": "string",
+      "enum": [
+        "Link",
+        "Transfer"
+      ]
+    }
+  }
+}
+

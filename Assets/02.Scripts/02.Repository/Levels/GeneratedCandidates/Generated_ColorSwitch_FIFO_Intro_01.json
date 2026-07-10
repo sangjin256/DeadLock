@@ -1,0 +1,151 @@
+{
+  "id": 11001,
+  "name": "Generated_ColorSwitch_FIFO_Intro_01",
+  "rowCount": 5,
+  "columnCount": 6,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 1,
+          "selectionOrder": 0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "row": 0,
+      "column": 5,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 2,
+          "selectionOrder": 0
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "row": 4,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 1,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 2,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "row": 4,
+      "column": 5,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 3,
+          "selectionOrder": 0
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 7,
+      "row": 1,
+      "column": 1,
+      "initialColorId": 1,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "row": 2,
+      "column": 2,
+      "initialColorId": 1,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "ColorSwitch",
+          "colorIdList": [
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "row": 3,
+      "column": 4,
+      "initialColorId": 2,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "starThresholdData": {
+    "threeStarRoundCount": 3,
+    "twoStarRoundCount": 5,
+    "oneStarRoundCount": 7
+  },
+  "testCaseDataList": [
+    {
+      "name": "AI Seed",
+      "maxRoundCount": 7,
+      "expectedEndState": "Succeeded",
+      "assignedConnectionDataList": [
+        {
+          "processId": 0,
+          "slotId": 0,
+          "resourceId": 14
+        },
+        {
+          "processId": 5,
+          "slotId": 0,
+          "resourceId": 14
+        },
+        {
+          "processId": 24,
+          "slotId": 0,
+          "resourceId": 7
+        },
+        {
+          "processId": 24,
+          "slotId": 1,
+          "resourceId": 22
+        },
+        {
+          "processId": 29,
+          "slotId": 0,
+          "resourceId": 14
+        }
+      ]
+    }
+  ],
+  "generationNotes": [
+    "Difficulty target is 2.0 to 3.0.",
+    "The central ColorSwitch resource is intended to move through colors 1, 2, and 3 while preserving strict FIFO pressure.",
+    "P24 uses two Basic resources to keep the level from being only a single ColorSwitch queue.",
+    "Relay and Clock are intentionally omitted for the first AI import and validation rehearsal.",
+    "This candidate is unverified until Unity LevelDefinitionValidator, LevelSolutionFinder, and LevelDifficultyAnalyzer pass."
+  ]
+}

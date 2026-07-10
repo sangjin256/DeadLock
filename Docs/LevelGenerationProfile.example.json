@@ -1,0 +1,285 @@
+[
+  {
+    "profileId": "basic_tutorial",
+    "displayName": "Basic Tutorial",
+    "description": "Basic resource matching only. Use this to generate early onboarding puzzles.",
+    "metadata": {
+      "chapterId": "tutorial",
+      "chapterName": "Tutorial",
+      "tags": [
+        "intro",
+        "basic"
+      ]
+    },
+    "board": {
+      "rowCount": {
+        "min": 3,
+        "max": 4
+      },
+      "columnCount": {
+        "min": 4,
+        "max": 5
+      }
+    },
+    "colors": {
+      "colorCount": {
+        "min": 2,
+        "max": 3
+      },
+      "allowedColorIdRange": {
+        "min": 1,
+        "max": 8
+      }
+    },
+    "processes": {
+      "count": {
+        "min": 2,
+        "max": 3
+      },
+      "slotCountPerProcess": {
+        "min": 1,
+        "max": 2
+      }
+    },
+    "resources": {
+      "count": {
+        "min": 2,
+        "max": 4
+      },
+      "capacity": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "rules": {
+      "requiredResourceRules": [],
+      "allowedResourceRules": [
+        "Basic"
+      ],
+      "forbiddenResourceRules": [
+        "ColorSwitch",
+        "EmptyColor",
+        "Clock",
+        "Simultaneous"
+      ],
+      "requiredBoardRules": [],
+      "allowedBoardRules": [],
+      "forbiddenBoardRules": [
+        "Relay"
+      ],
+      "requiredRelayTypes": [],
+      "allowedRelayTypes": [],
+      "forbiddenRelayTypes": [
+        "Link",
+        "Transfer"
+      ]
+    },
+    "difficulty": {
+      "targetScore": {
+        "min": 1.0,
+        "max": 1.8
+      },
+      "targetOptimalRoundCount": {
+        "min": 1,
+        "max": 3
+      }
+    },
+    "solverLimits": {
+      "maxRoundCount": 8,
+      "maxSearchNodeCount": 200000,
+      "maxEvaluatedCandidateCount": 500000
+    },
+    "notes": "Prefer short paths and obvious color matches. Avoid deadlock-looking layouts."
+  },
+  {
+    "profileId": "colorswitch_intro",
+    "displayName": "ColorSwitch Intro",
+    "description": "Introduce one or more ColorSwitch resources while keeping other rules simple.",
+    "metadata": {
+      "chapterId": "chapter_colorswitch",
+      "chapterName": "ColorSwitch",
+      "tags": [
+        "intro",
+        "colorswitch"
+      ]
+    },
+    "board": {
+      "rowCount": {
+        "min": 4,
+        "max": 5
+      },
+      "columnCount": {
+        "min": 5,
+        "max": 6
+      }
+    },
+    "colors": {
+      "colorCount": {
+        "min": 3,
+        "max": 4
+      },
+      "allowedColorIdRange": {
+        "min": 1,
+        "max": 12
+      }
+    },
+    "processes": {
+      "count": {
+        "min": 3,
+        "max": 4
+      },
+      "slotCountPerProcess": {
+        "min": 2,
+        "max": 3
+      }
+    },
+    "resources": {
+      "count": {
+        "min": 4,
+        "max": 6
+      },
+      "capacity": {
+        "min": 1,
+        "max": 2
+      }
+    },
+    "rules": {
+      "requiredResourceRules": [
+        "ColorSwitch"
+      ],
+      "allowedResourceRules": [
+        "Basic",
+        "ColorSwitch"
+      ],
+      "forbiddenResourceRules": [
+        "Clock",
+        "Simultaneous"
+      ],
+      "requiredBoardRules": [],
+      "allowedBoardRules": [],
+      "forbiddenBoardRules": [
+        "Relay"
+      ],
+      "requiredRelayTypes": [],
+      "allowedRelayTypes": [],
+      "forbiddenRelayTypes": [
+        "Link",
+        "Transfer"
+      ]
+    },
+    "difficulty": {
+      "targetScore": {
+        "min": 1.8,
+        "max": 2.8
+      },
+      "targetOptimalRoundCount": {
+        "min": 3,
+        "max": 6
+      }
+    },
+    "solverLimits": {
+      "maxRoundCount": 12,
+      "maxSearchNodeCount": 500000,
+      "maxEvaluatedCandidateCount": 1000000
+    },
+    "notes": "The ColorSwitch resource should be necessary for the optimal solution, not decorative."
+  },
+  {
+    "profileId": "clock_simultaneous_challenge",
+    "displayName": "Clock + Simultaneous Challenge",
+    "description": "Generate a harder timing puzzle using Clock and Simultaneous resources.",
+    "metadata": {
+      "chapterId": "chapter_timing",
+      "chapterName": "Timing",
+      "tags": [
+        "clock",
+        "simultaneous",
+        "hard"
+      ]
+    },
+    "board": {
+      "rowCount": {
+        "min": 5,
+        "max": 7
+      },
+      "columnCount": {
+        "min": 6,
+        "max": 8
+      }
+    },
+    "colors": {
+      "colorCount": {
+        "min": 4,
+        "max": 5
+      },
+      "allowedColorIdRange": {
+        "min": 1,
+        "max": 20
+      }
+    },
+    "processes": {
+      "count": {
+        "min": 4,
+        "max": 6
+      },
+      "slotCountPerProcess": {
+        "min": 3,
+        "max": 5
+      }
+    },
+    "resources": {
+      "count": {
+        "min": 6,
+        "max": 9
+      },
+      "capacity": {
+        "min": 1,
+        "max": 3
+      }
+    },
+    "rules": {
+      "requiredResourceRules": [
+        "Clock",
+        "Simultaneous"
+      ],
+      "allowedResourceRules": [
+        "Basic",
+        "ColorSwitch",
+        "Clock",
+        "Simultaneous"
+      ],
+      "forbiddenResourceRules": [
+        "EmptyColor"
+      ],
+      "requiredBoardRules": [],
+      "allowedBoardRules": [
+        "Relay"
+      ],
+      "forbiddenBoardRules": [],
+      "requiredRelayTypes": [],
+      "allowedRelayTypes": [
+        "Link"
+      ],
+      "forbiddenRelayTypes": [
+        "Transfer"
+      ]
+    },
+    "difficulty": {
+      "targetScore": {
+        "min": 3.4,
+        "max": 4.5
+      },
+      "targetOptimalRoundCount": {
+        "min": 5,
+        "max": 9
+      }
+    },
+    "solverLimits": {
+      "maxRoundCount": 18,
+      "maxSearchNodeCount": 2000000,
+      "maxEvaluatedCandidateCount": 3000000
+    },
+    "notes": "The puzzle should require timing pressure, but avoid relying on ambiguous legacy behavior."
+  }
+]
+

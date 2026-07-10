@@ -50,6 +50,7 @@ public sealed class LevelEditorWindow : EditorWindow
     private string _finalValidationText = string.Empty;
     private string _testRunText = string.Empty;
     private string _solutionFinderText = string.Empty;
+    private string _generationImportText = string.Empty;
     private string _testCaseEditMessage = string.Empty;
     private readonly List<LevelTestConnectionRunData> _lastTestConnectionRunDataList = new List<LevelTestConnectionRunData>();
     private LevelSolveReport _lastSolveReport;
@@ -119,6 +120,7 @@ public sealed class LevelEditorWindow : EditorWindow
         header.Add(CreateHeaderButton("새 레벨", CreateNewLevel));
         header.Add(CreateHeaderButton("저장", SaveLevel));
         header.Add(CreateHeaderButton("검증", RunFinalValidation));
+        header.Add(CreateHeaderButton("AI 후보 가져오기", ImportGeneratedCandidate));
         header.Add(CreateHeaderButton("색상 새로고침", ReloadColors));
     }
 
@@ -219,6 +221,7 @@ public sealed class LevelEditorWindow : EditorWindow
         ClearRelayDraft();
         _selectedRelayIndex = -1;
         _finalValidationText = string.Empty;
+        _generationImportText = string.Empty;
         ClearTestRunState();
         ClearSolutionFinderState();
         _testCaseEditMessage = string.Empty;
@@ -3716,6 +3719,37 @@ public sealed class LevelEditorWindow : EditorWindow
         SetLevel(levelSO);
     }
 
+    private void ImportGeneratedCandidate()
+    {
+        string jsonFilePath = EditorUtility.OpenFilePanel("AI 후보 가져오기", LevelGenerationCandidateImportMenu.GetDefaultCandidateFolderPath(), "json");
+
+        if (string.IsNullOrEmpty(jsonFilePath))
+        {
+            return;
+        }
+
+        LevelGenerationCandidateImportService service = new LevelGenerationCandidateImportService();
+        LevelGenerationCandidateImportReport report = service.Import(jsonFilePath, LevelGenerationCandidateImportMenu.DefaultOutputAssetFolder);
+        service.WriteReport(report, LevelGenerationCandidateImportMenu.DefaultReportFolder);
+        Debug.Log(report.ToText());
+
+        if (report.IsSaved)
+        {
+            LevelSO levelSO = AssetDatabase.LoadAssetAtPath<LevelSO>(report.CreatedAssetPath);
+
+            if (levelSO != null)
+            {
+                SetLevel(levelSO);
+                Selection.activeObject = levelSO;
+                EditorGUIUtility.PingObject(levelSO);
+            }
+        }
+
+        _generationImportText = report.ToText();
+        RefreshAll();
+        EditorUtility.DisplayDialog("AI 후보 가져오기", report.GetDialogMessage(), "OK");
+    }
+
     private void SaveLevel()
     {
         if (_levelSO != null)
@@ -4154,6 +4188,15 @@ public sealed class LevelEditorWindow : EditorWindow
             _validationContainer.Add(solutionLabel);
         }
 
+        if (!string.IsNullOrEmpty(_generationImportText))
+        {
+            _validationContainer.Add(CreateSectionTitle("AI 후보 가져오기"));
+            _validationContainer.Add(CreateHeaderButton("리포트 복사", CopyGenerationImportReport));
+            Label importLabel = new Label(_generationImportText);
+            importLabel.style.whiteSpace = WhiteSpace.Normal;
+            _validationContainer.Add(importLabel);
+        }
+
         if (!string.IsNullOrEmpty(_testRunText))
         {
             _validationContainer.Add(CreateSectionTitle("테스트 실행"));
@@ -4206,6 +4249,16 @@ public sealed class LevelEditorWindow : EditorWindow
         legendLabel.style.color = new StyleColor(new Color(0.78f, 0.82f, 0.88f));
         legendLabel.style.whiteSpace = WhiteSpace.Normal;
         box.Add(legendLabel);
+    }
+
+    private void CopyGenerationImportReport()
+    {
+        if (string.IsNullOrEmpty(_generationImportText))
+        {
+            return;
+        }
+
+        EditorGUIUtility.systemCopyBuffer = _generationImportText;
     }
 
     private void SetSelectedTestRoundIndex(int roundIndex)

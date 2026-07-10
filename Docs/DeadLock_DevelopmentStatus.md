@@ -79,7 +79,15 @@
 - Editor 전용 `LevelSolutionFinder`를 추가했다. `LevelSO -> LevelDefinition -> Board` 흐름으로 가능한 예약 연결 조합을 탐색하고, 가장 적은 라운드 해와 별 기준 추천값을 보고한다.
 - Level Editor의 테스트 케이스 섹션에 `자동 해 찾기 / 별 기준` 패널을 추가했다. 최적 해 찾기, 별 기준 저장, `Auto Optimal` 테스트 케이스 생성/갱신을 수행할 수 있다.
 - 다음 검증/제작 자동화 방향을 정했다. 최적 해 찾기와 난이도 평가는 Unity Editor 내부 서비스로 만들고, 자동 레벨 생성은 Codex/AI 스킬이 후보를 만들고 Unity solver가 검증하는 반복 루프로 분리한다.
-- 챕터 설계는 "현재 챕터의 신규 Rule은 필수, 이전 챕터 Rule은 선택적으로 재등장 가능"한 구조로 잡는다. 이를 위해 후속 작업에서 챕터별 필수/허용 Rule, 목표 난이도 범위, 목표 라운드 범위를 담는 `ChapterRuleProfile` 계열 정의가 필요하다.
+- AI 레벨 생성 입력은 챕터 전용 profile이 아니라 `LevelGenerationProfile`로 정리했다. 챕터는 필수 구조가 아니라 profile metadata로만 두고, 필수/허용/금지 Rule, 목표 난이도, 목표 라운드는 AI 생성 조건으로 표현한다.
+- `Docs/DeadLock_LevelGenerationProfile.md`, `Docs/LevelGenerationProfile.schema.json`, `Docs/LevelGenerationProfile.example.json`을 추가했다. v1은 Unity `ScriptableObject`나 Editor UI가 아니라 문서와 JSON 스키마 중심이다.
+- 프로젝트 로컬 Codex 스킬 `deadlock-level-generator`를 추가했다. 이 스킬은 `LevelGenerationProfile`을 읽고 Unity `.asset`이 아니라 `LevelGenerationCandidate` JSON 후보를 작성한다.
+- `Docs/LevelGenerationCandidate.schema.json`을 추가해 후보 JSON 계약을 정의했다. 후보 JSON은 `LevelSO` authoring data와 맞춘 필드 이름을 사용하고, 실제 색상 hex 없이 `ColorId` 정수만 사용한다.
+- `Tools/DeadLock/Levels/Import Generated Candidate` 메뉴를 추가했다. `LevelGenerationCandidate` JSON을 임시 `LevelSO`로 읽은 뒤 `LevelDefinitionValidator`, `LevelSolutionFinder`, `LevelDifficultyAnalyzer`를 통과한 경우에만 `Assets/02.Scripts/02.Repository/Levels/Generated`에 `LevelSO` 에셋으로 저장한다.
+- 생성 후보 import 도구는 Unity `JsonUtility`용 DTO와 `SerializedObject` writer를 사용한다. `LevelSO` 및 내부 authoring data에는 public setter를 추가하지 않았고, 실패한 후보는 에셋을 만들지 않는다.
+- Level Editor header에 `AI 후보 가져오기` 버튼을 추가했다. import 성공 시 생성된 `LevelSO`를 현재 편집 대상으로 자동 로드하고, import/검증 report를 하단 로그에 표시한다.
+- `Docs/DeadLock_AILevelGenerationWorkflow.md`를 추가했다. Codex에게 레벨 생성을 어떻게 요청할지, 생성된 JSON을 Unity에 어떻게 가져올지, 실패 report를 어떻게 다시 전달할지 예시 중심으로 정리했다.
+- AI 후보 관리 UX를 개선했다. `AI 후보 가져오기`와 독립 import 메뉴의 기본 탐색 폴더를 `GeneratedCandidates`로 맞추고, import report를 `GeneratedCandidates/ImportReports`에 `.txt`로 저장하며, Level Editor 하단 로그에서 report를 클립보드로 복사할 수 있게 했다.
 - Stage28 실패 원인을 분석했고, 마이그레이션 데이터보다 라운드 실행 규칙 차이가 핵심이라고 판단했다. waiting 중인 프로세스의 이후 슬롯 스케줄이 사라지지 않고 다음 라운드 일반 후보로 이월되도록 `Board.RunSimulation()`을 보강했다.
 - `RoundResult`에 deferred connection 목록을 추가해 라운드 로그에서 waiting queue 진입과 process-wait 이월을 구분할 수 있게 했다. 에디터 라운드 보드 시각화에서는 deferred를 출발 전 상태로 유지하고 로그에만 표시한다.
 - `LevelSolutionFinder`는 탐색 노드 제한을 상향하고 완성 후보 평가 수 제한을 별도로 추가했다. Stage28처럼 후보 평가 수는 139,968개지만 중간 탐색 노드가 20만을 조금 넘는 레벨도 탐색 제한 때문에 오판하지 않도록 했다.
@@ -88,32 +96,21 @@
 
 ## 다음 작업 순서
 
-1. 챕터별 Rule profile을 설계한다.
-    - 각 챕터의 필수 Rule과 허용 Rule을 정의한다.
-    - 현재 챕터 신규 Rule은 모든 스테이지에 반드시 포함되도록 검증한다.
-    - 챕터별 목표 난이도 범위와 목표 최적 라운드 범위를 정의한다.
-    - 챕터별 3/2/1별 라운드 허용 폭을 조정할 수 있게 한다.
+1. 사용자가 지정하는 다음 제작/구현 작업을 진행한다.
+    - AI 후보 생성/검증 루프는 기본 리허설과 UX 개선까지 완료된 상태다.
+    - 다음에는 실제 레벨 후보 추가 제작, 테스트 구조, 또는 런타임 연결 작업 중 하나로 이동할 수 있다.
 
-2. Level Editor에 난이도/챕터 적합성 패널과 batch 실행 UI를 추가한다.
-    - 여러 test case 또는 여러 LevelSO를 한 번에 분석한다.
-    - 최적 라운드, 난이도 점수, 챕터 Rule 포함 여부, 경고를 요약 표시한다.
-
-3. Codex/AI 기반 레벨 생성 스킬을 설계한다.
-    - 입력 조건: 보드 크기, 챕터, 필수/허용 Rule, process 수, 색 수, 목표 난이도, 목표 최적 라운드.
-    - Codex 스킬이 후보 LevelSO/LevelDefinition을 만들고, Unity solver/analyzer가 검증한다.
-    - 조건 불만족 시 AI가 후보를 수정하는 반복 루프로 둔다.
-
-4. Unity Test Framework 기반 테스트 구조를 준비한다.
+2. Unity Test Framework 기반 테스트 구조를 준비한다.
    - 순수 .NET console runner는 사용하지 않는다.
    - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-5. `LevelPlayManager`와 DTO를 작성한다.
+3. `LevelPlayManager`와 DTO를 작성한다.
     - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
 
-6. MVP UI와 Bootstrap을 연결한다.
+4. MVP UI와 Bootstrap을 연결한다.
     - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
 
-7. 저장/플랫폼/모바일 입력을 분리한다.
+5. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -135,7 +132,7 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 
 ## 다음 스레드 시작 메모
 
-다음 작업은 챕터별 Rule profile을 설계해 각 챕터의 필수 Rule, 허용 Rule, 목표 난이도 범위, 목표 최적 라운드 범위를 정의하는 것이다. 이후 Level Editor에 챕터 적합성 패널과 batch 분석 UI를 추가한다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
+다음 작업은 사용자가 지정하는 제작/구현 방향으로 이어간다. AI 후보 생성/검증 루프는 후보 JSON 저장, Unity import, report 저장/복사까지 기본 작업이 완료된 상태다. RelayTransfer Sender capacity 1 제약은 에디터 즉시 UX 검증과 `LevelDefinitionValidator` 최종 검증으로 보장한다. 테스트가 필요해지면 순수 .NET console runner가 아니라 Unity Test Framework 기반으로 추가한다.
 
 ## 2026-07-09 SelectionOrder 라운드 순서 보정
 
@@ -153,3 +150,11 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - 기존 기본/탐색/urgency/distance 순서에 더해 OffToOn early-wait 순서와 deterministic random process order 후보를 추가했다.
 - Stage30은 resource 선택보다 process별 slot 실행 순서가 핵심인 케이스로 확인되었고, 이번 solver 보강 대상에 해당한다.
 - Unity Editor 컴파일/테스트는 명시 요청이 없어 실행하지 않았다.
+
+## 2026-07-10 Migrated Level Naming
+
+- Migrated `LevelSO` asset naming was changed from legacy global names like `Stage1` and `Tutorial1` to chapter/stage based names.
+- Tutorial assets now use `Level_Tutorial_S01` through `Level_Tutorial_S10`.
+- Main stage assets now use `Level_C01_S01` through `Level_C05_S10`, where `Cxx` is the chapter number and `Sxx` is the stage number inside that chapter.
+- `Stage28_new` was renamed to `Level_C03_S08_Alt01` and kept as an alternate Chapter 3 Stage 8 level.
+- `.asset.meta` files were moved together with the assets, so Unity GUID references are preserved.

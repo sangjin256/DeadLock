@@ -1,0 +1,161 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a88d4aa3fb404f919fd2a5f6b3fdba25, type: 3}
+  m_Name: Level_C02_S09
+  m_EditorClassIdentifier: Assembly-CSharp::LevelSO
+  _id: 19
+  _rowCount: 5
+  _columnCount: 9
+  _processDataList:
+  - _id: 0
+    _row: 0
+    _column: 0
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 6
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 8
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 8
+      _selectionOrder: 2
+  - _id: 4
+    _row: 0
+    _column: 4
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 6
+      _selectionOrder: 0
+  - _id: 8
+    _row: 0
+    _column: 8
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 6
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 5
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 8
+      _selectionOrder: 2
+  - _id: 36
+    _row: 4
+    _column: 0
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 6
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 5
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 8
+      _selectionOrder: 2
+  - _id: 44
+    _row: 4
+    _column: 8
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 6
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 8
+      _selectionOrder: 1
+  _resourceDataList:
+  - _id: 18
+    _row: 2
+    _column: 0
+    _initialColorId: 8
+    _capacity: 1
+    _ruleDataList:
+    - _ruleType: 0
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 22
+    _row: 2
+    _column: 4
+    _initialColorId: 6
+    _capacity: 3
+    _ruleDataList:
+    - _ruleType: 4
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 26
+    _row: 2
+    _column: 8
+    _initialColorId: 8
+    _capacity: 2
+    _ruleDataList:
+    - _ruleType: 4
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 40
+    _row: 4
+    _column: 4
+    _initialColorId: 5
+    _capacity: 2
+    _ruleDataList:
+    - _ruleType: 4
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  _relayDataList: []
+  _starThresholdData:
+    _threeStarRoundCount: 0
+    _twoStarRoundCount: 0
+    _oneStarRoundCount: 0
+  _testCaseDataList:
+  - _name: Auto Optimal
+    _maxRoundCount: 8
+    _expectedEndState: 0
+    _assignedConnectionDataList:
+    - _processId: 0
+      _slotId: 0
+      _resourceId: 22
+    - _processId: 0
+      _slotId: 1
+      _resourceId: 26
+    - _processId: 0
+      _slotId: 2
+      _resourceId: 18
+    - _processId: 4
+      _slotId: 0
+      _resourceId: 22
+    - _processId: 8
+      _slotId: 0
+      _resourceId: 22
+    - _processId: 8
+      _slotId: 1
+      _resourceId: 40
+    - _processId: 8
+      _slotId: 2
+      _resourceId: 18
+    - _processId: 36
+      _slotId: 1
+      _resourceId: 40
+    - _processId: 36
+      _slotId: 0
+      _resourceId: 22
+    - _processId: 36
+      _slotId: 2
+      _resourceId: 26
+    - _processId: 44
+      _slotId: 1
+      _resourceId: 26
+    - _processId: 44
+      _slotId: 0
+      _resourceId: 22
