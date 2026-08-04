@@ -48,4 +48,19 @@ public sealed class RelayLinkRule : IBoardRule
     {
         return new RelayLinkRule(_relation);
     }
+
+    public RelayStateSnapshot CreateStateSnapshot(Board board)
+    {
+        ResourceNode firstResource = board.GetResource(_relation.FirstResourceId);
+        ResourceNode secondResource = board.GetResource(_relation.SecondResourceId);
+        bool isActive = (firstResource is not null && firstResource.OccupiedConnectionIdList.Count > 0) ||
+                        (secondResource is not null && secondResource.OccupiedConnectionIdList.Count > 0);
+
+        return new RelayStateSnapshot(_relation.Id,
+                                      _relation.FirstResourceId,
+                                      _relation.SecondResourceId,
+                                      _relation.RelayType,
+                                      _relation.SenderResourceId,
+                                      isActive);
+    }
 }

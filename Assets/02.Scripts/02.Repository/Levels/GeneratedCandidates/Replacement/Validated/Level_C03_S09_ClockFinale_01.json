@@ -1,0 +1,190 @@
+{
+  "id": 29,
+  "name": "Level_C03_S09",
+  "rowCount": 6,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 11,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 16,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 14,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 13,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 19,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 14,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 13,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 11,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 16,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "row": 5,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 16,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 19,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 14,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "row": 5,
+      "column": 6,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 13,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 11,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 19,
+          "selectionOrder": 2
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 15,
+      "row": 2,
+      "column": 1,
+      "initialColorId": 11,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 13,
+      "capacity": 3,
+      "ruleDataList": [
+        {
+          "ruleType": "Simultaneous"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "row": 2,
+      "column": 5,
+      "initialColorId": 14,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Clock",
+          "clockMode": "OnToOff",
+          "clockRoundCount": 6
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "row": 4,
+      "column": 1,
+      "initialColorId": 16,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Clock",
+          "clockMode": "OffToOn",
+          "clockRoundCount": 2
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "row": 4,
+      "column": 3,
+      "initialColorId": 19,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C03 S09 replacement: the OnToOff Clock must be used as each process finishes its preparatory work.",
+    "The OffToOn Clock creates a controlled queue, while the Simultaneous resource asks the player to coordinate three processes first.",
+    "This is intended as the Clock chapter finale before ColorSwitch is introduced."
+  ]
+}

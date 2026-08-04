@@ -2,6 +2,9 @@ using System.Collections.Generic;
 
 public sealed class LevelDefinitionValidator
 {
+    public const int MaxProcessSlotCount = 6;
+    public const int MaxColorSwitchColorCount = 5;
+
     public LevelValidationResult Validate(LevelDefinition definition)
     {
         List<LevelValidationError> errorList = new List<LevelValidationError>();
@@ -61,6 +64,11 @@ public sealed class LevelDefinitionValidator
 
     private void ValidateProcessSlotList(ProcessDefinition process, List<LevelValidationError> errorList)
     {
+        if (process.SlotList.Length > MaxProcessSlotCount)
+        {
+            errorList.Add(new LevelValidationError($"Process {process.Id} supports at most {MaxProcessSlotCount} slots."));
+        }
+
         HashSet<int> slotIdSet = new HashSet<int>();
 
         foreach (ProcessSlotDefinition slot in process.SlotList)
@@ -168,6 +176,11 @@ public sealed class LevelDefinitionValidator
         {
             errorList.Add(new LevelValidationError($"Resource {resource.Id} ColorSwitch color list must not be empty."));
             return;
+        }
+
+        if (definition.ColorList.Length > MaxColorSwitchColorCount)
+        {
+            errorList.Add(new LevelValidationError($"Resource {resource.Id} ColorSwitch supports at most {MaxColorSwitchColorCount} colors."));
         }
 
         for (int i = 0; i < definition.ColorList.Length; i++)

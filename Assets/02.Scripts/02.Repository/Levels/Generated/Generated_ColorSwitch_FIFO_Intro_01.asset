@@ -103,3 +103,22 @@ MonoBehaviour:
     - _processId: 29
       _slotId: 0
       _resourceId: 14
+  - _name: Auto Optimal
+    _maxRoundCount: 7
+    _expectedEndState: 0
+    _assignedConnectionDataList:
+    - _processId: 0
+      _slotId: 0
+      _resourceId: 7
+    - _processId: 5
+      _slotId: 0
+      _resourceId: 14
+    - _processId: 24
+      _slotId: 1
+      _resourceId: 22
+    - _processId: 24
+      _slotId: 0
+      _resourceId: 7
+    - _processId: 29
+      _slotId: 0
+      _resourceId: 14

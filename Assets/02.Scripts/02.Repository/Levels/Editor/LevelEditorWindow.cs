@@ -1372,7 +1372,10 @@ public sealed class LevelEditorWindow : EditorWindow
             BuildSlotInspector(box, slotProperty, slotListProperty.propertyPath, i);
         }
 
-        box.Add(CreateHeaderButton("슬롯 추가", () => AddSlot(slotListProperty.propertyPath)));
+        if (slotListProperty.arraySize < LevelEditorValidationUtility.MaximumProcessSlotCount)
+        {
+            box.Add(CreateHeaderButton("슬롯 추가", () => AddSlot(slotListProperty.propertyPath)));
+        }
         box.Add(CreateHeaderButton("프로세스 삭제", () => DeleteArrayElement("_processDataList", processIndex)));
     }
 
@@ -1524,7 +1527,10 @@ public sealed class LevelEditorWindow : EditorWindow
             row.Add(CreateHeaderButton("제거", () => DeleteArrayElement(colorIdListProperty.propertyPath, colorIndex)));
         }
 
-        parent.Add(CreateHeaderButton("선택 색 추가", () => AddColorId(colorIdListProperty.propertyPath)));
+        if (colorIdListProperty.arraySize < LevelEditorValidationUtility.MaximumColorSwitchColorCount)
+        {
+            parent.Add(CreateHeaderButton("선택 색 추가", () => AddColorId(colorIdListProperty.propertyPath)));
+        }
     }
 
     private void BuildRelaySummary()
@@ -3152,8 +3158,14 @@ public sealed class LevelEditorWindow : EditorWindow
 
     private void AddSlot(string slotListPath)
     {
-        BeginEdit("Add Slot");
         SerializedProperty slotListProperty = _serializedObject.FindProperty(slotListPath);
+
+        if (slotListProperty.arraySize >= LevelEditorValidationUtility.MaximumProcessSlotCount)
+        {
+            return;
+        }
+
+        BeginEdit("Add Slot");
         int arrayIndex = slotListProperty.arraySize;
         slotListProperty.InsertArrayElementAtIndex(arrayIndex);
         SerializedProperty slotProperty = slotListProperty.GetArrayElementAtIndex(arrayIndex);
@@ -3175,8 +3187,14 @@ public sealed class LevelEditorWindow : EditorWindow
 
     private void AddColorId(string colorIdListPath)
     {
-        BeginEdit("Add ColorId");
         SerializedProperty colorIdListProperty = _serializedObject.FindProperty(colorIdListPath);
+
+        if (colorIdListProperty.arraySize >= LevelEditorValidationUtility.MaximumColorSwitchColorCount)
+        {
+            return;
+        }
+
+        BeginEdit("Add ColorId");
         int arrayIndex = colorIdListProperty.arraySize;
         colorIdListProperty.InsertArrayElementAtIndex(arrayIndex);
         colorIdListProperty.GetArrayElementAtIndex(arrayIndex).intValue = _selectedColorId;

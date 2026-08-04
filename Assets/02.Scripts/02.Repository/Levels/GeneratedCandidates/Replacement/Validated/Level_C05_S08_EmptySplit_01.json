@@ -1,0 +1,53 @@
+{
+  "id": 48,
+  "name": "Level_C05_S08",
+  "rowCount": 3,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 14,
+      "row": 2,
+      "column": 0,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 }
+      ]
+    },
+    {
+      "id": 20,
+      "row": 2,
+      "column": 6,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 26, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 27, "selectionOrder": 1 }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 9,
+      "row": 1,
+      "column": 2,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 11,
+      "row": 1,
+      "column": 4,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S08: the two processes must commit the two EmptyColor resources to different colors before their second slots can complete.",
+    "This is the known 3.5 EmptyColor split puzzle, promoted from the previously verified design."
+  ]
+}

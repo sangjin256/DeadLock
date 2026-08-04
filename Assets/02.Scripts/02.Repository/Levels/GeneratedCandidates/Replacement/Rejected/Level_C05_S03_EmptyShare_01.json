@@ -1,0 +1,52 @@
+{
+  "id": 43,
+  "name": "Level_C05_S03",
+  "rowCount": 3,
+  "columnCount": 5,
+  "processDataList": [
+    {
+      "id": 10,
+      "row": 2,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 27,
+          "selectionOrder": 0
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "row": 2,
+      "column": 4,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 27,
+          "selectionOrder": 0
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 7,
+      "row": 1,
+      "column": 2,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "EmptyColor"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S03 replacement: either process may set the EmptyColor resource to ColorId 27 first.",
+    "The second process then confirms that the fixed color remains available after the first process releases it.",
+    "The only pressure is one readable waiting turn."
+  ]
+}

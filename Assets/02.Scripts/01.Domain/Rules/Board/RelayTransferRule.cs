@@ -61,4 +61,17 @@ public sealed class RelayTransferRule : IBoardRule
     {
         return new RelayTransferRule(_relation);
     }
+
+    public RelayStateSnapshot CreateStateSnapshot(Board board)
+    {
+        ResourceNode receiver = board.GetResource(_relation.GetOther(_relation.SenderResourceId));
+        bool isActive = receiver is not null && receiver.HasRelayColor;
+
+        return new RelayStateSnapshot(_relation.Id,
+                                      _relation.FirstResourceId,
+                                      _relation.SecondResourceId,
+                                      _relation.RelayType,
+                                      _relation.SenderResourceId,
+                                      isActive);
+    }
 }

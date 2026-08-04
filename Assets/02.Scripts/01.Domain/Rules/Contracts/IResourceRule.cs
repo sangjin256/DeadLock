@@ -8,4 +8,5 @@ public interface IResourceRule
     public void OnRoundEnded(ResourceNode resource, int round, RuleEffects effects);
     public void ResetSimulationState(ResourceNode resource);
     public IResourceRule Snapshot();
+    public ResourceRuleStateSnapshot CreateStateSnapshot();
 }

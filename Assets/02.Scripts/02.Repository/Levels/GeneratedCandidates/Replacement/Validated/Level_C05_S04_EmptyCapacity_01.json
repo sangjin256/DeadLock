@@ -1,0 +1,74 @@
+{
+  "id": 44,
+  "name": "Level_C05_S04",
+  "rowCount": 3,
+  "columnCount": 5,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 27,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 26,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "row": 0,
+      "column": 4,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 27,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 26,
+          "selectionOrder": 1
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 7,
+      "row": 1,
+      "column": 2,
+      "initialColorId": 28,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "EmptyColor"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "row": 2,
+      "column": 2,
+      "initialColorId": 26,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S04 replacement: two processes share the newly fixed EmptyColor resource without queue pressure.",
+    "They then compete for one Basic follow-up resource, introducing a small amount of capacity scheduling.",
+    "The EmptyColor lesson remains visually clear because both first slots use the same color."
+  ]
+}

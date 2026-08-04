@@ -2,6 +2,10 @@ using System.Collections.Generic;
 
 internal sealed class LevelEditorValidationUtility
 {
+    public const int MaximumProcessSlotCount = 6;
+    public const int MaximumResourceCapacity = 4;
+    public const int MaximumColorSwitchColorCount = 5;
+
     public string[] Validate(LevelSO levelSO)
     {
         List<string> messageList = new List<string>();
@@ -99,6 +103,11 @@ internal sealed class LevelEditorValidationUtility
     {
         HashSet<int> slotIdSet = new HashSet<int>();
 
+        if (processData.SlotDataList.Count > MaximumProcessSlotCount)
+        {
+            messageList.Add($"Process {processData.Id} supports at most {MaximumProcessSlotCount} slots for the LevelPlay prefab contract.");
+        }
+
         for (int i = 0; i < processData.SlotDataList.Count; i++)
         {
             LevelProcessSlotData slotData = processData.SlotDataList[i];
@@ -163,6 +172,11 @@ internal sealed class LevelEditorValidationUtility
                 messageList.Add($"리소스 {resourceData.Id}의 수용량은 1 이상이어야 합니다.");
             }
 
+            if (resourceData.Capacity > MaximumResourceCapacity)
+            {
+                messageList.Add($"Resource {resourceData.Id} supports at most {MaximumResourceCapacity} capacity slots for the LevelPlay prefab contract.");
+            }
+
             ValidateResourceRuleList(resourceData, messageList);
         }
 
@@ -215,6 +229,11 @@ internal sealed class LevelEditorValidationUtility
         {
             messageList.Add($"리소스 {resourceData.Id}의 ColorSwitch 색 목록은 비어 있을 수 없습니다.");
             return;
+        }
+
+        if (ruleData.ColorIdList.Count > MaximumColorSwitchColorCount)
+        {
+            messageList.Add($"Resource {resourceData.Id} ColorSwitch supports at most {MaximumColorSwitchColorCount} colors for the LevelPlay prefab contract.");
         }
 
         for (int i = 0; i < ruleData.ColorIdList.Count; i++)

@@ -1,0 +1,76 @@
+{
+  "id": 45,
+  "name": "Level_C05_S05",
+  "rowCount": 4,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 10,
+      "row": 1,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 3,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 26,
+      "capacity": 2,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    },
+    {
+      "id": 24,
+      "row": 3,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 2,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S05 replacement: three processes jointly fix an EmptyColor resource, then work through two capacity-limited follow-up colors.",
+    "The design increases scheduling pressure from S04 without adding a competing first-color decision yet.",
+    "All EmptyColor slots remain the same color so the player can focus on release timing."
+  ]
+}

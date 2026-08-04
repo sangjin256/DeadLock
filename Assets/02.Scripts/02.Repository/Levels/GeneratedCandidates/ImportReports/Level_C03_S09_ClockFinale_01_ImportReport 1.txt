@@ -1,0 +1,26 @@
+DeadLock LevelGenerationCandidate Import Report
+Input: D:\DeadLock\Assets\02.Scripts\02.Repository\Levels\GeneratedCandidates\Replacement\Level_C03_S09_ClockFinale_01.json
+Saved: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C03_S09.asset
+Report: Assets/02.Scripts/02.Repository/Levels/GeneratedCandidates/ImportReports/Level_C03_S09_ClockFinale_01_ImportReport 1.txt
+
+[Info]
+- LevelDefinition validation succeeded.
+- Solver: BestFoundUnproven / Best solution found from ordered candidates. Optimal order is not fully proven.
+- Solver stats: explored 15, evaluated 7,764, succeeded 428
+- Best clear round: 5
+- Star thresholds: 3★ 5R, 2★ 8R, 1★ 11R
+- Star threshold basis: 탐색 제한 또는 취소 전 현재 최선 라운드 기준 추천입니다.
+- Difficulty: 3.3 / 5.0 (보통)
+- Difficulty reason: 라운드 압박 보통: 최선 5R / 이론상 최소 3R
+- Difficulty reason: 흐름 압박 높음: waiting 3, 재투입 3, 이월 4
+- Difficulty reason: 성공 해 희소성 보통: 성공 428 / 후보 평가 7,764
+- Difficulty reason: Rule/Relay 복잡도 보통
+- Difficulty reason: 평균 연결 거리 보통: 5.2
+- Saved asset: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C03_S09.asset
+
+[Warnings]
+- 성공 해는 찾았지만 최적 해임은 증명되지 않았습니다.
+
+[Errors]
+- None
+

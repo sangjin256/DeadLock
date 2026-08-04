@@ -38,4 +38,9 @@ public sealed class NoResourceRule : IResourceRule
     }
 
     public IResourceRule Snapshot() => this;
+
+    public ResourceRuleStateSnapshot CreateStateSnapshot()
+    {
+        return ResourceRuleStateSnapshot.None;
+    }
 }

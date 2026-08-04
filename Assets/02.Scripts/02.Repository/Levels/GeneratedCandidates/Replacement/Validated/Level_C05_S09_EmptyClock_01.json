@@ -1,0 +1,75 @@
+{
+  "id": 49,
+  "name": "Level_C05_S09",
+  "rowCount": 4,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 10,
+      "row": 1,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 3,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 26,
+      "capacity": 3,
+      "ruleDataList": [
+        { "ruleType": "Clock", "clockMode": "OffToOn", "clockRoundCount": 2 }
+      ]
+    },
+    {
+      "id": 24,
+      "row": 3,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S09: a shared EmptyColor commitment is followed by an OffToOn gate and a final serial release path.",
+    "The player must account for clock waiting while preserving the process completion order."
+  ]
+}

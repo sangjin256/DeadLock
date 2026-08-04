@@ -1,0 +1,182 @@
+{
+  "id": 28,
+  "name": "Level_C03_S08",
+  "rowCount": 5,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 14,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 11,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 13,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 16,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 13,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 19,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "row": 4,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 14,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 19,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "row": 4,
+      "column": 3,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 16,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 11,
+          "selectionOrder": 1
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "row": 4,
+      "column": 6,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 13,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 11,
+          "selectionOrder": 1
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 15,
+      "row": 2,
+      "column": 1,
+      "initialColorId": 11,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 13,
+      "capacity": 3,
+      "ruleDataList": [
+        {
+          "ruleType": "Simultaneous"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "row": 2,
+      "column": 5,
+      "initialColorId": 14,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Clock",
+          "clockMode": "OnToOff",
+          "clockRoundCount": 5
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "row": 3,
+      "column": 1,
+      "initialColorId": 16,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Clock",
+          "clockMode": "OffToOn",
+          "clockRoundCount": 2
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "row": 3,
+      "column": 3,
+      "initialColorId": 19,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C03 S08 replacement: fill the Simultaneous resource before the delayed Clock becomes available.",
+    "The OnToOff Clock has a readable early deadline, while the OffToOn Clock creates intentional waiting pressure.",
+    "All required colors have one intended resource so the first Clock replacement remains teachable."
+  ]
+}

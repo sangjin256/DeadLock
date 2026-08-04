@@ -96,21 +96,22 @@
 
 ## 다음 작업 순서
 
-1. 사용자가 지정하는 다음 제작/구현 작업을 진행한다.
-    - AI 후보 생성/검증 루프는 기본 리허설과 UX 개선까지 완료된 상태다.
-    - 다음에는 실제 레벨 후보 추가 제작, 테스트 구조, 또는 런타임 연결 작업 중 하나로 이동할 수 있다.
+1. Shapes View 프리팹 기반을 구현한다. 아직 구현 전이다.
+    - `04.UI/LevelPlay/Views`에 passive `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`와 UI 전용 visual state enum을 추가한다.
+    - `VisualSettings_Default.asset`을 참조하는 Editor 생성 메뉴 `Tools/DeadLock/Visuals/Create LevelPlay View Prefabs`를 추가한다. 생성기는 기존 프리팹을 절대 덮어쓰지 않고, 없는 프리팹만 만든다.
+    - 생성 대상은 `Assets/03.Prefabs/LevelPlay/Nodes/Prefab_Node_Process.prefab`, `Prefab_Node_Resource.prefab`, `Assets/03.Prefabs/LevelPlay/Connections/Prefab_Connection.prefab`, `Prefab_Relay.prefab`이다.
+    - Process는 원형, Resource는 사각형, Connection/Relay는 Shapes 선으로 구성한다. 임시 uGUI 보드는 만들지 않는다.
 
-2. Unity Test Framework 기반 테스트 구조를 준비한다.
+2. `BoardPresenter`와 런타임 DTO 표시 경계를 연결한다.
+    - Presenter는 `LevelPlayBootstrap.Manager` 이벤트와 DTO를 구독하고, View 입력을 `LevelPlayManager`의 계획 편집 유스케이스로 변환한다.
+    - Rule/Relay 표시용 DTO가 부족하면 Manager가 Domain 객체를 노출하지 않는 선에서 DTO를 확장한다. pause, 배속, 현재 재생 라운드는 Presenter/View의 재생 상태로 유지한다.
+    - 계획 단계의 슬롯 선택/연결 교체/삭제와 결과 단계의 라운드 순차 재생, Relay focus를 연결한다.
+
+3. Unity Test Framework 검증을 확장한다.
+   - `LevelPlayManager` EditMode 테스트를 실행하고, Scene/View가 추가되면 PlayMode로 연결 할당, 라운드 재생, pause, 배속, Relay 표시를 검증한다.
    - 순수 .NET console runner는 사용하지 않는다.
-   - 씬 오브젝트와 런타임 연결 흐름이 준비되면 Unity EditMode 또는 PlayMode 테스트로 `ColorSwitch`, `EmptyColor`, `Clock`, `Simultaneous`, Relay Link, Relay Transfer 핵심 동작을 검증한다.
 
-3. `LevelPlayManager`와 DTO를 작성한다.
-    - 연결 할당/제거, 자원 포커스, 시뮬레이션 시작/라운드 진행, DTO 캐싱, 상태 변경 이벤트 발행을 담당한다.
-
-4. MVP UI와 Bootstrap을 연결한다.
-    - `BoardPresenter`, `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView`, 임시 수동 레벨 생성을 연결한다.
-
-5. 저장/플랫폼/모바일 입력을 분리한다.
+4. 저장/플랫폼/모바일 입력을 분리한다.
     - 진행도/설정 Repository, `IPlatformServices`, `06.Infrastructure` 구현을 진행한다.
 
 ## 검증
@@ -158,3 +159,187 @@ Unity 검증은 의도적으로 수동 전용이다. 검증 요청이 실행되�
 - Main stage assets now use `Level_C01_S01` through `Level_C05_S10`, where `Cxx` is the chapter number and `Sxx` is the stage number inside that chapter.
 - `Stage28_new` was renamed to `Level_C03_S08_Alt01` and kept as an alternate Chapter 3 Stage 8 level.
 - `.asset.meta` files were moved together with the assets, so Unity GUID references are preserved.
+
+## 2026-07-10 Migrated Level Solver Audit
+
+- The 61 migrated `LevelSO` assets were evaluated once with the same search limits as the Level Editor's optimal-solution action: `max(30, one-star round count)` rounds, 2,000,000 search nodes, and 2,000,000 evaluated candidates.
+- Results: 9 optimal solutions proven, 39 successful solutions with optimality unproven, 7 levels with no success found by the current Solver, 6 search-limit results, and no validation or audit errors.
+- The detailed report is stored in `Docs/DeadLock_MigratedLevelSolveAudit.md` and `Docs/DeadLock_MigratedLevelSolveAudit.json`.
+- `MigratedLevelSolveAuditRunner` now checkpoints after each completed level. The first 40 classifications were recovered from the prior batch log after an unexpected shutdown, so their detailed node/candidate counters are intentionally recorded as unavailable rather than rerun.
+- The next investigation target is the current-Solver no-solution/search-limit group, especially Chapter 5, without treating those results as mathematical impossibility proofs.
+
+## 2026-07-12 Migrated Level Replacement Start
+
+- Archived the 13 migrated levels classified as `NoSolutionFoundByCurrentSolver` or `SearchLimitReached` by renaming both their `.asset` and `.asset.meta` files with a `[Obsolete]` prefix. The assets remain available as references and retain their Unity GUIDs.
+- Added `Docs/DeadLock_LevelReplacementPlan.md` to define the C03/C04/C05 replacement scope, chapter rule progression, target difficulty bands below `4.0`, and acceptance criteria.
+- C03 S08-S09, C04 S09-S10, and C05 S02-S10 will be replaced in that order. The later Cxx S11-S15 expert extension is intentionally out of scope and reserved for difficulty `4.0+`.
+
+## 2026-07-12 Replacement Validation Progress
+
+- Added Editor-only replacement candidate import and promotion runners. Candidates are imported into `Generated`, validated with the existing Solver and difficulty analyzer, then promoted into `Migrated` only when the configured difficulty band is satisfied.
+- Promotion writes the recommended star thresholds and an `Auto Optimal` test case from the Solver's best candidate before moving the asset to its canonical migrated path.
+- Promoted replacements: C03 S08 (3.1), C03 S09 (3.3), C04 S09 (3.5), C04 S10 (3.7), C05 S02 (1.4), C05 S03 (1.5), C05 S04 (2.4), C05 S05 (2.9), C05 S06 (2.9), C05 S07 (3.1), C05 S08 (3.5), C05 S09 (3.8), and C05 S10 (3.9).
+- C04 S09 revision 01 was preserved as a rejected reference because its 4.4 score exceeded the standard chapter cap. Revision 02 replaced it at 3.5.
+- C05 S07 was tuned down from 3.5 to 3.1, while C05 S10 was tuned up from 2.8 through 3.5 to 3.9. All rejected source JSON and generated assets remain preserved as references.
+- The 13 archived migrated levels now have canonical replacements. The final chapter-curve review must still separate the currently tied C05 S05/S06 difficulty scores before the migrated-level audit is refreshed.
+
+## 2026-07-12 LevelPlayManager Foundation
+
+- Added pure C# `LevelPlayManager` and immutable UI DTOs under `03.Manager/LevelPlay`. The Manager receives `LevelDefinition` and `LevelPlaySettings`, and does not reference `LevelSO` or Unity APIs.
+- Planning supports connection assignment, planned-connection removal, transactional resource replacement with rollback, process-local `SelectionOrder` normalization, and restart from the last valid plan.
+- Simulation is calculated once through `Board.RunSimulation()` and exposed as a complete round DTO list with end state and 0-3 star evaluation. Pause, speed, and current playback round remain future presentation state.
+- Added `Board.RemoveConnection()` for planned connections only, plus resource-focus DTO conversion and Manager state/simulation/focus events.
+- Added Unity Test Framework EditMode coverage for loading validation, plan editing, replacement rollback, incomplete plans, simulation/stars, restart restoration, and Relay focus. The Unity test suite has not been executed in this task.
+
+## 2026-07-13 LevelPlay Bootstrap Foundation
+
+- Added code-only `LevelPlayBootstrap` under `05.Bootstrap/LevelPlay`. It maps its Inspector `LevelSO` into `LevelDefinition` and `LevelPlaySettings`, creates `LevelPlayManager`, and calls `LoadLevel()` in `Awake()`.
+- The component exposes only `LevelSO`, `Manager`, `IsInitialized`, and `InitializationError`. Invalid references, star thresholds, or level definitions stop initialization and produce a contextual Unity error log.
+- No runtime Scene, Prefab, View, Presenter, singleton, or Scene lookup was added. Shapes-based runtime visuals remain the next implementation step.
+
+## 2026-07-13 비주얼 준비 단계
+
+- 현재 구현 경계는 `LevelPlayBootstrap`까지 완료됐다. 다음 작업은 임시 런타임 보드를 만드는 것이 아니라, 씬 오브젝트를 분석하고 프리팹 경계를 정하는 것으로 시작한다.
+- `Docs/DeadLock_VisualDirection.md`를 기준으로 현재 씬의 오브젝트를 `Board`, `Process`, `Resource`, `Connection`, `Relay`, `HUD/Overlay`, `Feedback` 책임으로 분류한 뒤 프리팹을 만든다.
+- 후보마다 프리팹화 여부, 단일/복수 생성 여부, View가 소유할 값, 후속 `BoardPresenter`가 DTO로 주입할 값을 기록한다.
+- 작업 순서는 비주얼 기획서 검토 -> 현재 시즌 오브젝트 목록화 -> 프리팹 후보 표 -> Shapes 비주얼 기반 -> Presenter/View 연결 -> 라운드 재생, pause, 배속 제어 순으로 진행한다.
+
+## 2026-07-13 Shapes 상태 검증 보드
+
+- `04.UI/VisualPrototype/Editor/ShapesVisualPrototypeBuilder`를 추가했다. `VisualPrototype_Shapes` 씬에서 `Tools/DeadLock/Visuals/Rebuild Shapes Visual Prototype` 메뉴를 실행하면, 기존 정적 prototype hierarchy를 상태 검증용 Shapes hierarchy로 다시 만든다.
+- Process는 Default, Selected, Waiting, Completed 상태를 한 View shell에서 비교할 수 있게 두었고, Resource는 capacity 1-4의 모든 점유 수 조합을 한 화면에서 확인할 수 있게 구성했다.
+- Resource 점유 슬롯은 빈 상태에서 muted, 실제 점유 상태에서 connection 색으로 점등한다. waiting은 resource slot을 점등하지 않으며 Process port 피드백으로 표현한다.
+- Rule 시각 요소는 composable 구조로 정리했다. Clock은 상단 badge, ColorSwitch는 상단 ColorSwitchTrack, EmptyColor는 점유 슬롯 뒤의 X, Simultaneous는 capacity slot 주위의 center hub를 사용한다. 복합 Rule은 shell을 늘리지 않고 같은 layer를 조합한다.
+- 이 작업은 Editor 전용 상태 기준을 만든 것이며, runtime Prefab, Presenter, View, Scene 직렬화 데이터는 아직 변경하지 않았다. Unity 메뉴 실행과 화면 검토 뒤 이 기준을 실제 Prefab 후보 표로 전환한다.
+- ColorSwitch는 하단 후보 색 점 방식이 아니라, Resource 상단의 단방향 `ColorSwitchTrack`으로 수정했다. 현재 색, 다음 색, 현재 전이 구간을 각각 강조하고 마지막 색에서 첫 색으로 이어지는 순환선은 표시하지 않는다.
+- ColorSwitch + Clock + Capacity 2 상태 샘플을 추가했다. 이 조합에서는 ColorSwitchTrack이 상단을 사용하고 Clock은 좌상단 compact badge로 이동해 겹침을 확인한다.
+
+## 2026-07-13 VisualSettings Foundation
+
+- Presentation 전용 `VisualSettingsSO`와 `VisualColorEntry`를 `04.UI/LevelPlay/Settings`에 추가했다. Runtime ColorId 조회, 중립/상태/Relay 색, Process/Resource/Connection/ColorSwitch 공통 Shapes 수치를 한 에셋에서 관리한다.
+- `ColorId <= 0`은 muted, 등록되지 않은 양수 ID는 missing magenta로 표시한다. Domain이나 `LevelSO`에 실제 Unity 색을 넣지 않는다.
+- Editor 전용 `VisualSettingsDefaultAssetGenerator`를 추가했다. 메뉴 실행 시 마이그레이션 리포트의 기존 37색을 `Assets/05.Visual Resources/Settings/VisualSettings_Default.asset`으로 seed하며, 이미 만든 에셋은 덮어쓰지 않는다.
+- `LevelPlayBootstrap`, Manager, DTO, Prefab, Presenter는 이번 작업에서 변경하지 않았다. 다음 작업은 `ProcessView`, `ResourceView`, `ConnectionView`, `RelayView` 프리팹과 passive View shell 구현이다.
+
+## 2026-07-13 LevelPlay Prefab/View Foundation
+
+### 현재 완료 범위
+
+- 실제 런타임 조립은 `LevelPlayBootstrap -> LevelSOMapper -> LevelDefinitionValidator -> LevelBoardFactory -> LevelPlayManager`까지 완료됐다.
+- 상태 검증 기준은 `VisualPrototype_Shapes` 씬과 `ShapesVisualPrototypeBuilder`에 있다. 이 씬은 프리팹 원본이 아니라 Capacity 1~4, Rule 조합, 연결/Relay 상태의 배치와 겹침을 확인하는 참조 보드다.
+- 런타임 색상과 Shapes 기본 수치는 `Assets/05.Visual Resources/Settings/VisualSettings_Default.asset`이 source of truth다. 이 에셋에는 마이그레이션 팔레트 `ColorId 1~37`가 seed되어 있다.
+- `04.UI/LevelPlay/Views`에 네 passive View와 UI 전용 visual state/type, `ResourceRuleVisualData`를 추가했다. `Assets/03.Prefabs/LevelPlay` 프리팹은 생성 메뉴가 최초 생성하도록 두었으며, 이 메뉴와 Prefab Mode 검증은 아직 실행하지 않았다. `BoardPresenter`와 런타임 Scene 직렬화 데이터는 아직 만들지 않았다.
+
+### 구현 파일과 책임
+
+- `Assets/02.Scripts/04.UI/LevelPlay/Views/ProcessView.cs`
+  - Shapes 원형 Process 본체, 중앙 port, 필요 ColorId chip tray, 선택/waiting/failed/completed overlay를 표시한다.
+  - `int ColorId`, UI 전용 상태 enum, 위치 같은 표시값만 받고 Domain/Manager/DTO를 직접 참조하지 않는다.
+- `Assets/02.Scripts/04.UI/LevelPlay/Views/ResourceView.cs`
+  - Shapes 사각 Resource 본체, 기본 색, Capacity 1~4 점유 슬롯, lock, ColorSwitch, Clock, EmptyColor, Simultaneous, Relay anchor를 표시한다.
+  - 실제 점유 슬롯만 connection 색으로 점등하고, waiting은 Resource slot을 점등하지 않는다. waiting 피드백은 Process port가 담당한다.
+- `Assets/02.Scripts/04.UI/LevelPlay/Views/ConnectionView.cs`
+  - 두 끝점, ColorId, Planned/Occupied/Waiting/Blocked/Completed 상태를 Shapes 선으로 표시한다.
+- `Assets/02.Scripts/04.UI/LevelPlay/Views/RelayView.cs`
+  - Link/Transfer 형태, 양 끝점, 강조 상태를 표시한다. Transfer는 sender/receiver와 방향 장식을 분리해 표현한다.
+- `Assets/02.Scripts/04.UI/LevelPlay/Editor/LevelPlayViewPrefabGenerator.cs`
+  - `Tools/DeadLock/Visuals/Create LevelPlay View Prefabs` 메뉴를 제공한다.
+  - `VisualSettings_Default.asset`이 없으면 오류만 기록하고 생성하지 않는다. 기존 프리팹은 수동 디자인 변경을 보존하기 위해 건너뛴다.
+- `Assets/02.Scripts/04.UI/LevelPlay/Settings/VisualSettingsSO.cs`
+  - node shadow offset, state ring, Clock normal/compact badge, Simultaneous hub/slot/link, Relay stub/endpoint, ColorSwitch rail/chip/link/pointer에 필요한 Shapes 수치만 추가한다.
+  - 기존 37개 palette entry는 변경하지 않는다.
+
+### 프리팹 고정 구조
+
+- `Prefab_Node_Process.prefab`
+  - `Background`
+  - `Port`
+  - `RequiredColorTray/Background`
+  - `RequiredColorTray/ColorChips`
+  - `StateOverlay`
+- `Prefab_Node_Resource.prefab`
+  - `Background`
+  - `Port`
+  - `OccupancySlots`
+  - `RuleVisuals`
+  - `StateOverlay`
+  - `RelayAnchors/Left`
+  - `RelayAnchors/Right`
+- `Prefab_Connection.prefab`
+  - `Background/Shadow`
+  - `Track/Line`
+- `Prefab_Relay.prefab`
+  - `Links/StartStub`
+  - `Links/EndStub`
+  - `Endpoints`
+
+`ColorChips`, Capacity slot, ColorSwitch track, Clock badge, EmptyColor X, Simultaneous hub/links 같은 가변 요소는 프리팹에 고정 개수로 두지 않고 해당 container 아래에서 View가 생성/정리한다. `Shadow`, `Stroke`, `Fill` 같은 렌더링 부품은 루트가 아니라 역할별 container 아래에 둔다.
+
+### 표시 규칙 확정
+
+- Capacity 1~4: 빈 슬롯은 muted, 실제 점유 슬롯만 해당 connection 색으로 점등한다. Capacity 1은 중앙, 2는 가로, 3은 방사형, 4는 2x2로 둔다.
+- ColorSwitch: Resource 상단 `ColorSwitchTrack`에 Definition 순서대로 color chip을 배치한다. 현재 색은 큰 흰 rim, 다음 색은 ring과 아래 pointer, 현재 -> 다음 인접 구간은 밝은 선/chevron으로 표시한다. 마지막 색에서 첫 색으로 돌아가는 선이나 화살표는 그리지 않는다.
+- Clock: 기본은 Resource 상단 중앙 badge, ColorSwitch와 함께 있을 때는 좌상단 compact badge로 이동한다.
+- EmptyColor: 고정 전에는 occupancy slot 뒤에 muted X를 두고, 최초 실제 점유로 색이 고정되면 제거한다.
+- Simultaneous: 점유 슬롯과 중앙 hub를 연결한다. capacity 미달 hub는 red, 충족 hub는 green이다.
+- Relay: Resource 본체의 종류가 아니라 별도 `RelayView`로 표현한다. Link는 무방향, Transfer는 sender -> receiver 방향과 endpoint 차이를 유지한다.
+
+### 후속 구현 순서
+
+1. `Assets/01.Scenes/LevelPlayRuntime.unity`에서 실제 보드 표시를 확인한다. `BoardPresenter`는 Bootstrap의 Manager DTO를 구독해 Process, Resource, Connection View를 생성·갱신한다.
+2. 계획 입력을 실제 씬에서 확인한다. Process slot을 클릭한 뒤 Resource를 클릭하면 예약/교체하고, 예약된 slot을 선택한 뒤 `Delete` 또는 `Backspace`로 제거한다.
+3. 결과 재생: `LevelSimulationDTO` 전체 라운드 결과를 pause/배속 가능한 표시 상태로 순차 재생한다. 전체 시뮬레이션 계산은 시작 시 한 번만 수행한다.
+4. Relay focus와 Resource Rule의 세부 표시 DTO를 추가하고, waiting/complete/blocked 피드백, DOTween/FEEL polish, 모바일 입력과 PlayMode 테스트를 추가한다.
+
+### 다음 스레드 시작 지시
+
+- 첫 작업은 `LevelPlayRuntime` 씬에서 실제 보드와 계획 입력을 수동 확인한 뒤 결과 재생을 Presenter로 연결하는 것이다. Domain, Repository, Manager, Bootstrap의 규칙 코드와 `LevelSO` 저장 구조는 변경하지 않는다.
+- View는 passive하게 유지한다. View가 `LevelPlayManager`, Domain 객체, Domain enum을 직접 참조하거나 게임 규칙을 판단하면 안 된다.
+- Unity 컴파일/테스트는 사용자가 별도로 요청하기 전에는 실행하지 않는다. 구현 후에는 정적 검색, `.meta` 누락 확인, `git diff --check`만 수행한다.
+
+## 2026-07-13 LevelPlay Runtime Board Foundation
+
+- `04.UI/LevelPlay/Presentation/BoardPresenter`를 추가했다. Presenter는 `LevelPlayBootstrap`이 조립한 `LevelPlayManager`의 `OnLevelChanged` DTO만 구독하며, `BoardRoot` 아래에 Process, Resource, Connection View를 id별로 생성·재사용한다.
+- row/column은 보드 중심 기준의 local position으로 변환하고, Process slot 색과 connection 관계를 View의 primitive 표시값으로 변환한다. 기존 View는 Domain, Manager, DTO를 직접 참조하지 않는다.
+- `Assets/01.Scenes/LevelPlayRuntime.unity`를 추가했다. 이 씬은 `Level_C03_S08`과 네 View prefab, orthographic camera, `LevelPlayBootstrap`, `BoardPresenter`, `BoardRoot`를 연결한다.
+- 현재 Manager DTO에는 Resource Rule과 Relay 관계의 표시 데이터가 없으므로, 이 첫 runtime board는 Process, Resource, Connection 기본 상태만 표시한다. Rule/Relay 세부 표시와 플레이어 입력은 다음 단계다.
+- Unity에서 씬을 열거나 Play Mode를 실행하지 않았다.
+
+## 2026-07-13 LevelPlay Planning Input Foundation
+
+- `ProcessView`는 필요한 색 chip마다 2D 입력 collider를 생성하고, 클릭된 process/slot id를 event로 발행한다. `ResourceView`는 Resource id 클릭 event를 발행하며, 기존 생성 프리팹에도 runtime `BoxCollider2D`를 보강해 입력이 동작하게 한다.
+- `BoardPresenter`는 선택한 process slot을 selected 상태로 다시 표시하고, Resource 클릭을 `AssignConnection` 또는 `ReplaceConnection` Manager 유스케이스로 변환한다. 선택된 예약 slot의 삭제는 desktop 임시 입력인 `Delete`/`Backspace`로 `RemoveConnection`을 호출한다.
+- 이 입력은 Presenter가 Manager를 호출하고 View가 입력 event만 발행하는 MVP 경계를 유지한다. 터치 제스처, 버튼 UI, feedback은 모바일/연출 단계에서 별도로 구현한다.
+- Unity에서 입력을 실행 검증하지 않았다.
+
+## 2026-07-13 LevelPlay Round Playback Foundation
+
+- `BoardPresenter`는 계획 입력이 완성된 경우에만 `LevelPlayManager.StartSimulation()`을 호출하고, 계산이 완료되어 전달된 `LevelSimulationDTO`를 저장된 Planning DTO를 기준으로 라운드별 표시 상태로 재생한다. 시뮬레이션 규칙 계산은 시작 시 한 번만 수행하며, 재생 중에는 Manager나 Domain 상태를 변경하지 않는다.
+- `LevelRoundDTO`의 occupied, waiting, requeued, released, blocked, completed, failed 목록을 프레젠테이션 상태 집합으로 반영한다. 그 결과 Process/Resource/Connection View는 기존의 표시 전용 API만으로 라운드별 상태를 다시 그린다.
+- 재생 중 `Space`는 일시정지/재개, `1`/`2`/`3`은 0.5x/1x/2x 재생 속도, `R`은 계획 상태로 재시작한다. Planning 상태에서는 `Space`로 시뮬레이션을 시작한다.
+- 재생 대기는 `UniTask`와 파괴 취소 토큰을 사용한다. Scene을 나가거나 재시작하면 진행 중인 재생은 취소된다.
+- Unity 컴파일, Play Mode, 수동 입력 검증은 이번 변경에서는 실행하지 않았다.
+
+## 2026-07-13 LevelPlay Runtime Validation Attempt
+
+- Unity 6.4에서 `Assets/01.Scenes/LevelPlayRuntime.unity`가 열리는 것과 Editor.log의 최초 컴파일 결과를 확인했다.
+- 컴파일은 `ProcessView.RefreshRequiredColorTray`가 `slotIdList`를 매개변수로 받지 않아 발생한 `CS0103` 세 건을 보고했다. `Refresh`가 slot id 목록을 전달하도록 수정했다.
+- Unity MCP 브리지는 연결 후 응답이 시간 초과되는 상태라 수정본의 재컴파일 완료와 Play Mode 상호작용은 이 세션에서 확인하지 못했다. 다음 검증에서는 Unity Console에서 새 컴파일 결과를 먼저 확인한 뒤 슬롯 선택/예약/재생 흐름을 실행한다.
+
+## 2026-07-13 LevelPlay Clock Typography Prefabization
+
+- `Prefab_Node_Resource`의 `RuleVisuals` 아래에 `Dynamic` container와 고정 `Clock/Badge`, `Clock/TurnCountNormal`, `Clock/TurnCountCompact`을 추가했다. 두 TMP 라벨은 LiberationSans SDF font asset, 정렬, no-wrap, normal 5 / compact 3.5 크기와 위치를 프리팹에 보관한다.
+- `ResourceView`는 Rule의 가변 Shapes만 `Dynamic`과 `Clock/Badge`에서 생성·정리한다. Clock 숫자는 고정 TMP 중 하나를 활성화하여 text와 열림 상태 color만 갱신하며, 런타임에 폰트·크기·정렬·줄바꿈을 결정하지 않는다.
+- 새 Resource prefab을 생성하는 editor generator도 같은 고정 Clock 텍스트 hierarchy를 만든다. 기존 프리팹을 생성기가 덮어쓰지 않는 원칙은 유지한다.
+
+## 2026-07-13 LevelPlay Connection Boundary And Relay Focus
+
+- Process에서 Resource로 향하는 Connection은 Process 중앙 Port에서 시작하고, Resource의 `BoxCollider2D` shell 경계에서 끝난다. 계획 보드와 라운드 재생은 같은 경계 계산을 사용하며, Relay도 동일한 API를 사용한다.
+- `BoardPresenter`는 `LevelPlayManager.OnResourceFocusChanged`의 불변 `ResourceFocusDTO`를 구독한다. 슬롯을 선택하지 않은 상태에서 Resource를 누르면 해당 Resource와 연관 Resource를 강조하고, 관련 Relay의 전체 표시를 강조한다.
+- Resource focus는 슬롯 선택, 시뮬레이션 시작, 재시작 시 Presenter 표시 상태에서 해제된다. Domain, DTO, Manager, 프리팹의 정적 구조는 변경하지 않았다.
+
+## 2026-07-13 LevelPlay Pre-HUD Interaction And Feedback
+
+- Process slot은 짧은 탭으로 선택하고, 0.45초 길게 누르면 계획 단계에서 해당 슬롯의 예약 연결을 제거한다. 기존 `Delete`/`Backspace` 제거 경로는 desktop fallback으로 유지한다.
+- `VisualSettingsSO`에 Waiting Port pulse와 잘못된 입력 shake의 presentation 값을 추가했다. Waiting Process의 중앙 Port는 반복 pulse하며, 잘못된 Resource 연결·예약 삭제·미완성 상태의 시작 시도는 선택 Process만 짧게 shake한다.
+- 모든 피드백은 기존 Process prefab의 Transform과 Shapes만 갱신하고, 런타임 GameObject/Shape/Collider를 생성하거나 제거하지 않는다. 게임 HUD와 결과 화면은 아직 구현하지 않았다.

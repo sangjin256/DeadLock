@@ -42,6 +42,7 @@ public sealed class ResourceNode
 
     private ColorId _relayColor;
     private bool _hasRelayColor;
+    public bool HasRelayColor => _hasRelayColor;
 
     private ColorId _pendingRelayColor;
     private bool _hasPendingRelayColor;
@@ -213,6 +214,17 @@ public sealed class ResourceNode
     public void ResetRoundState()
     {
         _wasOccupiedThisRound = false;
+    }
+
+    public ResourceStateSnapshot CreateStateSnapshot()
+    {
+        return new ResourceStateSnapshot(Id,
+                                         Color,
+                                         AvailableCapacity,
+                                         IsLocked,
+                                         WaitingCount,
+                                         OccupiedConnectionIdList,
+                                         Rule.CreateStateSnapshot());
     }
 
     private void ApplyPendingRelayColorChange()

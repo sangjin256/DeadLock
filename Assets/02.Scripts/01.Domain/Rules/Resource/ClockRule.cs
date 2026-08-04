@@ -80,4 +80,16 @@ public sealed class ClockRule : IResourceRule
     {
         return new ClockRule(_mode, _initialRoundCount);
     }
+
+    public ResourceRuleStateSnapshot CreateStateSnapshot()
+    {
+        return new ResourceRuleStateSnapshot(System.Array.Empty<ColorId>(),
+                                             -1,
+                                             true,
+                                             _isOpen,
+                                             _remainingRoundCount,
+                                             false,
+                                             false,
+                                             false);
+    }
 }

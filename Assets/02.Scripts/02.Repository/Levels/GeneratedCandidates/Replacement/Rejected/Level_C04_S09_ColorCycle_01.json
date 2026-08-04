@@ -1,0 +1,186 @@
+{
+  "id": 39,
+  "name": "Level_C04_S09",
+  "rowCount": 5,
+  "columnCount": 9,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 20,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 23,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 25,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "row": 0,
+      "column": 4,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 21,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 24,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 25,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "row": 0,
+      "column": 8,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 22,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 23,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 25,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "row": 4,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 20,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 24,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 25,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "row": 4,
+      "column": 4,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 21,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 23,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 25,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "row": 4,
+      "column": 8,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 22,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 24,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 25,
+          "selectionOrder": 2
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 20,
+      "row": 2,
+      "column": 2,
+      "initialColorId": 20,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "ColorSwitch",
+          "colorIdList": [20, 21, 22]
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "row": 2,
+      "column": 4,
+      "initialColorId": 23,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "ColorSwitch",
+          "colorIdList": [23, 24]
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "row": 2,
+      "column": 6,
+      "initialColorId": 25,
+      "capacity": 2,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C04 S09 replacement: six processes must use two ColorSwitch resources in compatible color cycles.",
+    "The same process must finish its Basic slot before both ColorSwitch resources advance, so assignment order is visible and consequential.",
+    "No Clock or Relay is used; the challenge remains focused on strict FIFO ColorSwitch planning."
+  ]
+}

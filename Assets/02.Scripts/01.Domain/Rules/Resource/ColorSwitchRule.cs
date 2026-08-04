@@ -85,6 +85,18 @@ public sealed class ColorSwitchRule : IResourceRule
         return new ColorSwitchRule(_colorArray);
     }
 
+    public ResourceRuleStateSnapshot CreateStateSnapshot()
+    {
+        return new ResourceRuleStateSnapshot(_colorArray,
+                                             _currentColorIndex,
+                                             false,
+                                             false,
+                                             0,
+                                             false,
+                                             false,
+                                             false);
+    }
+
     private bool ContainsColor(ColorId color)
     {
         for (int i = 0; i < _colorArray.Length; i++)

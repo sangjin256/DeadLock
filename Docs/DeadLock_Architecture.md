@@ -147,6 +147,28 @@ ResourceView hover/tap
 - `ActiveBoardRuleIds`
 - `FocusKind`: `None`, `Single`, `Pair`, `Group`, `Board`
 
+## LevelPlayManager 경계
+
+`LevelPlayManager`는 순수 C# Application Service로 `LevelDefinition`과 `LevelPlaySettings`를 받아 새 `Board`를 만든다. `LevelSO`를 직접 참조하지 않으며, 이후 Bootstrap이 `LevelSOMapper`와 `LevelStarThresholdData`를 각각 Definition과 Settings로 변환해 주입한다.
+
+- 계획 단계에서 연결 추가, 제거, 교체를 처리한다. 같은 슬롯의 resource 교체는 기존 `SelectionOrder`를 유지하고, 새 슬롯 연결은 해당 process의 마지막 순서를 받는다.
+- 실행은 모든 예약이 끝난 뒤 `Board.RunSimulation()`을 한 번 호출해 전체 `SimulationReport`를 계산한다. Manager는 이를 `LevelSimulationDTO`와 라운드 DTO 목록으로 변환하고, pause/배속/현재 재생 라운드는 이후 Presenter/View의 표시 상태로 둔다.
+- 재시작은 새 Board를 만들고 마지막 계획 목록과 process별 `SelectionOrder`를 다시 적용한다. 실행 결과는 지우되 플레이어의 마지막 계획은 유지한다.
+- 별 평가는 Manager가 `LevelPlaySettings`의 3/2/1별 라운드 기준으로 계산한다. 성공하지 못한 결과는 0별이다.
+
+Manager는 `OnLevelChanged`, `OnSimulationReady`, `OnResourceFocusChanged` 이벤트로 불변 DTO만 발행한다. UI는 Domain 객체나 Domain enum을 직접 참조하지 않는다.
+
+`LevelPlayBootstrap`은 이 조립을 담당하는 최소 MonoBehaviour다. Inspector의 `LevelSO` 하나만 받고 `Awake()`에서 Mapper, Validator, Factory, Manager를 생성해 `LoadLevel()`을 호출한다. 초기화 성공 여부와 오류 문자열을 읽기 전용으로 제공하며, 잘못된 LevelSO나 별 기준은 Unity 오류 로그에 남긴다. Scene 탐색, 싱글톤, Presenter/View 참조는 갖지 않는다.
+
+## 런타임 보드 비주얼 기반
+
+실제 플레이 보드는 `BoardPresenter`가 `LevelPlayManager`와 Passive View를 연결해 만든다. 현재 Bootstrap은 LevelPlayManager까지만 조립하며, Presenter/View 조립은 비주얼 기반이 확정되는 다음 단계에서 추가한다.
+
+- `ProcessView`는 Shapes 기반 원형 노드, `ResourceView`는 Shapes 기반 사각 노드로 첫 구현부터 렌더링한다. `ColorId`의 실제 표시 색은 이후 팔레트 설정이 제공하더라도 View에서만 해석한다.
+- `ConnectionView`와 `RelayView`는 Shapes 선을 사용한다. 계획 연결, 점유, waiting, 완료, 차단, Relay Link/Transfer 방향성을 DTO 상태에 따라 반영한다.
+- `BoardPresenter`는 슬롯 선택, resource 선택, 연결 제거/교체, 시작, 재시작을 Manager 유스케이스로 변환한다. `LevelSimulationDTO`는 먼저 완성된 전체 결과로 전달되며, View는 이를 pause/배속 가능한 라운드 재생으로 소비한다.
+- DOTween, FEEL, 햅틱 같은 피드백은 기본 View가 DTO 상태를 정확히 표현한 뒤 별도 presentation polishing 단계에서 추가한다.
+
 Board는 레벨 생성 시 `ResourceId`에서 관련 `IBoardRule`을 찾을 수 있는 인덱스를 만들 수 있다. 이렇게 하면 Relay처럼 두 자원을 묶는 퍼즐, 자원 하나만 강조하는 외부 퍼즐, 자원 그룹이나 보드 전체를 강조하는 퍼즐을 같은 흐름으로 처리할 수 있다.
 
 ## 중요한 경계

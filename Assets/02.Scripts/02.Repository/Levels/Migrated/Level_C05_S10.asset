@@ -13,103 +13,62 @@ MonoBehaviour:
   m_Name: Level_C05_S10
   m_EditorClassIdentifier: Assembly-CSharp::LevelSO
   _id: 50
-  _rowCount: 5
-  _columnCount: 11
+  _rowCount: 4
+  _columnCount: 7
   _processDataList:
-  - _id: 1
+  - _id: 0
     _row: 0
-    _column: 1
-    _slotDataList:
-    - _id: 0
-      _requiredColorId: 30
-      _selectionOrder: 0
-    - _id: 1
-      _requiredColorId: 27
-      _selectionOrder: 1
-    - _id: 2
-      _requiredColorId: 31
-      _selectionOrder: 2
-  - _id: 5
-    _row: 0
-    _column: 5
-    _slotDataList:
-    - _id: 0
-      _requiredColorId: 32
-      _selectionOrder: 0
-    - _id: 1
-      _requiredColorId: 32
-      _selectionOrder: 1
-    - _id: 2
-      _requiredColorId: 32
-      _selectionOrder: 2
-    - _id: 3
-      _requiredColorId: 27
-      _selectionOrder: 3
-  - _id: 9
-    _row: 0
-    _column: 9
-    _slotDataList:
-    - _id: 0
-      _requiredColorId: 30
-      _selectionOrder: 0
-    - _id: 1
-      _requiredColorId: 27
-      _selectionOrder: 1
-    - _id: 2
-      _requiredColorId: 27
-      _selectionOrder: 2
-    - _id: 3
-      _requiredColorId: 26
-      _selectionOrder: 3
-  - _id: 45
-    _row: 4
-    _column: 1
-    _slotDataList:
-    - _id: 0
-      _requiredColorId: 30
-      _selectionOrder: 0
-    - _id: 1
-      _requiredColorId: 27
-      _selectionOrder: 1
-    - _id: 2
-      _requiredColorId: 27
-      _selectionOrder: 2
-    - _id: 3
-      _requiredColorId: 27
-      _selectionOrder: 3
-  - _id: 49
-    _row: 4
-    _column: 5
-    _slotDataList:
-    - _id: 0
-      _requiredColorId: 30
-      _selectionOrder: 0
-    - _id: 1
-      _requiredColorId: 32
-      _selectionOrder: 1
-    - _id: 2
-      _requiredColorId: 31
-      _selectionOrder: 2
-  - _id: 53
-    _row: 4
-    _column: 9
-    _slotDataList:
-    - _id: 0
-      _requiredColorId: 30
-      _selectionOrder: 0
-    - _id: 1
-      _requiredColorId: 27
-      _selectionOrder: 1
-    - _id: 2
-      _requiredColorId: 27
-      _selectionOrder: 2
-    - _id: 3
-      _requiredColorId: 26
-      _selectionOrder: 3
-  _resourceDataList:
-  - _id: 22
-    _row: 2
     _column: 0
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 27
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 26
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 28
+      _selectionOrder: 2
+  - _id: 3
+    _row: 0
+    _column: 3
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 27
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 26
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 28
+      _selectionOrder: 2
+  - _id: 6
+    _row: 0
+    _column: 6
+    _slotDataList:
+    - _id: 0
+      _requiredColorId: 26
+      _selectionOrder: 0
+    - _id: 1
+      _requiredColorId: 26
+      _selectionOrder: 1
+    - _id: 2
+      _requiredColorId: 28
+      _selectionOrder: 2
+  _resourceDataList:
+  - _id: 9
+    _row: 1
+    _column: 2
+    _initialColorId: 28
+    _capacity: 2
+    _ruleDataList:
+    - _ruleType: 2
+      _colorIdList: 
+      _clockMode: 0
+      _clockRoundCount: 0
+  - _id: 11
+    _row: 1
+    _column: 4
     _initialColorId: 28
     _capacity: 1
     _ruleDataList:
@@ -117,71 +76,60 @@ MonoBehaviour:
       _colorIdList: 
       _clockMode: 0
       _clockRoundCount: 0
+  - _id: 17
+    _row: 2
+    _column: 3
+    _initialColorId: 26
+    _capacity: 3
+    _ruleDataList:
     - _ruleType: 3
       _colorIdList: 
       _clockMode: 1
-      _clockRoundCount: 2
+      _clockRoundCount: 3
   - _id: 24
-    _row: 2
-    _column: 2
-    _initialColorId: 32
-    _capacity: 3
-    _ruleDataList:
-    - _ruleType: 4
-      _colorIdList: 
-      _clockMode: 0
-      _clockRoundCount: 0
-    - _ruleType: 1
-      _colorIdList: 200000001b000000
-      _clockMode: 0
-      _clockRoundCount: 0
-  - _id: 26
-    _row: 2
-    _column: 4
-    _initialColorId: 32
-    _capacity: 1
-    _ruleDataList:
-    - _ruleType: 1
-      _colorIdList: 200000001e000000
-      _clockMode: 0
-      _clockRoundCount: 0
-  - _id: 28
-    _row: 2
-    _column: 6
-    _initialColorId: 28
-    _capacity: 2
-    _ruleDataList:
-    - _ruleType: 4
-      _colorIdList: 
-      _clockMode: 0
-      _clockRoundCount: 0
-    - _ruleType: 1
-      _colorIdList: 1c0000001b000000
-      _clockMode: 0
-      _clockRoundCount: 0
-    - _ruleType: 2
-      _colorIdList: 
-      _clockMode: 0
-      _clockRoundCount: 0
-  - _id: 30
-    _row: 2
-    _column: 8
-    _initialColorId: 30
-    _capacity: 2
-    _ruleDataList:
-    - _ruleType: 4
-      _colorIdList: 
-      _clockMode: 0
-      _clockRoundCount: 0
-  - _id: 32
-    _row: 2
-    _column: 10
+    _row: 3
+    _column: 3
     _initialColorId: 28
     _capacity: 1
     _ruleDataList:
-    - _ruleType: 2
+    - _ruleType: 0
       _colorIdList: 
       _clockMode: 0
       _clockRoundCount: 0
   _relayDataList: []
-  _testCaseDataList: []
+  _starThresholdData:
+    _threeStarRoundCount: 5
+    _twoStarRoundCount: 8
+    _oneStarRoundCount: 11
+  _testCaseDataList:
+  - _name: Auto Optimal
+    _maxRoundCount: 11
+    _expectedEndState: 0
+    _assignedConnectionDataList:
+    - _processId: 0
+      _slotId: 0
+      _resourceId: 9
+    - _processId: 0
+      _slotId: 1
+      _resourceId: 17
+    - _processId: 0
+      _slotId: 2
+      _resourceId: 24
+    - _processId: 3
+      _slotId: 0
+      _resourceId: 9
+    - _processId: 3
+      _slotId: 2
+      _resourceId: 24
+    - _processId: 3
+      _slotId: 1
+      _resourceId: 17
+    - _processId: 6
+      _slotId: 2
+      _resourceId: 11
+    - _processId: 6
+      _slotId: 0
+      _resourceId: 17
+    - _processId: 6
+      _slotId: 1
+      _resourceId: 17

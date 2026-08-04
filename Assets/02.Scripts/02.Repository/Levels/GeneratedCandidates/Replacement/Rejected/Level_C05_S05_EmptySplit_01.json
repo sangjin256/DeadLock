@@ -1,0 +1,96 @@
+{
+  "id": 45,
+  "name": "Level_C05_S05",
+  "rowCount": 3,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 14,
+      "row": 2,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 27,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 26,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 28,
+          "selectionOrder": 2
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "row": 2,
+      "column": 6,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 26,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 27,
+          "selectionOrder": 1
+        },
+        {
+          "id": 2,
+          "requiredColorId": 28,
+          "selectionOrder": 2
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 9,
+      "row": 1,
+      "column": 2,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "EmptyColor"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "row": 1,
+      "column": 4,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "EmptyColor"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S05 replacement: the two processes must split the two EmptyColor resources so both colors remain available.",
+    "The shared final Basic resource adds a small completion-order decision after the color commitments are made.",
+    "Choosing the same EmptyColor resource first with different colors creates a visible bad commitment."
+  ]
+}

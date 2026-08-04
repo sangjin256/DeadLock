@@ -1,0 +1,26 @@
+DeadLock LevelGenerationCandidate Import Report
+Input: D:\DeadLock\Assets\02.Scripts\02.Repository\Levels\GeneratedCandidates\Replacement\Level_C05_S03_EmptyShare_02.json
+Saved: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C05_S03.asset
+Report: Assets/02.Scripts/02.Repository/Levels/GeneratedCandidates/ImportReports/Level_C05_S03_EmptyShare_02_ImportReport.txt
+
+[Info]
+- LevelDefinition validation succeeded.
+- Solver: SolvedOptimal / 최적 해를 찾았습니다.
+- Solver stats: explored 2, evaluated 1, succeeded 1
+- Best clear round: 1
+- Star thresholds: 3★ 1R, 2★ 2R, 1★ 3R
+- Star threshold basis: 증명된 최적 라운드 기준 추천입니다.
+- Difficulty: 1.5 / 5.0 (매우 쉬움)
+- Difficulty reason: 라운드 압박 낮음: 최선 1R / 이론상 최소 1R
+- Difficulty reason: 흐름 압박 낮음: waiting 0, 재투입 0, 이월 0
+- Difficulty reason: 성공 해 희소성 낮음: 성공 1 / 후보 평가 1
+- Difficulty reason: Rule/Relay 복잡도 보통
+- Difficulty reason: 평균 연결 거리 보통: 3.0
+- Saved asset: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C05_S03.asset
+
+[Warnings]
+- None
+
+[Errors]
+- None
+

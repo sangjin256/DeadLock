@@ -97,6 +97,29 @@ public sealed class Board
         return AssignConnectionResult.Ok(connection.Id);
     }
 
+    public bool RemoveConnection(int connectionId)
+    {
+        Connection connection = GetConnection(connectionId);
+
+        if (connection is null || connection.State != EConnectionState.Planned)
+        {
+            return false;
+        }
+
+        ProcessNode process = GetProcess(connection.ProcessId);
+
+        if (process is null ||
+            !process.TryGetSlot(connection.ColorSlotId, out ProcessColorSlot slot) ||
+            slot.ConnectionId != connectionId)
+        {
+            return false;
+        }
+
+        _connectionList.Remove(connection);
+        slot.ClearConnection();
+        return true;
+    }
+
     public SimulationReport RunSimulation(int maxRoundCount)
     {
         ResetSimulationState();
@@ -133,6 +156,7 @@ public sealed class Board
                 actedProcessIdSet);
             CompleteReadyProcesses(roundResult);
             ApplyRoundEndedEffects(round, roundResult);
+            CaptureRoundState(roundResult);
 
             if (_hasSimulationFailure)
             {
@@ -174,6 +198,27 @@ public sealed class Board
         return builder.Build();
     }
 
+    public RelayStateSnapshot[] CreateRelayStateSnapshotArray()
+    {
+        List<RelayStateSnapshot> snapshotList = new List<RelayStateSnapshot>();
+
+        foreach (IBoardRule rule in _boardRuleList)
+        {
+            if (rule is RelayLinkRule linkRule)
+            {
+                snapshotList.Add(linkRule.CreateStateSnapshot(this));
+                continue;
+            }
+
+            if (rule is RelayTransferRule transferRule)
+            {
+                snapshotList.Add(transferRule.CreateStateSnapshot(this));
+            }
+        }
+
+        return snapshotList.ToArray();
+    }
+
     private void ResetSimulationState()
     {
         _hasSimulationFailure = false;
@@ -193,6 +238,18 @@ public sealed class Board
         {
             connection.ResetSimulationState();
         }
+    }
+
+    private void CaptureRoundState(RoundResult roundResult)
+    {
+        List<ResourceStateSnapshot> resourceStateSnapshotList = new List<ResourceStateSnapshot>(_resourceList.Count);
+
+        foreach (ResourceNode resource in _resourceList)
+        {
+            resourceStateSnapshotList.Add(resource.CreateStateSnapshot());
+        }
+
+        roundResult.CaptureBoardState(resourceStateSnapshotList, CreateRelayStateSnapshotArray());
     }
 
     private bool AreAllSlotsReserved()

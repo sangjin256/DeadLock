@@ -1,0 +1,26 @@
+DeadLock LevelGenerationCandidate Import Report
+Input: D:\DeadLock\Assets\02.Scripts\02.Repository\Levels\GeneratedCandidates\Replacement\Level_C05_S05_EmptyCapacity_03.json
+Saved: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C05_S05.asset
+Report: Assets/02.Scripts/02.Repository/Levels/GeneratedCandidates/ImportReports/Level_C05_S05_EmptyCapacity_03_ImportReport.txt
+
+[Info]
+- LevelDefinition validation succeeded.
+- Solver: BestFoundUnproven / Best solution found from ordered candidates. Optimal order is not fully proven.
+- Solver stats: explored 17, evaluated 72, succeeded 9
+- Best clear round: 3
+- Star thresholds: 3★ 3R, 2★ 5R, 1★ 7R
+- Star threshold basis: 탐색 제한 또는 취소 전 현재 최선 라운드 기준 추천입니다.
+- Difficulty: 2.1 / 5.0 (쉬움)
+- Difficulty reason: 라운드 압박 낮음: 최선 3R / 이론상 최소 2R
+- Difficulty reason: 흐름 압박 보통: waiting 1, 재투입 1, 이월 0
+- Difficulty reason: 성공 해 희소성 낮음: 성공 9 / 후보 평가 72
+- Difficulty reason: Rule/Relay 복잡도 낮음
+- Difficulty reason: 평균 연결 거리 보통: 3.5
+- Saved asset: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C05_S05.asset
+
+[Warnings]
+- 성공 해는 찾았지만 최적 해임은 증명되지 않았습니다.
+
+[Errors]
+- None
+

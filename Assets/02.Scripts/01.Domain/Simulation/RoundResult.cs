@@ -28,6 +28,12 @@ public sealed class RoundResult
     private readonly List<int> _blockedConnectionIdList = new();
     public IReadOnlyList<int> BlockedConnectionIdList => _blockedConnectionIdList;
 
+    private ResourceStateSnapshot[] _resourceStateSnapshotArray = new ResourceStateSnapshot[0];
+    public IReadOnlyList<ResourceStateSnapshot> ResourceStateSnapshotList => _resourceStateSnapshotArray;
+
+    private RelayStateSnapshot[] _relayStateSnapshotArray = new RelayStateSnapshot[0];
+    public IReadOnlyList<RelayStateSnapshot> RelayStateSnapshotList => _relayStateSnapshotArray;
+
     public bool HasProgress => _occupiedConnectionIdList.Count > 0 ||
                                _completedProcessIdList.Count > 0 ||
                                _releasedConnectionIdList.Count > 0 ||
@@ -81,11 +87,30 @@ public sealed class RoundResult
         AddUnique(_blockedConnectionIdList, connectionId);
     }
 
+    public void CaptureBoardState(IReadOnlyList<ResourceStateSnapshot> resourceStateSnapshotList,
+                                  IReadOnlyList<RelayStateSnapshot> relayStateSnapshotList)
+    {
+        _resourceStateSnapshotArray = CopySnapshotArray(resourceStateSnapshotList);
+        _relayStateSnapshotArray = CopySnapshotArray(relayStateSnapshotList);
+    }
+
     private static void AddUnique(List<int> idList, int id)
     {
         if (!idList.Contains(id))
         {
             idList.Add(id);
         }
+    }
+
+    private static T[] CopySnapshotArray<T>(IReadOnlyList<T> snapshotList)
+    {
+        T[] snapshotArray = new T[snapshotList.Count];
+
+        for (int i = 0; i < snapshotList.Count; i++)
+        {
+            snapshotArray[i] = snapshotList[i];
+        }
+
+        return snapshotArray;
     }
 }

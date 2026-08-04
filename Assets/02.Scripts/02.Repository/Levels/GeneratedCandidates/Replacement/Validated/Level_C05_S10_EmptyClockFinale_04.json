@@ -1,0 +1,85 @@
+{
+  "id": 50,
+  "name": "Level_C05_S10",
+  "rowCount": 4,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 26, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 9,
+      "row": 1,
+      "column": 2,
+      "initialColorId": 28,
+      "capacity": 2,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 11,
+      "row": 1,
+      "column": 4,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 26,
+      "capacity": 3,
+      "ruleDataList": [
+        { "ruleType": "Clock", "clockMode": "OffToOn", "clockRoundCount": 3 }
+      ]
+    },
+    {
+      "id": 24,
+      "row": 3,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S10 revision: the final three-process split-commitment route keeps its structure but delays the OffToOn gate by one additional round.",
+    "This increases timing pressure without adding a new rule or obscuring the EmptyColor chapter lesson."
+  ]
+}

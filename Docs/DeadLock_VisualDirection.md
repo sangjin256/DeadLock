@@ -43,6 +43,16 @@
 
 배경은 프로토타입에서는 어두운 색을 사용하지만, 실제 게임은 밝은 배경도 고려한다. 따라서 Relay 라인처럼 배경 위에 직접 올라가는 보조 라인은 밝은 색보다 어두운 중립색을 우선한다.
 
+### 런타임 팔레트 및 Shapes 수치
+
+실제 런타임의 색상과 Shapes 공통 수치는 `VisualSettingsSO` 하나에서 관리한다. 기본 에셋은 `Assets/05.Visual Resources/Settings/VisualSettings_Default.asset`이며, Editor 메뉴 `Tools/DeadLock/Visuals/Create Default Visual Settings`이 마이그레이션 리포트의 `ColorId 1~37` Hex 값을 초기 팔레트 entry로 복사해 생성한다.
+
+- `LevelSO`, Domain, Manager는 실제 Unity 색상을 저장하거나 조회하지 않는다.
+- 마이그레이션 리포트는 기본 에셋 생성 시점의 seed일 뿐이며, 런타임 View는 `VisualSettingsSO`만 참조한다.
+- `ColorId <= 0`은 `MutedColor`로 표현한다. EmptyColor처럼 아직 실제 색이 정해지지 않은 상태를 위한 값이다.
+- 등록되지 않은 양수 `ColorId`는 `MissingColor`로 표현한다. 기본값은 magenta이며, 새 레벨이 새 ColorId를 쓰면 해당 entry를 팔레트에 추가해야 한다.
+- Process/Resource/Connection/ColorSwitch의 기본 Shapes 치수도 같은 에셋에 두고, 프리팹 단계에서 각 View가 이 값을 사용한다.
+
 ## Process 비주얼
 
 프로세스는 원형 노드다.
@@ -73,6 +83,8 @@
 
 리소스는 모두 둥근 사각형 노드다. 리소스 종류는 외곽 형태가 아니라 내부 아이콘/슬롯/상태 표현으로 구분한다.
 
+`Capacity`는 별도 리소스 종류가 아니라 모든 리소스가 공통으로 가지는 점유 수다. 따라서 Basic, Clock, ColorSwitch, EmptyColor, Simultaneous 모두 Capacity 슬롯을 표현할 수 있어야 한다. Resource 전체 프리팹을 Rule별로 나누지 않고, 공통 Resource shell 위에 점유 슬롯과 Rule 비주얼을 조합한다.
+
 - 그림자: rounded rectangle, 위치 `(0.07, -0.07)`, 크기 `(1.02, 1.02)`, corner `0.21`, 검정 alpha `0.25`
 - 외곽 stroke: rounded rectangle, 크기 `(0.98, 0.98)`, corner `0.20`, 리소스 대표색
 - 내부 fill: rounded rectangle, 크기 `(0.83, 0.83)`, corner `0.17`, station fill
@@ -100,9 +112,12 @@
 - 3개: ColorSwitch/Simultaneous와 같은 방사형 삼각형 배치와 y `-0.06` 보정을 사용한다.
 - 4개: 2x2 바둑판 형태로 배치
 - 5개 이상: 원형 배치 fallback을 사용한다.
-- 사용 가능 슬롯: 리소스 색으로 채움
-- 비어 있거나 아직 미사용 슬롯: muted alpha `0.42`
-- 별도 `2/3` 텍스트는 표시하지 않고 슬롯 개수와 채움 상태로 읽히게 한다.
+- 비점유 슬롯: muted fill과 낮은 alpha rim으로 형태만 보이게 한다.
+- 실제 점유 슬롯: 해당 connection의 색으로 채우고, 짧은 pop으로 점유를 알린다.
+- waiting 상태는 점유가 아니므로 Resource 슬롯을 켜지 않는다. waiting은 Process Port pulse로 표현한다.
+- 반환된 슬롯은 muted 상태로 되돌린다.
+- 슬롯은 View가 점유 성공 시 가장 낮은 빈 index부터 배정하고, connection id와 slot index의 대응을 재생 중 유지한다.
+- 별도 `2/3` 텍스트는 실제 게임에 표시하지 않고 슬롯 개수와 채움 상태로 읽히게 한다.
 
 ### Simultaneous
 
@@ -126,11 +141,13 @@
 
 사용 후 또는 상태 변화에 따라 현재 색이 순환/변경되는 리소스다.
 
-- 내부 색 점: 여러 개의 작은 원
-- 점 반지름: `0.095`
-- 점 배치: 중심에서 거리 `0.23`, 원형 배치
-- 3개 색 점일 때는 Simultaneous와 같은 y `-0.06` 삼각형 보정을 적용한다.
-- 의미: 현재 또는 순환 가능한 리소스 색 후보를 보여준다.
+- 후보 색은 Resource 상단의 수평 `ColorSwitchTrack`에 Definition 순서대로 배치한다.
+- 색 chip 사이에는 단방향 순서 line을 둔다. 현재 색에서 다음 색으로 이어지는 구간만 밝은 선과 chevron으로 강조한다.
+- 현재 색 chip은 가장 큰 흰색 rim으로 점등한다. 다음 색 chip은 밝은 ring과 위쪽 pointer로 표시한다. 나머지 chip도 순서를 읽을 수 있게 낮은 alpha의 색으로 유지한다.
+- 마지막 chip 다음은 첫 chip으로 돌아가지만, 순환선이나 마지막 -> 첫 chip 화살표는 그리지 않는다. 첫 chip의 next marker만으로 다음 전환을 표시한다.
+- track 높이: Resource 기준 `(0, 0.76)`. chip 간격은 색 1~3개 `0.40`, 4개 `0.30`, 5개 이상 `0.25`다.
+- Resource stroke는 현재 색으로 맞추고, 중앙 영역은 Capacity 점유 슬롯에 남긴다.
+- 의미: 현재 제공 색과 바로 다음 전환 색, 전체 전환 순서를 동시에 보여준다.
 
 프로세스 본체색과 혼동되지 않게, ColorSwitch의 색은 오직 리소스가 제공/변경하는 실제 퍼즐 색을 뜻한다.
 
@@ -138,9 +155,10 @@
 
 처음 들어온 색으로 고정되는 리소스다.
 
-- 현재 placeholder: muted X 표시
-- slash 위치: `(-0.19, -0.19)` to `(0.19, 0.19)`, `(-0.19, 0.19)` to `(0.19, -0.19)`
-- slash 두께: `0.06`
+- 고정 전 placeholder: Capacity 슬롯 뒤에 낮은 alpha의 muted X를 표시한다.
+- slash 위치: `(-0.29, -0.29)` to `(0.29, 0.29)`, `(-0.29, 0.29)` to `(0.29, -0.29)`
+- slash 두께: `0.035`
+- 첫 실제 점유 후: X를 숨기고 Resource stroke와 점유 슬롯을 고정된 색으로 표현한다.
 
 추후 개선 후보:
 
@@ -151,14 +169,24 @@
 
 남은 턴 수가 핵심인 리소스다.
 
-- 중앙 숫자를 최우선으로 읽히게 한다.
-- 숫자 font size: `5`
-- 숫자 위치: `(0, 0)`
+- 남은 턴은 Resource 상단 중앙의 독립 Clock badge로 읽는다. 중앙 영역은 Capacity 2~4와 Simultaneous hub에 남긴다.
+- badge 중심 위치: `(0, 0.64)`
+- badge stroke/fill 반지름: `0.21` / `0.17`
 - 숫자 색: Ink
-- 보조 시계 링: 반지름 `0.31`, 두께 `0.035`, 리소스 색 alpha `0.48`
-- 보조 시계 바늘: 두께 `0.035`, 리소스 색 alpha `0.32`
+- 열림 상태: 리소스 색 stroke와 정상 alpha
+- 닫힘 상태: badge와 Resource stroke를 muted alpha로 낮춘다.
 
-우상단 작은 배지는 모바일에서 작게 보일 수 있으므로, 현재 방향은 중앙 숫자 우선이다.
+### 복합 Rule 배치
+
+실제 레벨에는 `Simultaneous + Clock`, Capacity 2~4 Clock, Capacity 2 ColorSwitch와 EmptyColor가 존재한다. 따라서 Rule 모듈은 다음 공간을 공유하지 않는다.
+
+- 점유 슬롯: 항상 중앙 영역을 우선 사용한다.
+- Simultaneous: 중앙 hub와 방사형 점유 슬롯을 사용한다. hub는 미충족이면 red, capacity 충족이면 green이다.
+- Clock: 상단 Clock badge를 사용한다.
+- ColorSwitch: 상단 `ColorSwitchTrack`을 우선 사용한다.
+- Clock + ColorSwitch: ColorSwitchTrack은 상단 중앙에 유지하고, Clock은 Resource 좌상단의 compact badge `(-0.48, 0.40)`로 옮긴다.
+- EmptyColor: 점유 슬롯 뒤의 낮은 alpha X를 사용한다.
+- Relay: Resource 내부가 아니라 별도 RelayView의 stub, endpoint, full line을 사용한다.
 
 ## 일반 연결선
 
@@ -303,16 +331,60 @@ Relay 대상 리소스들은 서로 떨어져 있어도 같은 쌍이라는 것�
 실제 인게임 프리팹도 Shapes 프로토타입처럼 의미 단위로 child를 묶는다.
 
 - `Background`: Shadow, Stroke, Fill처럼 노드의 바탕을 이루는 요소
-- `Slots`: Capacity 슬롯, Simultaneous 슬롯, ColorSwitch 색 점, 프로세스 필요 색 칩
+- `OccupancySlots`: Capacity 슬롯과 Simultaneous의 실제 점유 슬롯
+- `RuleVisuals`: ColorSwitchTrack, EmptyColor X, Clock badge, Simultaneous hub처럼 Rule을 표현하는 요소
+- `RequiredColorTray`: 프로세스 필요 색 칩
 - `Links`: 일반 연결선, Relay stub, Simultaneous 슬롯과 중앙 허브를 잇는 선
 - `Port`: 프로세스/기본 리소스 중앙 포트
-- `Icon`: EmptyColor slash, Clock face/hand처럼 규칙 아이콘을 구성하는 요소
-- `State`: Clock turn count, Simultaneous activation light처럼 상태값을 직접 보여주는 요소
+- `StateOverlay`: 선택, lock, waiting, completed 같은 공통 상태 요소
+- `RelayAnchors`: Relay stub가 시작되는 위치
 - `Endpoints`: Relay Link/Transfer 끝 장식 placeholder
 
 이름은 나중에 스프라이트나 별도 View component로 교체하기 쉽도록 기능 기준으로 짓는다. `Shadow`, `Stroke`, `Fill` 같은 렌더링 부품은 루트에 직접 두지 않고 `Background` 아래에 둔다.
 
+## 런타임 View/Prefab 구현 계약 (다음 작업)
+
+이 절은 확정된 구현 계약이며, 아직 runtime Prefab과 View 컴포넌트는 생성되지 않았다. `VisualPrototype_Shapes`의 모양을 그대로 복사하는 것이 아니라 아래 네 passive View와 공통 `VisualSettings_Default.asset`으로 수렴한다.
+
+### 생성 경로와 방식
+
+- View 코드: `Assets/02.Scripts/04.UI/LevelPlay/Views`
+- Prefab 경로:
+  - `Assets/03.Prefabs/LevelPlay/Nodes/Prefab_Node_Process.prefab`
+  - `Assets/03.Prefabs/LevelPlay/Nodes/Prefab_Node_Resource.prefab`
+  - `Assets/03.Prefabs/LevelPlay/Connections/Prefab_Connection.prefab`
+  - `Assets/03.Prefabs/LevelPlay/Connections/Prefab_Relay.prefab`
+- Editor 메뉴: `Tools/DeadLock/Visuals/Create LevelPlay View Prefabs`
+- 생성기는 `Assets/05.Visual Resources/Settings/VisualSettings_Default.asset`을 읽는다. 이미 존재하는 프리팹은 절대 덮어쓰지 않고 건너뛴다. 최초 생성 뒤의 형태/수치 조정은 Prefab Mode에서 수동으로 보존한다.
+
+### View 경계
+
+- `ProcessView`: 위치, 필요 `ColorId` 목록, UI 전용 Process visual state만 받는다.
+- `ResourceView`: 위치, 기본 색, capacity/점유 수, lock, ColorSwitch/Clock/EmptyColor/Simultaneous 표시값과 Relay anchor만 다룬다.
+- `ConnectionView`: 양 끝점, 색, UI 전용 connection visual state만 받는다.
+- `RelayView`: 양 끝점, Link/Transfer visual type, highlight만 다룬다.
+- View는 `Board`, `LevelPlayManager`, Domain enum, Rule 객체를 직접 참조하지 않는다. 이후 `BoardPresenter`가 Manager DTO를 위 primitive 표시값으로 변환한다.
+
+### 가변 요소 생성 원칙
+
+- `RequiredColorTray/ColorChips`: Process가 요구하는 ColorId 수에 맞춰 View가 생성/정리한다.
+- `OccupancySlots`: Capacity 1~4에 맞춰 View가 생성/배치하고, 현재 점유 수만 점등한다.
+- `RuleVisuals`: ColorSwitch track, Clock badge, EmptyColor X, Simultaneous hub/links를 Rule 표시값에 맞춰 생성/정리한다.
+- `RelayAnchors`: Resource 프리팹에 고정된 좌우 anchor를 두고, 이후 RelayPresenter가 endpoint 기준으로 사용한다.
+- `Connection`과 `Relay` 선은 프리팹의 기본 Shapes `Line`을 View가 endpoint 변경으로 갱신한다. 매 프레임 새 오브젝트를 만들지 않는다.
+
 ## 추후 검토할 비주얼 작업
+
+### 상태 검증 보드
+
+`VisualPrototype_Shapes`는 실제 게임 화면이 아니라 프리팹화 전 시각 상태를 확인하는 참조 보드다. Editor 메뉴 `Tools/DeadLock/Visuals/Rebuild Shapes Visual Prototype`은 다음 샘플을 생성한다.
+
+- Process: Default, Selected, Waiting, Completed
+- Capacity: 1~4별 `0 / ... / capacity` 점유 상태
+- Rule 조합: Clock + Capacity 2~4, ColorSwitch + Capacity 2, ColorSwitch + Clock + Capacity 2, EmptyColor + Capacity 2의 고정 전/후, Simultaneous + Clock
+- Connection 및 Relay Link/Transfer 기준 샘플
+
+이 보드의 각 샘플은 독립 프리팹 후보가 아니다. 실제 프리팹은 `ProcessView`, 공통 `ResourceView`, `ConnectionView`, `RelayView` 네 종류와 필요한 하위 모듈로 수렴해야 한다.
 
 - EmptyColor의 X placeholder를 빈 물방울/점선 원/후보 슬롯 표현으로 교체한다.
 - 연결선이 이어질 때 물방울이 합쳐지는 shader 또는 mesh effect를 테스트한다.

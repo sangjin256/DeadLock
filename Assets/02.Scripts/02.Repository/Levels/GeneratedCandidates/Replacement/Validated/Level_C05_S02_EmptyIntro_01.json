@@ -1,0 +1,57 @@
+{
+  "id": 42,
+  "name": "Level_C05_S02",
+  "rowCount": 3,
+  "columnCount": 5,
+  "processDataList": [
+    {
+      "id": 10,
+      "row": 2,
+      "column": 0,
+      "slotDataList": [
+        {
+          "id": 0,
+          "requiredColorId": 27,
+          "selectionOrder": 0
+        },
+        {
+          "id": 1,
+          "requiredColorId": 26,
+          "selectionOrder": 1
+        }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 2,
+      "row": 0,
+      "column": 2,
+      "initialColorId": 26,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "Basic"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "row": 1,
+      "column": 2,
+      "initialColorId": 28,
+      "capacity": 1,
+      "ruleDataList": [
+        {
+          "ruleType": "EmptyColor"
+        }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S02 replacement: the process first commits the EmptyColor resource to ColorId 27.",
+    "The Basic follow-up makes the process complete and visibly leaves the EmptyColor resource fixed to its first color.",
+    "This is a low-pressure visual introduction before multiple processes compete to set an EmptyColor resource."
+  ]
+}

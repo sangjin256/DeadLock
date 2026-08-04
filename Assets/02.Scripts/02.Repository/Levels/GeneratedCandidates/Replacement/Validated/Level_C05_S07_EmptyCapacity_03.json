@@ -1,0 +1,62 @@
+{
+  "id": 47,
+  "name": "Level_C05_S07",
+  "rowCount": 4,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 10,
+      "row": 1,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 2,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 3,
+      "initialColorId": 26,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S07 revision: a capacity-two EmptyColor resource releases one process only after the first two complete their serial Basic follow-up.",
+    "The design targets one extra round of visible waiting between S06 and the first split-commitment puzzle."
+  ]
+}

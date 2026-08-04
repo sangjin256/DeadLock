@@ -50,4 +50,16 @@ public sealed class SimultaneousRule : IResourceRule
     {
         return new SimultaneousRule();
     }
+
+    public ResourceRuleStateSnapshot CreateStateSnapshot()
+    {
+        return new ResourceRuleStateSnapshot(System.Array.Empty<ColorId>(),
+                                             -1,
+                                             false,
+                                             false,
+                                             0,
+                                             false,
+                                             false,
+                                             true);
+    }
 }

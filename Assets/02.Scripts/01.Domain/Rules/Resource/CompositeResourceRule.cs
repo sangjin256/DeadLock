@@ -102,4 +102,38 @@ public sealed class CompositeResourceRule : IResourceRule
 
         return new CompositeResourceRule(snapshotArray);
     }
+
+    public ResourceRuleStateSnapshot CreateStateSnapshot()
+    {
+        ResourceRuleStateSnapshot result = ResourceRuleStateSnapshot.None;
+
+        for (int i = 0; i < _ruleArray.Length; i++)
+        {
+            ResourceRuleStateSnapshot snapshot = _ruleArray[i].CreateStateSnapshot();
+
+            if (snapshot.ColorSwitchColorArray.Length > 0)
+            {
+                result = new ResourceRuleStateSnapshot(snapshot.ColorSwitchColorArray,
+                                                       snapshot.ColorSwitchCurrentIndex,
+                                                       result.HasClock || snapshot.HasClock,
+                                                       snapshot.HasClock ? snapshot.IsClockOpen : result.IsClockOpen,
+                                                       snapshot.HasClock ? snapshot.ClockRemainingRoundCount : result.ClockRemainingRoundCount,
+                                                       result.HasEmptyColor || snapshot.HasEmptyColor,
+                                                       result.IsEmptyColorFixed || snapshot.IsEmptyColorFixed,
+                                                       result.IsSimultaneous || snapshot.IsSimultaneous);
+                continue;
+            }
+
+            result = new ResourceRuleStateSnapshot(result.ColorSwitchColorArray,
+                                                   result.ColorSwitchCurrentIndex,
+                                                   result.HasClock || snapshot.HasClock,
+                                                   snapshot.HasClock ? snapshot.IsClockOpen : result.IsClockOpen,
+                                                   snapshot.HasClock ? snapshot.ClockRemainingRoundCount : result.ClockRemainingRoundCount,
+                                                   result.HasEmptyColor || snapshot.HasEmptyColor,
+                                                   result.IsEmptyColorFixed || snapshot.IsEmptyColorFixed,
+                                                   result.IsSimultaneous || snapshot.IsSimultaneous);
+        }
+
+        return result;
+    }
 }

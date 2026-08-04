@@ -1,0 +1,26 @@
+DeadLock LevelGenerationCandidate Import Report
+Input: D:\DeadLock\Assets\02.Scripts\02.Repository\Levels\GeneratedCandidates\Replacement\Level_C04_S09_ColorCycle_01.json
+Saved: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C04_S09.asset
+Report: Assets/02.Scripts/02.Repository/Levels/GeneratedCandidates/ImportReports/Level_C04_S09_ColorCycle_01_ImportReport.txt
+
+[Info]
+- LevelDefinition validation succeeded.
+- Solver: BestFoundUnproven / Best solution found from ordered candidates. Optimal order is not fully proven.
+- Solver stats: explored 18, evaluated 30,650, succeeded 327
+- Best clear round: 21
+- Star thresholds: 3★ 21R, 2★ 32R, 1★ 43R
+- Star threshold basis: 탐색 제한 또는 취소 전 현재 최선 라운드 기준 추천입니다.
+- Difficulty: 4.4 / 5.0 (매우 어려움)
+- Difficulty reason: 라운드 압박 높음: 최선 21R / 이론상 최소 3R
+- Difficulty reason: 흐름 압박 높음: waiting 9, 재투입 9, 이월 83
+- Difficulty reason: 성공 해 희소성 높음: 성공 327 / 후보 평가 30,650
+- Difficulty reason: Rule/Relay 복잡도 보통
+- Difficulty reason: 평균 연결 거리 보통: 5.1
+- Saved asset: Assets/02.Scripts/02.Repository/Levels/Generated/Level_C04_S09.asset
+
+[Warnings]
+- 성공 해는 찾았지만 최적 해임은 증명되지 않았습니다.
+
+[Errors]
+- None
+

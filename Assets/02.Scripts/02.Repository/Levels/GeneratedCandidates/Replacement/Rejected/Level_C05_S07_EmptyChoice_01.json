@@ -1,0 +1,75 @@
+{
+  "id": 47,
+  "name": "Level_C05_S07",
+  "rowCount": 4,
+  "columnCount": 7,
+  "processDataList": [
+    {
+      "id": 0,
+      "row": 0,
+      "column": 0,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 3,
+      "row": 0,
+      "column": 3,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    },
+    {
+      "id": 6,
+      "row": 0,
+      "column": 6,
+      "slotDataList": [
+        { "id": 0, "requiredColorId": 27, "selectionOrder": 0 },
+        { "id": 1, "requiredColorId": 26, "selectionOrder": 1 },
+        { "id": 2, "requiredColorId": 28, "selectionOrder": 2 }
+      ]
+    }
+  ],
+  "resourceDataList": [
+    {
+      "id": 10,
+      "row": 1,
+      "column": 3,
+      "initialColorId": 28,
+      "capacity": 3,
+      "ruleDataList": [
+        { "ruleType": "EmptyColor" }
+      ]
+    },
+    {
+      "id": 17,
+      "row": 2,
+      "column": 2,
+      "initialColorId": 26,
+      "capacity": 1,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    },
+    {
+      "id": 18,
+      "row": 2,
+      "column": 4,
+      "initialColorId": 28,
+      "capacity": 2,
+      "ruleDataList": [
+        { "ruleType": "Basic" }
+      ]
+    }
+  ],
+  "relayDataList": [],
+  "generationNotes": [
+    "C05 S07: three processes jointly commit an EmptyColor resource, then must resolve uneven follow-up capacities.",
+    "The shared first color is safe, while the capacity-one color creates visible completion-order pressure."
+  ]
+}
